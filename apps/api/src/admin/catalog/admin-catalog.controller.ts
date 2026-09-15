@@ -1,0 +1,45 @@
+import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+
+import { CatalogService } from "../../catalog/catalog.service";
+import {
+  parseCategoryInput,
+  parseCategoryUpdateInput,
+  parseProductInput,
+  parseProductUpdateInput
+} from "../../catalog/catalog.validation";
+
+// TODO: Protect admin catalog endpoints with real admin auth before production.
+@Controller("admin")
+export class AdminCatalogController {
+  constructor(private readonly catalogService: CatalogService) {}
+
+  @Get("categories")
+  listCategories() {
+    return this.catalogService.listAdminCategories();
+  }
+
+  @Post("categories")
+  createCategory(@Body() body: Record<string, unknown>) {
+    return this.catalogService.createAdminCategory(parseCategoryInput(body));
+  }
+
+  @Patch("categories/:id")
+  updateCategory(@Param("id") id: string, @Body() body: Record<string, unknown>) {
+    return this.catalogService.updateAdminCategory(id, parseCategoryUpdateInput(body));
+  }
+
+  @Get("products")
+  listProducts(@Query("category") category?: string, @Query("search") search?: string) {
+    return this.catalogService.listAdminProducts({ category, search });
+  }
+
+  @Post("products")
+  createProduct(@Body() body: Record<string, unknown>) {
+    return this.catalogService.createAdminProduct(parseProductInput(body));
+  }
+
+  @Patch("products/:id")
+  updateProduct(@Param("id") id: string, @Body() body: Record<string, unknown>) {
+    return this.catalogService.updateAdminProduct(id, parseProductUpdateInput(body));
+  }
+}

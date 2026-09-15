@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  admin
+  picker
+  courier
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+enum OrderStatus {
+  draft
+  placed
+  confirmed
+  picking
+  picked
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  cash_on_delivery
+  manual_card_or_transfer
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum SubstitutionPolicy {
+  replace_similar
+  contact_me
+  remove_item
+}
+
+enum OrderItemStatus {
+  requested
+  picked
+  replaced
+  removed
+  unavailable
+}
+
+model User {
+  id              String            @id @default(uuid())
+  phone           String?           @unique
+  email           String?           @unique
+  passwordHash    String?           @map("password_hash")
+  name            String?
+  role            UserRole          @default(customer)
+  status          UserStatus        @default(active)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  addresses       CustomerAddress[]
+  orders          Order[]           @relation("CustomerOrders")
+  pickerWaves     DeliveryWave[]    @relation("PickerWaves")
+  courierWaves    DeliveryWave[]    @relation("CourierWaves")
+  refreshSessions RefreshSession[]
+
+  @@map("users")
+}
+
+model RefreshSession {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_sessions")
+}
+
+model CustomerAddress {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  label         String?
+  recipientName String   @map("recipient_name")
+  phone         String
+  city          String
+  street        String
+  building      String
+  apartment     String?
+  entrance      String?
+  floor         String?
+  instructions  String?
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders        Order[]
+
+  @@map("customer_addresses")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0) @map("sort_order")
+  isActive  Boolean   @default(true) @map("is_active")
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                   String                 @id @default(uuid())
+  categoryId           String                 @map("category_id")
+  name                 String
+  slug                 String                 @unique
+  description          String?
+  imageUrl             String?                @map("image_url")
+  unit                 String
+  currentPurchasePrice Decimal                @map("current_purchase_price") @db.Decimal(12, 2)
+  currentSalePrice     Decimal                @map("current_sale_price") @db.Decimal(12, 2)
+  isWeighted           Boolean                @default(false) @map("is_weighted")
+  minQuantity          Decimal                @map("min_quantity") @db.Decimal(12, 3)
+  quantityStep         Decimal                @map("quantity_step") @db.Decimal(12, 3)
+  isActive             Boolean                @default(true) @map("is_active")
+  isAvailableToday     Boolean                @default(true) @map("is_available_today")
+  sortOrder            Int                    @default(0) @map("sort_order")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  category             Category               @relation(fields: [categoryId], references: [id])
+  qualityOptions       ProductQualityOption[]
+  orderItems           OrderItem[]
+  replacementItems     OrderItem[]            @relation("ReplacementProduct")
+  waveItems            WaveItem[]
+
+  @@map("products")
+}
+
+model ProductQualityOption {
+  id        String  @id @default(uuid())
+  productId String  @map("product_id")
+  label     String
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_quality_options")
+}
+
+model DeliverySlot {
+  id             String         @id @default(uuid())
+  date           DateTime       @db.Date
+  startsAt       DateTime       @map("starts_at") @db.Time
+  endsAt         DateTime       @map("ends_at") @db.Time
+  capacityOrders Int            @map("capacity_orders")
+  isActive       Boolean        @default(true) @map("is_active")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  waves          DeliveryWave[]
+  orders         Order[]
+
+  @@map("delivery_slots")
+}
+
+model DeliveryWave {
+  id             String        @id @default(uuid())
+  deliverySlotId String        @map("delivery_slot_id")
+  status         String        @default("open")
+  pickerUserId   String?       @map("picker_user_id")
+  courierUserId  String?       @map("courier_user_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deliverySlot   DeliverySlot  @relation(fields: [deliverySlotId], references: [id], onDelete: Cascade)
+  picker         User?         @relation("PickerWaves", fields: [pickerUserId], references: [id])
+  courier        User?         @relation("CourierWaves", fields: [courierUserId], references: [id])
+  orders         Order[]
+  waveItems      WaveItem[]
+
+  @@map("delivery_waves")
+}
+
+model WaveItem {
+  id                     String       @id @default(uuid())
+  deliveryWaveId         String       @map("delivery_wave_id")
+  productId              String       @map("product_id")
+  requestedQuantityTotal Decimal      @map("requested_quantity_total") @db.Decimal(12, 3)
+  purchasedQuantity      Decimal?     @map("purchased_quantity") @db.Decimal(12, 3)
+  purchaseUnitPrice      Decimal?     @map("purchase_unit_price") @db.Decimal(12, 2)
+  purchaseTotal          Decimal?     @map("purchase_total") @db.Decimal(12, 2)
+  supplierNote           String?      @map("supplier_note")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+  deliveryWave           DeliveryWave @relation(fields: [deliveryWaveId], references: [id], onDelete: Cascade)
+  product                Product      @relation(fields: [productId], references: [id])
+
+  @@unique([deliveryWaveId, productId])
+  @@map("wave_items")
+}
+
+model Order {
+  id                      String             @id @default(uuid())
+  orderNumber             String             @unique @map("order_number")
+  customerId              String             @map("customer_id")
+  addressId               String?            @map("address_id")
+  deliveryAddressSnapshot Json               @map("delivery_address_snapshot")
+  deliverySlotId          String             @map("delivery_slot_id")
+  deliveryWaveId          String?            @map("delivery_wave_id")
+  status                  OrderStatus        @default(placed)
+  paymentMethod           PaymentMethod      @default(cash_on_delivery) @map("payment_method")
+  paymentStatus           PaymentStatus      @default(pending) @map("payment_status")
+  substitutionPolicy      SubstitutionPolicy @map("substitution_policy")
+  qualityComment          String?            @map("quality_comment")
+  itemsSubtotal           Decimal            @map("items_subtotal") @db.Decimal(12, 2)
+  deliveryFee             Decimal            @map("delivery_fee") @db.Decimal(12, 2)
+  serviceFee              Decimal            @default(0) @map("service_fee") @db.Decimal(12, 2)
+  discountTotal           Decimal            @default(0) @map("discount_total") @db.Decimal(12, 2)
+  totalEstimated          Decimal            @map("total_estimated") @db.Decimal(12, 2)
+  totalFinal              Decimal?           @map("total_final") @db.Decimal(12, 2)
+  customerComment         String?            @map("customer_comment")
+  createdAt               DateTime           @default(now()) @map("created_at")
+  updatedAt               DateTime           @updatedAt @map("updated_at")
+  customer                User               @relation("CustomerOrders", fields: [customerId], references: [id])
+  address                 CustomerAddress?   @relation(fields: [addressId], references: [id])
+  deliverySlot            DeliverySlot       @relation(fields: [deliverySlotId], references: [id])
+  deliveryWave            DeliveryWave?      @relation(fields: [deliveryWaveId], references: [id])
+  items                   OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                         String          @id @default(uuid())
+  orderId                    String          @map("order_id")
+  productId                  String          @map("product_id")
+  productNameSnapshot        String          @map("product_name_snapshot")
+  unit                       String
+  requestedQuantity          Decimal         @map("requested_quantity") @db.Decimal(12, 3)
+  saleUnitPriceSnapshot      Decimal         @map("sale_unit_price_snapshot") @db.Decimal(12, 2)
+  estimatedTotal             Decimal         @map("estimated_total") @db.Decimal(12, 2)
+  purchaseUnitPriceSnapshot  Decimal?        @map("purchase_unit_price_snapshot") @db.Decimal(12, 2)
+  qualityOptionId            String?         @map("quality_option_id")
+  qualityOptionLabelSnapshot String?         @map("quality_option_label_snapshot")
+  finalQuantity              Decimal?        @map("final_quantity") @db.Decimal(12, 3)
+  finalUnitPrice             Decimal?        @map("final_unit_price") @db.Decimal(12, 2)
+  finalTotal                 Decimal?        @map("final_total") @db.Decimal(12, 2)
+  status                     OrderItemStatus @default(requested)
+  replacementProductId       String?         @map("replacement_product_id")
+  pickerNote                 String?         @map("picker_note")
+  order                      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product                    Product         @relation(fields: [productId], references: [id])
+  replacementProduct         Product?        @relation("ReplacementProduct", fields: [replacementProductId], references: [id])
+
+  @@map("order_items")
+}
+
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
