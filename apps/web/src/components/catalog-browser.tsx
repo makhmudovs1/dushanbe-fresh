@@ -5,13 +5,31 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Category, getCategories, getProducts, Product } from "@/lib/api";
 import { ProductCard } from "./product-card";
 
-export function CatalogBrowser({ initialSearch = "" }: { initialSearch?: string }) {
+export function CatalogBrowser({
+  initialCategory = "",
+  initialSearch = "",
+  hideSearch = false
+}: {
+  initialCategory?: string;
+  initialSearch?: string;
+  hideSearch?: boolean;
+}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState(initialSearch);
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  const loadCategories = useCallback(async () => {
+    setCategoriesError(null);
+    try {
+      setCategories(await getCategories());
+    } catch {
+      setCategoriesError("Не удалось загрузить категории. Попробуйте ещё раз.");
+    }
+  }, []);
 
   const loadProducts = useCallback(async (nextCategory: string, nextSearch: string) => {
     setPending(true);
@@ -24,16 +42,21 @@ export function CatalogBrowser({ initialSearch = "" }: { initialSearch?: string 
       });
       setProducts(nextProducts);
     } catch {
-      setError("Каталог пока недоступен. Проверьте, что API запущен.");
+      setError("Не удалось загрузить товары. Попробуйте ещё раз.");
     } finally {
       setPending(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadProducts("", initialSearch);
-    void getCategories().then(setCategories).catch(() => setError("Категории пока недоступны"));
-  }, [initialSearch, loadProducts]);
+    void loadProducts(initialCategory, initialSearch);
+    setCategory(initialCategory);
+    setSearch(initialSearch);
+  }, [initialCategory, initialSearch, loadProducts]);
+
+  useEffect(() => {
+    void loadCategories();
+  }, [loadCategories]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,20 +70,23 @@ export function CatalogBrowser({ initialSearch = "" }: { initialSearch?: string 
 
   return (
     <section className="catalog-browser">
-      <form className="catalog-search" onSubmit={submitSearch}>
-        <input
-          aria-label="Поиск товаров"
-          placeholder="Найти помидоры, зелень, орехи..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <button type="submit">Искать</button>
-      </form>
+      {!hideSearch ? (
+        <form className="catalog-search" onSubmit={submitSearch}>
+          <input
+            aria-label="Поиск товаров"
+            placeholder="Найти помидоры, зелень, орехи..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <button type="submit">Искать</button>
+        </form>
+      ) : null}
 
-      <div className="category-tabs" aria-label="Категории">
+      <div className={hideSearch ? "category-tabs category-tabs--compact" : "category-tabs"} aria-label="Категории">
         {categoryTabs.map((item) => (
           <button
             className={item.slug === category ? "is-active" : ""}
+            aria-pressed={item.slug === category}
             key={item.slug || "all"}
             onClick={() => {
               setCategory(item.slug);
@@ -73,8 +99,24 @@ export function CatalogBrowser({ initialSearch = "" }: { initialSearch?: string 
         ))}
       </div>
 
-      {error ? <p className="notice">{error}</p> : null}
+      {categoriesError ? (
+        <div className="notice" role="alert">
+          <p>{categoriesError}</p>
+          <button className="secondary-link" type="button" onClick={() => void loadCategories()}>
+            Повторить загрузку категорий
+          </button>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="notice" role="alert">
+          <p>{error}</p>
+          <button className="secondary-link" type="button" onClick={() => void loadProducts(category, search)}>
+            Повторить загрузку товаров
+          </button>
+        </div>
+      ) : null}
       {pending ? <p className="notice">Загружаем свежий каталог...</p> : null}
+      {!pending && !error && products.length === 0 ? <p>По вашему запросу ничего не найдено.</p> : null}
 
       <div className="product-grid">
         {products.map((product) => (

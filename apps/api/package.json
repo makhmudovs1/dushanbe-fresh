@@ -12,18 +12,26 @@
     "db:generate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma generate",
     "db:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma migrate dev",
     "db:deploy": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma migrate deploy",
-    "db:seed": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed.ts"
+    "db:seed": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed.ts",
+    "db:seed:checkout": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-checkout.ts",
+    "db:validate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma validate",
+    "db:seed:operations": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-operations.ts"
   },
   "dependencies": {
+    "@dushanbe-fresh/shared": "workspace:*",
     "@nestjs/common": "10.3.10",
     "@nestjs/config": "3.2.3",
     "@nestjs/core": "10.3.10",
     "@nestjs/platform-express": "10.3.10",
     "@prisma/client": "5.22.0",
+    "bcryptjs": "3.0.2",
+    "cookie": "1.0.2",
+    "jsonwebtoken": "9.0.3",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10",
     "@types/node": "20.11.30",
     "prisma": "5.22.0",
     "tsx": "4.7.1"

@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+import { adjustQuantity } from "@/cart/cart";
+import { useCart } from "@/cart/cart-context";
 import { getProduct, Product } from "@/lib/api";
 
 export function ProductDetail({ slug }: { slug: string }) {
+  const { addProduct } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState("1.000");
   const [qualityOption, setQualityOption] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     void getProduct(slug)
@@ -36,39 +40,77 @@ export function ProductDetail({ slug }: { slug: string }) {
       <div className="product-detail__content">
         <p className="eyebrow">{product.category.name}</p>
         <h1>{product.name}</h1>
-        <p>{product.description}</p>
         <strong className="price">
           {product.sellingPrice} сомони / {product.unit}
         </strong>
+        <p>{product.description}</p>
 
         {product.qualityOptions.length > 0 ? (
-          <label className="field">
-            Предпочтение по качеству
-            <select
-              value={qualityOption}
-              onChange={(event) => setQualityOption(event.target.value)}
-            >
+          <fieldset className="quality-options">
+            <legend>Предпочтение по качеству</legend>
+            <div>
               {product.qualityOptions.map((option) => (
-                <option key={option.id} value={option.id}>
+                <label
+                  className={qualityOption === option.id ? "quality-chip is-active" : "quality-chip"}
+                  key={option.id}
+                >
+                  <input
+                    checked={qualityOption === option.id}
+                    name="qualityOption"
+                    onChange={() => setQualityOption(option.id)}
+                    type="radio"
+                    value={option.id}
+                  />
                   {option.label}
-                </option>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+          </fieldset>
         ) : null}
 
-        <label className="field">
-          Количество
-          <input
-            min={product.minQuantity}
-            step={product.quantityStep}
-            type="number"
-            value={quantity}
-            onChange={(event) => setQuantity(event.target.value)}
-          />
-        </label>
+        <div className="field">
+          <span>Количество</span>
+          <div className="quantity-control quantity-control--wide">
+            <button
+              onClick={() =>
+                setQuantity(
+                  adjustQuantity(quantity, product.minQuantity, product.quantityStep, "decrement")
+                )
+              }
+              type="button"
+            >
+              -
+            </button>
+            <strong>
+              {quantity} {product.unit}
+            </strong>
+            <button
+              onClick={() =>
+                setQuantity(
+                  adjustQuantity(quantity, product.minQuantity, product.quantityStep, "increment")
+                )
+              }
+              type="button"
+            >
+              +
+            </button>
+          </div>
+        </div>
 
-        <button className="primary-action" disabled>
+        {notice ? <p className="notice">{notice}</p> : null}
+
+        <button
+          className="primary-action"
+          onClick={() => {
+            addProduct({
+              product,
+              quantity,
+              qualityOptionId: qualityOption || null
+            });
+            setNotice("Добавлено в корзину.");
+          }}
+          type="button"
+        >
           Добавить в корзину
         </button>
       </div>

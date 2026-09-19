@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -21,7 +21,7 @@ const productInclude = {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listPublicCategories() {
     const categories = await this.prisma.category.findMany({

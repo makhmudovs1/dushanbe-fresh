@@ -9,6 +9,21 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dushanbe_fresh
+          POSTGRES_PASSWORD: dushanbe_fresh
+          POSTGRES_DB: dushanbe_fresh_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dushanbe_fresh -d dushanbe_fresh_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh_test?schema=public
+      TEST_DATABASE_URL: postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh_test?schema=public
 
     steps:
       - name: Checkout
@@ -29,6 +44,9 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
+
+      - name: Validate schema and migrate test database
+        run: pnpm db:validate && pnpm db:deploy
 
       - name: Lint
         run: pnpm lint

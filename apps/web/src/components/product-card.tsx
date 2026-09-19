@@ -10,7 +10,10 @@ export function ProductCard({ product }: { product: Product }) {
       </Link>
       <div className="product-card__body">
         <div>
-          <p className="product-card__category">{product.category.name}</p>
+          <div className="product-card__meta">
+            <p className="product-card__category">{product.category.name}</p>
+            <span>Сегодня в наличии</span>
+          </div>
           <h3>
             <Link href={`/products/${product.slug}`}>{product.name}</Link>
           </h3>
@@ -20,7 +23,9 @@ export function ProductCard({ product }: { product: Product }) {
           <strong>
             {product.sellingPrice} сомони / {product.unit}
           </strong>
-          <button disabled>В корзину</button>
+          <Link className="product-card__action" href={`/products/${product.slug}`}>
+            Выбрать
+          </Link>
         </div>
       </div>
     </article>

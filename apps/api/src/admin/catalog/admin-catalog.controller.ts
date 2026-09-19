@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { CatalogService } from "../../catalog/catalog.service";
 import {
@@ -8,10 +8,12 @@ import {
   parseProductUpdateInput
 } from "../../catalog/catalog.validation";
 
-// TODO: Protect admin catalog endpoints with real admin auth before production.
+import { Roles } from "../../auth/staff.guard";
+
+@Roles("admin")
 @Controller("admin")
 export class AdminCatalogController {
-  constructor(private readonly catalogService: CatalogService) {}
+  constructor(@Inject(CatalogService) private readonly catalogService: CatalogService) {}
 
   @Get("categories")
   listCategories() {

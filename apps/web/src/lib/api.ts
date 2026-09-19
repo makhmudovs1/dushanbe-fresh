@@ -33,10 +33,10 @@ export type Product = {
   }>;
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+const apiBaseUrl = "/api/v1";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await (path.startsWith("/admin/") ? staffFetch : fetch)(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -75,6 +75,13 @@ export function getAdminCategories() {
   return request<Category[]>("/admin/categories");
 }
 
+export function createAdminCategory(payload: Record<string, unknown>) {
+  return request<Category>("/admin/categories", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export function getAdminProducts() {
   return request<Product[]>("/admin/products");
 }
@@ -92,3 +99,4 @@ export function updateAdminProduct(id: string, payload: Record<string, unknown>)
     body: JSON.stringify(payload)
   });
 }
+import { staffFetch } from "./staff-auth";

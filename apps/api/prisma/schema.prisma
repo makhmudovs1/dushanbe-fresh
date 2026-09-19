@@ -167,7 +167,7 @@ model DeliverySlot {
   isActive       Boolean        @default(true) @map("is_active")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
-  waves          DeliveryWave[]
+  wave           DeliveryWave?
   orders         Order[]
 
   @@map("delivery_slots")
@@ -175,7 +175,7 @@ model DeliverySlot {
 
 model DeliveryWave {
   id             String        @id @default(uuid())
-  deliverySlotId String        @map("delivery_slot_id")
+  deliverySlotId String        @unique @map("delivery_slot_id")
   status         String        @default("open")
   pickerUserId   String?       @map("picker_user_id")
   courierUserId  String?       @map("courier_user_id")
@@ -194,6 +194,8 @@ model WaveItem {
   id                     String       @id @default(uuid())
   deliveryWaveId         String       @map("delivery_wave_id")
   productId              String       @map("product_id")
+  productNameSnapshot    String       @map("product_name_snapshot")
+  unit                   String
   requestedQuantityTotal Decimal      @map("requested_quantity_total") @db.Decimal(12, 3)
   purchasedQuantity      Decimal?     @map("purchased_quantity") @db.Decimal(12, 3)
   purchaseUnitPrice      Decimal?     @map("purchase_unit_price") @db.Decimal(12, 2)
@@ -211,6 +213,8 @@ model WaveItem {
 model Order {
   id                      String             @id @default(uuid())
   orderNumber             String             @unique @map("order_number")
+  checkoutRequestId       String?            @unique @map("checkout_request_id")
+  checkoutRequestHash     String?            @map("checkout_request_hash")
   customerId              String             @map("customer_id")
   addressId               String?            @map("address_id")
   deliveryAddressSnapshot Json               @map("delivery_address_snapshot")
@@ -236,6 +240,8 @@ model Order {
   deliveryWave            DeliveryWave?      @relation(fields: [deliveryWaveId], references: [id])
   items                   OrderItem[]
 
+  @@index([deliverySlotId, status])
+  @@index([deliveryWaveId])
   @@map("orders")
 }
 

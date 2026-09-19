@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
   Category,
+  createAdminCategory,
   createAdminProduct,
   getAdminCategories,
   getAdminProducts,
@@ -34,7 +35,8 @@ export function AdminCatalog() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [form, setForm] = useState(emptyProduct);
-  const [notice, setNotice] = useState("Admin API открыт без auth только для dev.");
+  const [categoryForm, setCategoryForm] = useState({ name: "", slug: "", sortOrder: 0 });
+  const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
@@ -123,6 +125,22 @@ export function AdminCatalog() {
     }
   }
 
+  async function saveCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setNotice("");
+    try {
+      await createAdminCategory(categoryForm);
+      setCategoryForm({ name: "", slug: "", sortOrder: 0 });
+      await load();
+      setNotice("Категория создана.");
+    } catch {
+      setNotice("Не удалось создать категорию. Проверьте название и уникальность slug.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function toggleProduct(product: Product, field: "isActive" | "isAvailableToday") {
     await updateAdminProduct(product.id, {
       [field]: !(product[field] ?? true)
@@ -148,6 +166,15 @@ export function AdminCatalog() {
             </div>
           ))}
         </div>
+        <form className="admin-form" onSubmit={saveCategory}>
+          <h3>Новая категория</h3>
+          <div className="form-grid">
+            <label>Название<input required value={categoryForm.name} onChange={(event) => setCategoryForm({ ...categoryForm, name: event.target.value })} /></label>
+            <label>Slug<input required value={categoryForm.slug} onChange={(event) => setCategoryForm({ ...categoryForm, slug: event.target.value })} /></label>
+            <label>Порядок<input required type="number" value={categoryForm.sortOrder} onChange={(event) => setCategoryForm({ ...categoryForm, sortOrder: Number(event.target.value) })} /></label>
+          </div>
+          <button className="secondary-link" disabled={pending} type="submit">Создать категорию</button>
+        </form>
       </section>
 
       <section className="admin-section">
