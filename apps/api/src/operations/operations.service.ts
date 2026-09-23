@@ -1,10 +1,12 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { OrderStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { aggregateDemand, dateFilter, decimal, finalOrderTotal, money, object, orderTransitions, text, transition, waveTransitions } from "./operations.rules";
+import { dateFilter, decimal, finalOrderTotal, money, object, orderTransitions, text, transition, waveTransitions } from "./operations.rules";
 import { mapOrder, mapWave, orderInclude, waveInclude, Wave } from "./operations.mappers";
 import type { StaffUser } from "@dushanbe-fresh/shared";
 import { assertAssignment, waveScope } from "./operations.access";
+import { refreshDemand } from "./operations.demand";
+import { attachConfirmedOrders, defaultAssignments, defaultStaffKeys } from "./operations.defaults";
 
 @Injectable()
 export class OperationsService {
@@ -45,11 +47,14 @@ export class OperationsService {
     return wave;
   }
 
-  async orders(filters: { date?: string; deliverySlotId?: string; status?: string }, actor?: StaffUser) {
+  async orders(filters: { date?: string; deliverySlotId?: string; status?: string; tab?: string }, actor?: StaffUser) {
     if (filters.status && !Object.keys(orderTransitions).includes(filters.status)) throw new BadRequestException("Неизвестный статус заказа.");
+    const tabs: Record<string, OrderStatus[]> = { active: ["confirmed", "picking", "picked", "out_for_delivery"], completed: ["delivered"], cancelled: ["cancelled"] };
+    if (filters.tab && !Object.prototype.hasOwnProperty.call(tabs, filters.tab)) throw new BadRequestException("Неизвестная вкладка заказов.");
+    const statuses = filters.tab ? tabs[filters.tab].filter(status => !filters.status || status === filters.status) : undefined;
     const orders = await this.prisma.order.findMany({
       where: { ...(actor && actor.role !== "admin" ? { deliveryWave: waveScope(actor) } : {}), deliverySlot: { date: dateFilter(filters.date) }, deliverySlotId: filters.deliverySlotId || undefined,
-        status: filters.status as OrderStatus | undefined }, orderBy: { createdAt: "desc" }, include: orderInclude
+        status: statuses ? { in: statuses } : filters.status as OrderStatus | undefined }, orderBy: { createdAt: "desc" }, include: orderInclude
     });
     return orders.map(mapOrder);
   }
@@ -69,29 +74,53 @@ export class OperationsService {
   staff() { return this.prisma.user.findMany({ where: { role: { in: ["picker", "courier"] }, status: "active" },
     select: { id: true, name: true, role: true }, orderBy: { name: "asc" } }); }
 
-  async waves(date?: string, actor?: StaffUser) {
-    const waves = await this.prisma.deliveryWave.findMany({ where: { ...waveScope(actor), deliverySlot: { date: dateFilter(date) } },
-      include: waveInclude, orderBy: { createdAt: "desc" } });
-    return waves.map(mapWave);
+  async waves(date?: string, actor?: StaffUser, tab?: string) {
+    const tabs: Record<string, string[]> = { upcoming: ["open"], working: ["picking"], completed: ["picked", "out_for_delivery", "delivered", "cancelled"] };
+    if (tab && !Object.prototype.hasOwnProperty.call(tabs, tab)) throw new BadRequestException("Неизвестная вкладка волн.");
+    const selected = tab ?? (actor?.role === "picker" ? "upcoming" : undefined);
+    const waves = await this.prisma.deliveryWave.findMany({ where: { ...waveScope(actor), deliverySlot: { date: dateFilter(date) }, ...(selected ? { status: { in: tabs[selected] } } : {}) },
+      include: waveInclude, orderBy: actor?.role === "picker" && selected !== "completed"
+        ? [{ deliverySlot: { date: "asc" } }, { deliverySlot: { startsAt: "asc" } }]
+        : { createdAt: "desc" } });
+    const threshold = await this.purchaseThreshold();
+    return waves.map(wave => mapWave(wave, threshold));
   }
 
   async wave(id: string, actor?: StaffUser) {
     const wave = await this.prisma.deliveryWave.findUnique({ where: { id }, include: waveInclude });
     if (!wave) throw new NotFoundException("Волна не найдена.");
     assertAssignment(wave, actor);
-    return mapWave(wave);
+    return mapWave(wave, await this.purchaseThreshold());
   }
 
-  private async refreshDemand(tx: Prisma.TransactionClient, id: string) {
-    const orders = await tx.order.findMany({ where: { deliveryWaveId: id, status: { not: "cancelled" } }, include: { items: true } });
-    const groups = aggregateDemand(orders.flatMap(order => order.items));
-    // Preserve procurement history even when an order is cancelled or a product is no longer requested.
-    await tx.waveItem.updateMany({ where: { deliveryWaveId: id }, data: { requestedQuantityTotal: "0" } });
-    for (const group of groups) {
-      await tx.waveItem.upsert({ where: { deliveryWaveId_productId: { deliveryWaveId: id, productId: group.productId } },
-        update: { requestedQuantityTotal: group.quantity }, create: { deliveryWaveId: id, productId: group.productId,
-          requestedQuantityTotal: group.quantity, productNameSnapshot: group.name, unit: group.unit } });
-    }
+  private async purchaseThreshold() {
+    const setting = await this.prisma.appSetting.findUnique({ where: { key: "purchase_price_deviation_percent" } });
+    return decimal(setting?.value ?? "15", 2, "Порог отклонения закупочной цены");
+  }
+
+  async updatePurchaseThreshold(value: unknown) {
+    const threshold = decimal(object(value).value, 2, "Порог отклонения закупочной цены");
+    if (threshold.gt(100)) throw new BadRequestException("Порог должен быть от 0 до 100%.");
+    return this.prisma.appSetting.upsert({ where: { key: "purchase_price_deviation_percent" },
+      create: { key: "purchase_price_deviation_percent", value: threshold.toFixed(2) }, update: { value: threshold.toFixed(2) } });
+  }
+
+  async updateDefaultStaff(value: unknown) {
+    const body = object(value);
+    await this.transaction(async tx => {
+      for (const [field, role] of [["pickerUserId", "picker"], ["courierUserId", "courier"]] as const) {
+        if (body[field] === undefined) continue;
+        const id = text(body[field], "Дежурный сотрудник", true, 100);
+        if (id && !await tx.user.findFirst({ where: { id, role, status: "active" } })) throw new BadRequestException("Выберите активного сотрудника с подходящей ролью.");
+        await tx.appSetting.upsert({ where: { key: `default_${role}_id` }, create: { key: `default_${role}_id`, value: id }, update: { value: id } });
+      }
+      const defaults = await defaultAssignments(tx);
+      // Fill only vacant assignments; never replace an explicit assignment.
+      for (const field of ["pickerUserId", "courierUserId"] as const) {
+        if (defaults[field]) await tx.deliveryWave.updateMany({ where: { status: { in: ["open", "picking", "picked"] }, [field]: null }, data: { [field]: defaults[field] } });
+      }
+    });
+    return this.prisma.appSetting.findMany({ where: { key: { in: defaultStaffKeys } } });
   }
 
   async formWave(value: unknown) {
@@ -101,10 +130,8 @@ export class OperationsService {
       let wave = await tx.deliveryWave.findUnique({ where: { deliverySlotId: slotId } });
       if (wave && wave.status !== "open") return wave.id;
       const count = await tx.order.count({ where: { deliverySlotId: slotId, status: "confirmed", deliveryWaveId: null } });
-      if (!count && !wave) throw new ConflictException("Сначала подтвердите заказы этого окна доставки.");
-      wave ??= await tx.deliveryWave.create({ data: { deliverySlotId: slotId } });
-      await tx.order.updateMany({ where: { deliverySlotId: slotId, status: "confirmed", deliveryWaveId: null }, data: { deliveryWaveId: wave.id } });
-      await this.refreshDemand(tx, wave.id);
+      if (!count && !wave) throw new ConflictException("В этом окне доставки пока нет подтверждённых заказов.");
+      wave = await attachConfirmedOrders(tx, slotId);
       return wave.id;
     });
     return this.wave(id);
@@ -123,7 +150,15 @@ export class OperationsService {
       if (status === "picked" && (wave?.status !== "picking" || order.totalFinal === null)) throw new ConflictException("Сначала распределите все товары заказа.");
       if (status === "out_for_delivery" && (wave?.status !== "out_for_delivery" || !wave.courierUserId)) throw new ConflictException("Сначала отправьте волну с назначенным курьером.");
       await tx.order.update({ where: { id }, data: { status } });
-      if (status === "cancelled" && order.deliveryWaveId) await this.refreshDemand(tx, order.deliveryWaveId);
+      if (status === "confirmed" && !order.deliveryWaveId) await attachConfirmedOrders(tx, order.deliverySlotId);
+      if (status === "cancelled" && order.deliveryWaveId) await refreshDemand(tx, order.deliveryWaveId);
+      if (wave?.status === "out_for_delivery" && ["delivered", "cancelled"].includes(status)) {
+        const remaining = await tx.order.count({ where: { deliveryWaveId: wave.id, status: { notIn: ["delivered", "cancelled"] } } });
+        if (!remaining) {
+          const delivered = await tx.order.count({ where: { deliveryWaveId: wave.id, status: "delivered" } });
+          await tx.deliveryWave.update({ where: { id: wave.id }, data: { status: delivered ? "delivered" : "cancelled" } });
+        }
+      }
     });
     return this.order(id, actor);
   }
@@ -144,12 +179,15 @@ export class OperationsService {
     const body = object(value);
     await this.transaction(async tx => {
       const wave = await this.lockedWave(tx, id);
-      if (["out_for_delivery", "delivered", "cancelled"].includes(wave.status)) throw new ConflictException("Назначения этой волны уже зафиксированы.");
+      if (["delivered", "cancelled"].includes(wave.status)) throw new ConflictException("Волна завершена.");
       const data: Prisma.DeliveryWaveUpdateInput = {};
       for (const [field, role, relation] of [["pickerUserId", "picker", "picker"], ["courierUserId", "courier", "courier"]] as const) {
         if (body[field] === undefined) continue;
         const userId = text(body[field], role, true, 100);
-        if (!userId) { data[relation] = { disconnect: true }; continue; }
+        if (!userId) {
+          if (relation === "courier" && wave.status === "out_for_delivery") throw new ConflictException("В пути можно заменить курьера, но нельзя оставить волну без курьера.");
+          data[relation] = { disconnect: true }; continue;
+        }
         const user = await tx.user.findFirst({ where: { id: userId, role, status: "active" } });
         if (!user) throw new BadRequestException("Выберите активного сотрудника с подходящей ролью.");
         data[relation] = { connect: { id: userId } };
@@ -167,7 +205,7 @@ export class OperationsService {
       const product = await tx.product.findFirst({ where: { id: productId, isActive: true, isAvailableToday: true } });
       if (!product) throw new BadRequestException("Товар недоступен.");
       await tx.waveItem.upsert({ where: { deliveryWaveId_productId: { deliveryWaveId: id, productId } }, update: {},
-        create: { deliveryWaveId: id, productId, productNameSnapshot: product.name, unit: product.unit, requestedQuantityTotal: "0" } });
+        create: { deliveryWaveId: id, productId, productNameSnapshot: product.name, unit: product.unit, requestedQuantityTotal: "0", referencePurchasePrice: product.currentPurchasePrice } });
     });
     return this.wave(id, actor);
   }
@@ -197,6 +235,7 @@ export class OperationsService {
 
   async distribute(id: string, itemId: string, value: unknown, actor?: StaffUser) {
     const body = object(value);
+    if (actor?.role === "picker" && body.finalUnitPrice !== undefined) throw new ForbiddenException("Сборщик не может изменять цену клиенту.");
     const status = text(body.status, "Статус позиции");
     if (!["picked", "replaced", "removed", "unavailable"].includes(status)) throw new BadRequestException("Выберите результат сборки позиции.");
     await this.transaction(async tx => {
@@ -237,8 +276,41 @@ export class OperationsService {
     return this.order(id, actor);
   }
 
+  async packOrder(id: string, actor?: StaffUser) {
+    if (actor?.role === "courier") throw new ForbiddenException();
+    await this.transaction(async tx => {
+      const order = await this.lockedOrder(tx, id, actor);
+      if (!order.deliveryWaveId || order.status !== "picking") throw new ConflictException("Заказ должен находиться в сборке.");
+      const wave = await tx.deliveryWave.findUniqueOrThrow({ where: { id: order.deliveryWaveId }, include: waveInclude });
+      if (wave.status !== "picking") throw new ConflictException("Сборка волны уже завершена.");
+      const pending = order.items.filter(item => item.status === "requested");
+      const planned = new Map<string, Prisma.Decimal>();
+      // Reserve all pending lines together, including duplicate products with different quality preferences.
+      for (const item of pending) {
+        if (item.finalQuantity !== null) throw new ConflictException("Проверьте незавершённое изменение позиции.");
+        const quantity = (planned.get(item.productId) ?? this.allocated(wave, item.productId)).plus(item.requestedQuantity);
+        const purchase = wave.waveItems.find(row => row.productId === item.productId);
+        if (!purchase || purchase.purchasedQuantity === null || purchase.unit !== item.unit || quantity.gt(purchase.purchasedQuantity)) {
+          throw new ConflictException(`Недостаточно закупленного товара «${item.productNameSnapshot}». Сохраните закупку или измените позицию заказа.`);
+        }
+        planned.set(item.productId, quantity);
+      }
+      for (const item of pending) {
+        await tx.orderItem.update({ where: { id: item.id }, data: {
+          status: "picked", finalQuantity: item.requestedQuantity, finalUnitPrice: item.saleUnitPriceSnapshot,
+          finalTotal: money(item.requestedQuantity.mul(item.saleUnitPriceSnapshot))
+        } });
+      }
+      const items = await tx.orderItem.findMany({ where: { orderId: id } });
+      await tx.order.update({ where: { id }, data: { totalFinal: finalOrderTotal(items, order) } });
+    });
+    return this.order(id, actor);
+  }
+
   async waveStatus(id: string, value: unknown, actor?: StaffUser) {
     const status = text(object(value).status, "Статус волны");
+    if (actor?.role === "courier" && status !== "out_for_delivery") throw new ForbiddenException();
+    if (actor?.role === "picker" && !["picking", "picked"].includes(status)) throw new ForbiddenException();
     await this.transaction(async tx => {
       const wave = await this.lockedWave(tx, id, actor);
       transition(wave.status, status, waveTransitions);
@@ -260,7 +332,7 @@ export class OperationsService {
       }
       await tx.order.updateMany({ where: { deliveryWaveId: id, status: { not: "cancelled" } }, data: { status: status as OrderStatus } });
       await tx.deliveryWave.update({ where: { id }, data: { status } });
-      if (status === "cancelled") await this.refreshDemand(tx, id);
+      if (status === "cancelled") await refreshDemand(tx, id);
     });
     return this.wave(id, actor);
   }

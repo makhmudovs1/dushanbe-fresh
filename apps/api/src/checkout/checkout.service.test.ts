@@ -23,7 +23,9 @@ function fixture() {
     product: { findMany: vi.fn().mockImplementation(async () => [product]) },
     appSetting: { findMany: vi.fn().mockResolvedValue(settings) },
     deliverySlot: { findUnique: vi.fn().mockResolvedValue(slot) },
-    order: { count: vi.fn().mockResolvedValue(0), findUnique: vi.fn().mockResolvedValue(null),
+    deliveryWave: { upsert: vi.fn().mockResolvedValue({ id: "wave", status: "open" }), update: vi.fn().mockResolvedValue({ id: "wave", status: "open" }) },
+    waveItem: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    order: { count: vi.fn().mockResolvedValue(0), findUnique: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       create: vi.fn().mockImplementation(async ({ data }) => ({ ...data, deliverySlot: slot })) },
     user: { upsert: vi.fn().mockResolvedValue({ id: "customer", role: "customer", status: "active" }) },
     $queryRaw: vi.fn().mockResolvedValue([{ id: "slot" }])
@@ -115,6 +117,17 @@ describe("checkout validation", () => {
 });
 
 describe("order creation", () => {
+  it("rechecks a wave that started picking after validation and explains the rejection", async () => {
+    const { service, tx, slot, orderInput } = fixture();
+    const order = await orderInput();
+    tx.deliverySlot.findUnique.mockResolvedValue({ ...slot, wave: { status: "picking" } });
+    const quote = await service.validate(input);
+    expect(quote.valid).toBe(false);
+    expect(quote.deliverySlot?.unavailableReasons).toEqual(["wave_closed"]);
+    expect(quote.errors).toContain("Приём заказов закрыт — сборка уже началась");
+    await expect(service.createOrder(order)).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.order.create).not.toHaveBeenCalled();
+  });
   it("saves contact/address/product/quality snapshots, cash pending and null final quantities", async () => {
     const { service, tx, prisma, orderInput } = fixture();
     const result = await service.createOrder(await orderInput());

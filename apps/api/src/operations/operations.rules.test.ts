@@ -1,9 +1,29 @@
 import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { aggregateDemand, dateFilter, decimal, finalOrderTotal, money, orderTransitions, transition, waveTransitions } from "./operations.rules";
+import { aggregateDemand, dateFilter, decimal, finalOrderTotal, money, orderTransitions, purchaseNeedsReview, purchaseReviewMessage, transition, waveTransitions } from "./operations.rules";
 
 const D = Prisma.Decimal;
 describe("operations rules", () => {
+  it("compares unit prices: 10 against 10 is 0%, 12 against 10 is exactly 20%", () => {
+    expect(purchaseNeedsReview(new D(10), new D(10), new D(0))).toBe(false);
+    expect(purchaseReviewMessage(new D(10), new D(10), new D(15))).toBeNull();
+    expect(purchaseNeedsReview(new D(12), new D(10), new D(20))).toBe(false);
+    expect(purchaseNeedsReview(new D(12), new D(10), new D("19.99"))).toBe(true);
+    expect(purchaseReviewMessage(new D(12), new D(10), new D(15))).toContain("на 20%");
+  });
+  it.each([
+    ["8.30", "8", "15", false], ["9.20", "8", "15", false], ["9.21", "8", "15", true],
+    ["6.80", "8", "15", false], ["6.79", "8", "15", true], ["9.21", "8", "20", false],
+    ["0", "0", "15", false], ["0.01", "0", "15", true], ["8", null, "15", false], [null, "8", "15", false]
+  ])("checks purchase deviation %s / %s at %s%% precisely", (actual, reference, threshold, expected) => {
+    expect(purchaseNeedsReview(actual === null ? null : new D(actual as string), reference === null ? null : new D(reference as string), new D(threshold as string))).toBe(expected);
+  });
+  it("explains real deviations without inventing warnings for missing references or empty purchases", () => {
+    expect(purchaseReviewMessage(new D("9.44"), new D(8), new D(15))).toBe("Цена закупки выше ориентира на 18%. Нужна проверка администратора.");
+    expect(purchaseReviewMessage(new D("6.56"), new D(8), new D(15))).toContain("ниже ориентира на 18%");
+    expect(purchaseReviewMessage(null, new D(8), new D(15))).toBeNull();
+    expect(purchaseReviewMessage(new D(8), null, new D(15))).toBeNull();
+  });
   it("aggregates exact quantities without losing quality preferences or distinct order counts", () => {
     const items = [
       { orderId: "a", requestedQuantity: new D("2.125"), qualityOptionLabelSnapshot: "спелые" },

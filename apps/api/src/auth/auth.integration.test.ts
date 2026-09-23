@@ -17,6 +17,8 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
   let app: INestApplication; let base: string;
   const ids = Object.fromEntries(["admin", "picker", "other-picker", "courier", "other-courier", "customer", "inactive"].map(role => [role, `${marker}-${role}`]));
   const tokens: Record<string, string> = {};
+  const savedDefaults = new Map<string, string>();
+  const phone = `+992${Date.now().toString().slice(-9)}`;
   const waves = [0, 1, 2].map(i => `${marker}-wave${i}`);
   const orders = [0, 1, 2].map(i => `${marker}-order${i}`);
   const slots = [0, 1, 2].map(i => `${marker}-slot${i}`);
@@ -32,6 +34,9 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
   beforeAll(async () => {
     if (!`${new URL(url!).pathname} ${new URL(url!).searchParams.get("schema")}`.includes("test")) throw new Error("Use a dedicated test database");
     vi.stubEnv("DATABASE_URL", url!); vi.stubEnv("WEB_ORIGIN", "http://localhost:3000");
+    for (const setting of await db.appSetting.findMany({ where: { key: { in: ["default_picker_id", "default_courier_id"] } } })) {
+      if (typeof setting.value === "string") savedDefaults.set(setting.key, setting.value);
+    }
     const passwordHash = await hash(password, 4);
     for (const [key, id] of Object.entries(ids)) await db.user.create({ data: { id, email: `${id}@test.local`, passwordHash, role: key === "inactive" ? "admin" : key.replace("other-", "") as "admin" | "picker" | "courier" | "customer", status: key === "inactive" ? "inactive" : "active" } });
     await db.category.create({ data: { id: marker, slug: marker, name: "Auth test" } });
@@ -45,14 +50,16 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
         items: { create: { id: `${marker}-line${i}`, productId: marker, productNameSnapshot: "Тестовый товар", unit: "kg", requestedQuantity: "2", saleUnitPriceSnapshot: "10", estimatedTotal: "20", purchaseUnitPriceSnapshot: "8", status: i === 0 ? "requested" : "picked", finalQuantity: i === 0 ? null : "2", finalUnitPrice: i === 0 ? null : "10", finalTotal: i === 0 ? null : "20" } } } });
     }
     app = await NestFactory.create(AppModule, { logger: false }); app.setGlobalPrefix("api/v1"); await app.listen(0, "127.0.0.1"); base = `${await app.getUrl()}/api/v1`;
-    for (const role of ["admin", "picker", "courier"]) await login(role);
+    for (const role of ["admin", "picker", "courier", "other-picker"]) await login(role);
   }, 20000);
   afterAll(async () => {
     await app?.close();
     await db.order.deleteMany({ where: { id: { in: orders } } });
     await db.deliverySlot.deleteMany({ where: { id: { in: slots } } });
     await db.product.deleteMany({ where: { id: marker } }); await db.category.deleteMany({ where: { id: marker } });
-    await db.user.deleteMany({ where: { id: { in: Object.values(ids) } } }); await db.$disconnect(); vi.unstubAllEnvs();
+    await db.appSetting.deleteMany({ where: { key: { in: ["default_picker_id", "default_courier_id"] } } });
+    for (const [key, value] of savedDefaults) await db.appSetting.create({ data: { key, value } });
+    await db.user.deleteMany({ where: { OR: [{ id: { in: Object.values(ids) } }, { phone }] } }); await db.$disconnect(); vi.unstubAllEnvs();
   });
   it("logs in with bcrypt and stores only a refresh hash in the database", async () => {
     const { response, data, cookie } = await login("admin");
@@ -83,15 +90,24 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     expect((await request(`/admin/delivery-waves/${waves[0]}`, "picker")).status).toBe(200);
     expect((await request(`/admin/delivery-waves/${waves[1]}`, "picker")).status).toBe(403);
     expect((await request(`/admin/orders/${orders[1]}`, "picker")).status).toBe(403);
-    const list = await (await request("/admin/delivery-waves", "picker")).json(); expect(list.map((wave: { id: string }) => wave.id).sort()).toEqual([waves[0], waves[2]].sort());
+    expect(await (await request("/admin/delivery-waves", "picker")).json()).toEqual([]);
+    const working = await (await request("/admin/delivery-waves?tab=working", "picker")).json(); expect(working.map((wave: { id: string }) => wave.id)).toEqual([waves[0]]);
+    const history = await (await request("/admin/delivery-waves?tab=completed", "picker")).json(); expect(history.map((wave: { id: string }) => wave.id)).toEqual([waves[2]]);
     expect((await request(`/admin/delivery-waves/${waves[1]}/items/${marker}-item1`, "picker", "PATCH", { purchasedQuantity: "3", purchaseUnitPrice: "8" })).status).toBe(403);
     expect((await request(`/admin/delivery-waves/${waves[0]}/assignments`, "picker", "PATCH", { pickerUserId: ids.picker })).status).toBe(403);
     expect((await request(`/admin/delivery-waves/${waves[0]}/status`, "picker", "PATCH", { status: "cancelled" })).status).toBe(403);
   });
   it("allows assigned picker to record procurement and final quantities", async () => {
-    expect((await request(`/admin/delivery-waves/${waves[0]}/items/${marker}-item0`, "picker", "PATCH", { purchasedQuantity: "2.1", purchaseUnitPrice: "8" })).status).toBe(200);
+    const before = await db.product.findUniqueOrThrow({ where: { id: marker } });
+    expect((await request(`/admin/products/${marker}`, "picker", "PATCH", { sellingPrice: "0.01" })).status).toBe(403);
+    expect((await request(`/admin/orders/${orders[0]}/items/${marker}-line0`, "picker", "PATCH", { status: "picked", finalQuantity: "2", finalUnitPrice: "0.01", pickerNote: "Подмена" })).status).toBe(403);
+    expect((await request(`/admin/delivery-waves/${waves[0]}/items/${marker}-item0`, "picker", "PATCH", { purchasedQuantity: "2.1", purchaseUnitPrice: "8", sellingPrice: "0.01", currentSalePrice: "0.01", finalUnitPrice: "0.01" })).status).toBe(200);
     const response = await request(`/admin/orders/${orders[0]}/items/${marker}-line0`, "picker", "PATCH", { status: "picked", finalQuantity: "2.08" });
     expect(response.status).toBe(200); expect((await response.json()).totalFinal).toBe("40.80");
+    expect((await db.product.findUniqueOrThrow({ where: { id: marker } })).currentSalePrice.toString()).toBe(before.currentSalePrice.toString());
+    const line = await db.orderItem.findUniqueOrThrow({ where: { id: `${marker}-line0` } });
+    expect(line.saleUnitPriceSnapshot.toFixed(2)).toBe("10.00");
+    expect(line.finalUnitPrice?.toFixed(2)).toBe("10.00");
     expect((await request(`/admin/delivery-waves/${waves[0]}/status`, "picker", "PATCH", { status: "picked" })).status).toBe(200);
   });
   it("never includes purchase data in courier list, detail or order responses", async () => {
@@ -118,6 +134,104 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     for (const path of ["/products", `/products/${marker}`, "/categories", "/delivery-slots", "/health"]) {
       const response = await request(path); expect(response.status).toBe(200); expect(await response.text()).not.toContain("purchasePrice");
     }
+  });
+  it("runs checkout through delivery and cash payment with no admin handoffs", async () => {
+    expect((await request("/admin/settings/default-staff", "picker", "PATCH", { pickerUserId: ids.picker })).status).toBe(403);
+    expect((await request("/admin/settings/default-staff", "admin", "PATCH", { pickerUserId: ids.courier })).status).toBe(400);
+    expect((await request("/admin/settings/default-staff", "admin", "PATCH", { pickerUserId: ids.picker, courierUserId: ids.courier })).status).toBe(200);
+    const slotId = `${marker}-happy-slot`; slots.push(slotId);
+    await db.deliverySlot.create({ data: { id: slotId, date: new Date("2099-03-01"), startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 10 } });
+    for (const [key, value] of Object.entries({ minimum_order_amount: "120.00", delivery_fee: "20.00", service_fee: "0.00" })) await db.appSetting.upsert({ where: { key }, update: { value }, create: { key, value } });
+    const create = async () => {
+      const input = { deliverySlotId: slotId, items: [{ productId: marker, quantity: "12", qualityOptionId: null }] };
+      const quote = await (await request("/checkout/validate", undefined, "POST", input)).json(); expect(quote.valid).toBe(true);
+      const response = await request("/checkout/orders", undefined, "POST", { ...input, requestId: randomUUID(), reviewToken: quote.reviewToken,
+        name: "Проверка", phone, address: { street: "Рудаки", building: "1", apartment: "", entrance: "", floor: "", instructions: "" }, substitutionPolicy: "contact_me" });
+      expect(response.status).toBe(201);
+      const receipt = await response.json();
+      const order = await db.order.findUniqueOrThrow({ where: { orderNumber: receipt.orderNumber }, include: { items: true } }); orders.push(order.id);
+      expect(order.status).toBe("confirmed"); expect(order.items[0].saleUnitPriceSnapshot.toString()).toBe("10");
+      return order;
+    };
+    const first = await create();
+    expect(first.deliveryWaveId).not.toBeNull();
+    let response = await request(`/admin/delivery-waves/${first.deliveryWaveId}`, "picker"); expect(response.status).toBe(200);
+    let wave = await response.json(); waves.push(wave.id);
+    expect(wave.picker.id).toBe(ids.picker); expect(wave.courier.id).toBe(ids.courier);
+    expect(wave.pickingList[0].purchaseNeedsReview).toBe(false);
+    expect(wave.pickingList[0].purchaseReviewMessage).toBeNull();
+    // A later checkout joins the already assigned open wave without re-forming it.
+    const second = await create(); expect(second.deliveryWaveId).toBe(wave.id);
+    wave = await (await request(`/admin/delivery-waves/${wave.id}`, "picker")).json();
+    expect(wave.orders.map((order: { id: string }) => order.id)).toEqual(expect.arrayContaining([first.id, second.id]));
+    expect(wave.pickingList[0]).toMatchObject({ requestedQuantityTotal: "24", referencePurchasePrice: "8.00" });
+    const preparation = await (await request(`/admin/delivery-waves/${wave.id}`, "courier")).json(); expect(preparation.status).toBe("open");
+    expect((await request(`/admin/delivery-waves/${wave.id}/status`, "courier", "PATCH", { status: "out_for_delivery" })).status).toBe(409);
+    expect((await request(`/admin/delivery-waves/${waves[1]}/status`, "courier", "PATCH", { status: "out_for_delivery" })).status).toBe(403);
+    expect((await request(`/admin/delivery-waves/${wave.id}/status`, "picker", "PATCH", { status: "picking" })).status).toBe(200);
+    response = await request(`/admin/delivery-waves/${wave.id}/items/${wave.pickingList[0].id}`, "picker", "PATCH", { purchasedQuantity: "24.1", purchaseUnitPrice: "9.21", supplierNote: "Ряд 3" });
+    expect(response.status).toBe(200); expect((await response.json()).pickingList[0].purchaseNeedsReview).toBe(true);
+    // Neither a catalog edit nor actual procurement changes the order's sale snapshot or wave reference.
+    await db.product.update({ where: { id: marker }, data: { currentSalePrice: "99", currentPurchasePrice: "20" } });
+    expect((await request(`/admin/orders/${first.id}/pack`, undefined, "POST")).status).toBe(401);
+    expect((await request(`/admin/orders/${first.id}/pack`, "courier", "POST")).status).toBe(403);
+    expect((await request(`/admin/orders/${first.id}/pack`, "other-picker", "POST")).status).toBe(403);
+    for (const order of [first, second]) {
+      response = await request(`/admin/orders/${order.id}/pack`, "picker", "POST", { finalQuantity: "999", sellingPrice: "0.01" });
+      expect(response.status).toBe(201);
+      const packed = await response.json();
+      expect(packed.totalFinal).toBe("140.00");
+      expect(packed.items[0]).toMatchObject({ finalQuantity: "12", finalUnitPrice: "10.00", status: "picked" });
+    }
+    wave = await (await request(`/admin/delivery-waves/${wave.id}/status`, "picker", "PATCH", { status: "picked" })).json();
+    expect(wave.status).toBe("picked"); expect(wave.pickingList[0].referencePurchasePrice).toBe("8.00");
+    expect(wave.orders.every((order: { status: string }) => order.status === "picked")).toBe(true);
+    expect((await (await request(`/admin/delivery-waves/${wave.id}`, "courier")).json()).status).toBe("picked");
+    response = await request(`/admin/delivery-waves/${wave.id}/status`, "courier", "PATCH", { status: "out_for_delivery" });
+    expect(response.status).toBe(200); const dispatched = await response.json();
+    expect(dispatched.orders.every((order: { status: string }) => order.status === "out_for_delivery")).toBe(true);
+    for (const field of ["purchase", "supplierNote", "metrics", "pickingList", "referencePurchasePrice"]) expect(JSON.stringify(dispatched)).not.toContain(field);
+    for (const order of [first, second]) {
+      expect((await request(`/admin/orders/${order.id}/status`, "courier", "PATCH", { status: "delivered" })).status).toBe(200);
+      expect((await request(`/admin/orders/${order.id}/paid`, "courier", "POST")).status).toBe(201);
+      const saved = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: true } });
+      expect(saved.status).toBe("delivered"); expect(saved.paymentStatus).toBe("paid"); expect(saved.items[0].saleUnitPriceSnapshot.toString()).toBe("10");
+    }
+    expect((await db.deliveryWave.findUniqueOrThrow({ where: { id: wave.id } })).status).toBe("delivered");
+    const active = await (await request(`/admin/orders?tab=active&deliverySlotId=${slotId}`, "admin")).json(); expect(active).toEqual([]);
+    const completed = await (await request(`/admin/orders?tab=completed&deliverySlotId=${slotId}&date=2099-03-01&status=delivered`, "admin")).json(); expect(completed).toHaveLength(2);
+    expect(await (await request(`/admin/orders?tab=active&status=delivered&deliverySlotId=${slotId}`, "admin")).json()).toEqual([]);
+    expect(await (await request(`/admin/orders?tab=completed&date=2099-03-02`, "admin")).json()).toEqual([]);
+    expect(await (await request(`/admin/delivery-waves?tab=upcoming`, "picker")).json()).toEqual([]);
+    await db.product.update({ where: { id: marker }, data: { currentSalePrice: "10", currentPurchasePrice: "8" } });
+  });
+  it("allows only admins to configure the Decimal review threshold", async () => {
+    const previous = await db.appSetting.findUnique({ where: { key: "purchase_price_deviation_percent" } });
+    try {
+      for (const role of ["picker", "courier"]) expect((await request("/admin/settings/purchase-price-deviation", role, "PATCH", { value: "20" })).status).toBe(403);
+      for (const value of [15, "-1", "100.01", "1.001"]) expect((await request("/admin/settings/purchase-price-deviation", "admin", "PATCH", { value })).status).toBe(400);
+      expect((await request("/admin/settings/purchase-price-deviation", "admin", "PATCH", { value: "20.25" })).status).toBe(200);
+      expect((await (await request(`/admin/delivery-waves/${waves[0]}`, "admin")).json()).purchasePriceDeviationPercent).toBe("20.25");
+    } finally {
+      if (previous) await db.appSetting.update({ where: { key: previous.key }, data: { value: previous.value! } });
+      else await db.appSetting.deleteMany({ where: { key: "purchase_price_deviation_percent" } });
+    }
+  });
+  it("keeps admin reassignment and cancellation available in transit", async () => {
+    await login("other-courier");
+    const id = waves[0];
+    expect((await request(`/admin/delivery-waves/${id}/status`, "courier", "PATCH", { status: "out_for_delivery" })).status).toBe(200);
+    expect((await request(`/admin/delivery-waves/${id}/assignments`, "admin", "PATCH", { courierUserId: null })).status).toBe(409);
+    expect((await request(`/admin/delivery-waves/${id}/assignments`, "admin", "PATCH", { courierUserId: ids["other-courier"], pickerUserId: ids["other-picker"] })).status).toBe(200);
+    for (const role of ["picker", "courier"]) expect((await request(`/admin/delivery-waves/${id}`, role)).status).toBe(403);
+    expect((await request(`/admin/delivery-waves/${id}`, "other-courier")).status).toBe(200);
+    expect((await request(`/admin/orders/${orders[0]}/status`, "courier", "PATCH", { status: "delivered" })).status).toBe(403);
+    expect((await request(`/admin/orders/${orders[0]}/status`, "admin", "PATCH", { status: "cancelled" })).status).toBe(200);
+    expect((await db.deliveryWave.findUniqueOrThrow({ where: { id } })).status).toBe("cancelled");
+    const cancelled = await (await request(`/admin/orders?tab=cancelled&deliverySlotId=${slots[0]}`, "admin")).json();
+    expect(cancelled.map((order: { id: string }) => order.id)).toEqual([orders[0]]);
+    expect((await db.waveItem.findUniqueOrThrow({ where: { id: `${marker}-item0` } })).purchaseTotal?.toFixed(2)).toBe("16.80");
+    expect((await request(`/admin/orders/${orders[2]}/status`, "admin", "PATCH", { status: "cancelled" })).status).toBe(409);
   });
   it("rotates refresh tokens once and logout revokes access immediately", async () => {
     const { cookie, data } = await login("admin");

@@ -199,6 +199,7 @@ model WaveItem {
   requestedQuantityTotal Decimal      @map("requested_quantity_total") @db.Decimal(12, 3)
   purchasedQuantity      Decimal?     @map("purchased_quantity") @db.Decimal(12, 3)
   purchaseUnitPrice      Decimal?     @map("purchase_unit_price") @db.Decimal(12, 2)
+  referencePurchasePrice Decimal?     @map("reference_purchase_price") @db.Decimal(12, 2)
   purchaseTotal          Decimal?     @map("purchase_total") @db.Decimal(12, 2)
   supplierNote           String?      @map("supplier_note")
   createdAt              DateTime     @default(now()) @map("created_at")

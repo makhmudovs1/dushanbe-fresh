@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client";
 import type { CheckoutInput, CheckoutLine, CheckoutQuote, CreateOrderInput, OrderReceipt } from "@dushanbe-fresh/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { readSlot, slotDto } from "../delivery-slots/delivery-slots.service";
+import { slotUnavailableLabels } from "@dushanbe-fresh/shared";
+import { attachConfirmedOrders } from "../operations/operations.defaults";
 
 const D = Prisma.Decimal;
 const maxMoney = new D("9999999999.99");
@@ -70,7 +72,8 @@ export class CheckoutService {
     });
     const deliverySlot = await readSlot(tx, input.deliverySlotId);
     const errors: string[] = [];
-    if (!deliverySlot?.available) errors.push("Окно доставки недоступно. Выберите другое время.");
+    if (!deliverySlot) errors.push("Окно доставки не найдено. Выберите другое время.");
+    else errors.push(...deliverySlot.unavailableReasons.map(reason => slotUnavailableLabels[reason]));
     const shortfall = D.max(0, minimum.minus(subtotal));
     if (shortfall.gt(0)) errors.push(`До минимального заказа не хватает ${shortfall.toFixed(2)} сомони.`);
     const total = subtotal.plus(deliveryFee).plus(serviceFee);
@@ -121,7 +124,7 @@ export class CheckoutService {
               orderNumber: `DF-${randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`,
               checkoutRequestId: input.requestId, checkoutRequestHash: requestHash,
               customerId: customer.id, deliveryAddressSnapshot: address, deliverySlotId: input.deliverySlotId,
-              substitutionPolicy: input.substitutionPolicy, status: "placed",
+              substitutionPolicy: input.substitutionPolicy, status: "confirmed",
               paymentMethod: "cash_on_delivery", paymentStatus: "pending",
               itemsSubtotal: new D(quote.itemsSubtotal), deliveryFee: new D(quote.deliveryFee),
               serviceFee: new D(quote.serviceFee), totalEstimated: new D(quote.totalEstimated), totalFinal: null,
@@ -134,6 +137,7 @@ export class CheckoutService {
               })) }
             }, include: { deliverySlot: true }
           });
+          await attachConfirmedOrders(tx, input.deliverySlotId);
           return this.receipt(order);
         }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5000, timeout: 10000 });
       } catch (error) {

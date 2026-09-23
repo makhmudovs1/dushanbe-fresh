@@ -22,12 +22,15 @@ export type PickingRow = {
   id: string; productId: string; name: string; unit: string; requestedQuantityTotal: string;
   orderCount: number; qualityPreferences: Array<{ label: string; quantity: string }>;
   purchasedQuantity: string | null; purchaseUnitPrice: string | null; purchaseTotal: string | null;
-  allocatedQuantity: string; supplierNote: string | null;
+  allocatedQuantity: string; remainingQuantity: string | null; supplierNote: string | null;
+  referencePurchasePrice: string | null; purchaseNeedsReview: boolean;
+  purchaseReviewMessage: string | null;
 };
 export type AdminWave = {
   id: string; status: WaveStatus; deliverySlot: DeliverySlotDto;
   picker: StaffDto | null; courier: StaffDto | null;
   orders: AdminOrder[]; pickingList: PickingRow[];
+  purchasePriceDeviationPercent: string;
   metrics: { orderCount: number; productCount: number; estimatedRevenue: string;
     finalRevenue: string | null; purchaseCost: string | null; grossMargin: string | null };
 };

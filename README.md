@@ -142,7 +142,7 @@ again to add dates as time advances. Unlike the catalog seed, it does not reset
 products or quality options. Monetary settings are JSON strings, not numbers.
 
 For a fresh checkout, run `db:generate`, `db:deploy`, `db:seed`,
-`db:seed:checkout` and `db:seed:operations` once before `dev`. Do not use `prisma db push` for normal
+`db:seed:checkout` and `db:seed:staff` once before `dev`. Do not use `prisma db push` for normal
 development: migrations are the source of truth. If an older local database was
 created with `db push`, compare its schema against the initial migration before
 baselining it with `prisma migrate resolve --applied 20260914000000_init`.
@@ -224,8 +224,8 @@ POST /api/v1/admin/products
 PATCH /api/v1/admin/products/:id
 ```
 
-Admin API is currently open for local development because authentication has not
-been implemented yet. This is a TODO and is not production-ready security.
+Admin catalog endpoints require a staff access token and the `admin` role.
+Picker and courier access is limited to their assigned operational work.
 
 ## Checks
 
@@ -278,14 +278,20 @@ Prepare staff for local development after applying migrations:
 ```bash
 corepack pnpm db:generate
 corepack pnpm db:deploy
-corepack pnpm db:seed:operations
+corepack pnpm db:seed:staff
 ```
 
-The operations seed creates one active admin, picker and courier with password
+The staff seed creates one active admin, picker and courier with password
 hashes only; it refuses to run in production. Existing staff password hashes are
 preserved. The default development credentials are documented below. Override the
 passwords only on their first creation with `DEV_ADMIN_PASSWORD`,
 `DEV_PICKER_PASSWORD` and `DEV_COURIER_PASSWORD`; use 12–72 UTF-8 bytes.
+
+It also creates missing `default_picker_id` / `default_courier_id` settings.
+Existing defaults are preserved. Admin can change the duty staff in `/admin/settings`.
+Checkout assigns active users of the appropriate role to vacant wave assignments.
+If a default is missing/invalid, checkout still creates the order and wave; admin
+must resolve the vacant assignment. Existing manual assignments are never replaced.
 
 Pages:
 
@@ -298,36 +304,43 @@ Pages:
 ```
 
 The order list filters by delivery date, slot and status. Order details use contact
-and address snapshots, show estimated/final totals and allow manual distribution.
+and address snapshots, show estimated/final totals and allow one-click packing with manual exceptions.
 Wave details provide procurement, distribution and courier tabs. Purchasing forms
 are mobile-friendly, with quantities and prices entered as decimal strings.
 
 Endpoints (prefix `/api/v1/admin`):
 
 ```text
-GET   /orders?date=YYYY-MM-DD&deliverySlotId=...&status=...
+GET   /orders?tab=active|completed|cancelled&date=YYYY-MM-DD&deliverySlotId=...&status=...
 GET   /orders/:id
 PATCH /orders/:id/status                     { status }
 PATCH /orders/:id/items/:itemId               { status, finalQuantity, finalUnitPrice?, replacementProductId?, pickerNote? }
 POST  /orders/:id/paid
 GET   /delivery-slots?date=YYYY-MM-DD
 GET   /staff
-GET   /delivery-waves?date=YYYY-MM-DD
+GET   /delivery-waves?date=YYYY-MM-DD&tab=upcoming|working|completed
 POST  /delivery-waves                        { deliverySlotId }
 GET   /delivery-waves/:id
 PATCH /delivery-waves/:id/assignments         { pickerUserId?, courierUserId? }
 PATCH /delivery-waves/:id/status             { status }
 POST  /delivery-waves/:id/items              { productId }
 PATCH /delivery-waves/:id/items/:itemId       { purchasedQuantity, purchaseUnitPrice, supplierNote? }
+GET   /settings
+PATCH /settings/purchase-price-deviation     { value: "15.00" }
+PATCH /settings/default-staff                { pickerUserId?, courierUserId? }
 ```
 
-Full flow: create customer orders in one slot, confirm them, form the wave, assign
-a picker, start picking, record actual purchase, distribute quantities in each
-order, finish picking, assign a courier, send the wave out, mark orders delivered
-and cash received, then finish the wave. All placed/confirmed orders for the slot
+Full flow: checkout automatically confirms validated orders, creates the slot's
+wave if missing and assigns the default picker/courier. The picker starts picking, records purchases,
+packs each order as requested (editing exceptions only) and completes the wave (`picked`). The assigned
+courier sees the upcoming wave as "Готовится", then ready orders, presses
+"Забрал заказы" (`out_for_delivery`), marks delivery and cash received.
+The wave completes automatically when its last active order is delivered.
+No admin handoff is required. All legacy placed/confirmed orders for the slot
 must be included or cancelled before picking starts. Once picking starts the slot
 is no longer bookable, including at checkout's final transactional recheck.
 
+New checkouts create or join the slot's open wave under the same slot lock.
 One wave per slot is enforced by PostgreSQL. Re-forming an open wave only adds
 unassigned confirmed orders and refreshes demand; existing purchase values are
 preserved. Re-forming a started/completed wave returns it unchanged. Mutations use
@@ -336,7 +349,8 @@ Serializable transactions with a per-slot lock and retries for conflicts.
 Purchase totals and customer line totals are computed by the backend with Decimal
 and HALF_UP rounding. Sending `purchaseTotal` or `finalTotal` has no effect.
 Allocation cannot exceed purchased quantities. Customer final price defaults to
-the order's selling-price snapshot; a manual override requires a picker note.
+the order's selling-price snapshot. Picker requests containing `finalUnitPrice`
+are rejected; exceptional admin overrides require a note and never change snapshots.
 `totalFinal` remains null until every line is resolved, then includes the order's
 original delivery/service fees and discount. Removed/unavailable lines cost zero;
 cancel an entirely unfulfilled order instead of dispatching it.
@@ -344,7 +358,7 @@ cancel an entirely unfulfilled order instead of dispatching it.
 Replacements must use the same unit, respect the substitution policy and have
 recorded procurement in the wave. With `contact_me`, record customer agreement in
 the picker note; `remove_item` prohibits replacement. No weight conversion or
-automatic allocation is implemented.
+automatic distribution of surplus purchase is implemented.
 
 Wave metrics use goods-only revenue. Gross margin subtracts the entire actual
 purchase cost, including excess purchases, from final goods revenue. Delivery,
@@ -354,6 +368,16 @@ cost/revenue/margin fields are null. The UI labels this “Валовая мар
 Status changes cannot move delivered orders back to picking. Procurement and
 allocation are immutable after picking; completed waves retain purchase history.
 Payment can be marked paid only for delivered cash-on-delivery orders.
+
+Each new wave item captures `referencePurchasePrice` from the catalog. The backend
+flags absolute purchase-price deviations strictly greater than the configured
+`purchase_price_deviation_percent` (default "15.00", editable by admin in Settings).
+Flags do not block picking or dispatch. Empty purchases, zero purchased quantities
+and legacy rows with unknown reference prices do not produce deviation warnings.
+Messages include the actual deviation, e.g. "Цена закупки выше ориентира на 18%.
+Нужна проверка администратора." No approval/audit workflow is implemented.
+Admin can reassign staff before wave completion, including replacing a courier
+in transit, and cancel unpaid orders before delivery. Staff views poll every 10s.
 
 Operational and catalog endpoints now require a real staff access token.
 The JWT access token lasts 10 minutes; the rotating refresh token is stored only
@@ -382,9 +406,9 @@ courier tracking, online payments or a separate picker app.
 ```bash
 corepack pnpm db:generate
 corepack pnpm db:deploy
-corepack pnpm db:seed
+corepack pnpm db:seed:catalog
 corepack pnpm db:seed:checkout
-corepack pnpm db:seed:operations
+corepack pnpm db:seed:staff
 corepack pnpm dev
 ```
 
@@ -414,8 +438,9 @@ production нельзя. Если staff seed уже был выполнен с �
 и шаг. Для весового товара оставьте включённым «Весовой товар»; затем нажмите
 «Сохранить».
 4. Чтобы изменить продажную либо ориентировочную закупочную цену, нажмите на
-нужный товар в списке. В форме измените «Продажная цена» или «Закупочная цена»
-и нажмите «Сохранить». Закупочная цена видна только администратору.
+нужный товар в списке. В форме измените «Цена для клиента» или «Ориентир закупки»
+и нажмите «Сохранить». Ориентир закупки также виден сборщику в назначенной волне,
+но клиенту и курьеру закупочные цены не выдаются.
 5. Чтобы выключить товар на сегодня, в строке товара нажмите «Сегодня: да».
 Кнопка изменится на «Сегодня: нет»; товар перестанет появляться клиентам.
 6. Чтобы включить товар снова, нажмите у него «Сегодня: нет». Полное отключение
@@ -427,30 +452,141 @@ production нельзя. Если staff seed уже был выполнен с �
 в отдельном окне или после выхода из админки. Добавьте товаров минимум на
 120 сомони, откройте корзину, перейдите к checkout, заполните контакты и адрес,
 выберите свободное окно, подтвердите условия и создайте заказ.
-2. Войдите как администратор. На «Заказы» появится новая строка; откройте её и
-нажмите «Подтвердить заказ». Для одной волны создайте как минимум один
-подтверждённый заказ в одном и том же окне доставки.
-3. Откройте «Волны доставки», выберите это окно в поле «Окно доставки» и нажмите
-«Сформировать волну». Кнопка объясняет, что сначала нужно выбрать окно.
-4. Откройте созданную волну. В списке «Сборщик» выберите «Сборщик (тест)» и
-нажмите «Начать сборку».
-5. Выйдите и войдите как сборщик. В «Мои волны» откройте назначенную волну. На
-вкладке «Закупка» для каждого товара укажите «Купили», «Закупочная цена» и при
-необходимости примечание, затем нажмите «Отметить купленным». На вкладке
-«Распределение» откройте каждый заказ, укажите фактическое количество и
-результат сборки, затем сохраните. После заполнения всех позиций вернитесь в
-волну и нажмите «Завершить сборку».
-6. Выйдите и снова войдите как администратор. Откройте волну, выберите «Курьер
-(тест)» в поле «Курьер» и нажмите «Передать курьеру».
-7. Выйдите и войдите как курьер. В «Мои доставки» откройте волну. В карточке
-каждого заказа доступны адрес, телефон и сумма к получению. Нажмите
-«Доставлен», а затем «Наличные получены». Курьер не видит закупочные цены,
-поставщика и маржу.
+2. Войдите как администратор. На «Заказы» по умолчанию открыты «Активные».
+Новый заказ уже имеет статус «Подтверждён»: отдельная кнопка не требуется.
+Вкладки «Завершённые» и «Отменённые» отделены; дата/слот/статус фильтруют
+заказы внутри выбранной вкладки.
+3. Волна уже создана автоматически, дежурные уже назначены. В «Волны доставки»
+admin может только проверить это: формировать волну вручную больше не нужно.
+4. Создайте ещё один заказ на тот же слот и третий на другой слот (для проверки
+даты удобно выбрать следующий день). В admin должны быть 3 заказа и 2 волны:
+в первой 2 заказа, во второй 1. Выберите дату доставки и нажмите «Показать»:
+в таблице должны остаться только заказы с этой delivery date, независимо от даты создания.
+5. Войдите как сборщик. В «Мои волны» → «Предстоящие» сразу видны обе волны.
+Откройте первую и нажмите
+«Начать сборку». Во вкладке «Закупить товары» укажите «Куплено», «Цена закупки за 1 кг, сом»
+и при необходимости примечание, затем «Отметить купленным». Карточка свернётся;
+нажатие «Изменить» откроет её снова. Для других единиц подпись цены меняется
+соответственно. «Ориентир рынка» доступен только для чтения.
+Начатая волна находится во вкладке «В работе», после сборки переходит в «Завершённые».
+6. Во вкладке «Упаковать заказы» видны компактные строки товаров каждого заказа.
+После физической упаковки нажмите «Всё упаковано как заказано»: backend сохранит
+requestedQuantity как finalQuantity для ещё не обработанных позиций. Появится
+«Заказ упакован». Открывать каждый заказ и повторять ввод количества больше не нужно.
+Если товара меньше, он отсутствует или заменён, нажмите «Изменить» у нужной строки,
+задайте фактическое количество/статус/примечание и сохраните изменение. После этого
+общая кнопка заполнит только остальные позиции, не перезаписывая исключение.
+Цена клиенту берётся из snapshot, итог позиции равен finalQuantity × snapshot-цена,
+а не закупочной цене. Нажмите «Завершить сборку»: волна и заказы станут «Собран».
+7. Курьер в отдельном браузере/профиле заранее видит волну как «Готовится».
+После завершения сборки состояние обновится в течение 10 секунд (или нажмите
+«Обновить»). Когда партия физически получена, нажмите «Забрал заказы».
+Волна и заказы перейдут в «У курьера» без admin-подтверждения.
+8. В каждом заказе нажмите «Доставлен», затем «Наличные получены». После последней
+доставки волна завершится автоматически. Курьер не видит закупочные цены,
+поставщика и маржу. Admin видит доставленные заказы во вкладке «Завершённые».
+
+### Проверка отклонения закупки и вмешательства admin
+
+**Цена за единицу и сумма закупки не взаимозаменяемы.** Для бананов с ориентиром
+`10.00 сом/кг` введите количество `16`, цену за 1 кг `10`, нажмите «Отметить купленным».
+Сохранённая карточка должна показать `16 кг × 10.00 сом/кг = 160.00 сом`, без warning.
+`purchaseTotal` считает только backend через Decimal; отклонение считается как
+`(purchaseUnitPrice - referencePurchasePrice) / referencePurchasePrice × 100`.
+При цене `12` отклонение составляет 20%, а сумма при 16 кг равна `192.00`.
+В поле цены не нужно вводить итог `160`: это означало бы 160 сом **за килограмм**.
+После сохранения следующий товар поднимается вверх: список одноколоночный
+на телефоне и desktop. Для повторного ввода нажмите «Изменить».
+
+Для кинзы в тестовом каталоге «Цена для клиента» = `2.50 сом/пучок`,
+«Ориентир закупки» = `1.50 сом/пучок`. Это разные цены, не ошибка:
+клиент видит первую, сборщик видит вторую как «Ориентир рынка».
+
+1. До создания новой волны задайте товару ориентир закупки `8.00` в каталоге.
+В «Настройки» задайте «Порог отклонения закупочной цены, %» = `15` и сохраните.
+2. Сборщик вводит `8.30`: флага нет. При `9.20` (ровно 15%) флага также нет.
+При `9.44` появится «Цена закупки выше ориентира на 18%. Нужна проверка администратора.», но завершение
+сборки не блокируется. Admin видит предупреждение в той же волне.
+3. Admin может поменять назначенного сборщика/курьера в полях волны, в том числе
+заменить курьера в пути. Старый сотрудник потеряет доступ, новый увидит волну.
+4. Для проблемного неоплаченного заказа до доставки откройте его и нажмите
+«Отменить заказ». Он появится в «Отменённые». Закупочная история сохраняется.
+
+### Проверка быстрой упаковки
+
+1. Создайте заказ с 15 кг бананов, запишите закупку 16 кг. После упаковки одной
+   кнопкой клиенту сохраняются ровно 15 кг, не 16. Его цена за кг не меняется.
+2. В списке закупки проверьте «Куплено: 16 кг», «Нужно клиентам: 15 кг»,
+   «Упаковано: 15 кг», «Остаток: 1 кг». До упаковки остаток включает всё ещё
+   не упакованное; после упаковки всех заказов это излишек компании.
+3. Для исключения через «Изменить» уменьшите количество отдельной позиции,
+   сохраните, затем упакуйте остальные одной кнопкой. Исключение должно сохраниться,
+   итог клиента уменьшиться, а остаток увеличиться. Удалённая/недоступная позиция
+   имеет нулевой итог; замены по-прежнему требуют соблюдения политики клиента.
+4. При нехватке закупки упаковка отклоняется целиком с указанием товара. Исправьте
+   закупку или сохраните исключение и повторите. Списывать чужую закупку и
+   упаковывать чужие волны нельзя. Повторное нажатие не меняет сохранённые позиции.
+
+API: `POST /api/v1/admin/orders/:id/pack`, без тела, только admin/назначенный picker.
+`remainingQuantity` в picking list считает backend через Decimal:
+`purchasedQuantity - сумма finalQuantity` по активным позициям picked/replaced,
+с учётом фактического товара замены. До ввода закупки значение null.
+Массовая упаковка работает только в picking; статусы доставки не меняются до
+«Завершить сборку». Складской учёт не добавлен.
+
+### Почему окно доставки закрыто
+
+`GET /api/v1/delivery-slots` и checkout validation возвращают `unavailableReasons`:
+
+- `capacity_full`: «Мест больше нет»; все неотменённые заказы занимают capacity.
+- `cutoff_passed`: «Время заказа прошло»; в MVP cutoff совпадает с началом окна
+  по времени Душанбе (UTC+05:00), включая точную границу времени.
+- `wave_closed`: «Приём заказов закрыт — сборка уже началась»; волна в picking,
+  picked, out_for_delivery или delivered. Завершение доставки не открывает слот заново.
+- `wave_cancelled`: «Приём заказов закрыт — доставка отменена».
+- `inactive`: «Приём заказов на это окно закрыт»; неактивные окна не включаются
+  в публичный список, но причина возвращается при проверке ранее выбранного окна.
+
+Если действуют несколько причин, UI показывает все. У доступного окна массив
+пустой. Backend повторно проверяет доступность при создании заказа под блокировкой
+слота, даже если клиент выбрал его до начала сборки.
+
+Диагностика локальной БД 23 сентября 2026 в 08:32 по Душанбе: окно 23.09
+10:00–12:00 закрыто из-за delivered-волны (2 из 10 мест), окно 24.09 10:00–12:00
+из-за picking-волны (1 из 10). На момент проверки время начала ещё не наступило.
+Эти конкретные состояния относятся только к локальной тестовой БД.
 
 Все перечисленные действия доступны через UI. На текущем MVP через UI пока
 нельзя изменять существующую категорию или управлять сотрудниками и их
 паролями; это не требуется для сценария выше. Настройки checkout на странице
 «Настройки» сейчас только для просмотра.
+Дежурные сотрудники и порог отклонения закупочной цены редактируются. Прикрепление подтверждения закупки
+и журнал согласований отклонений пока отсутствуют. Старые draft/placed-заказы
+не попадают в новые вкладки и не подтверждаются миграцией: их нужно отдельно
+разобрать через существующий API или сохранённую ссылку на заказ до запуска сборки.
+
+### Seeds и очистка локальной проверки
+
+- `corepack pnpm db:seed:catalog`: каталог (`db:seed` остаётся совместимым alias).
+- `corepack pnpm db:seed:staff`: dev-сотрудники и дежурные, без заказов/закупок.
+- `corepack pnpm db:seed:checkout`: настройки checkout и будущие слоты.
+- `corepack pnpm db:seed:operations`: необязательное demo, 3 заказа через backend
+  checkout в двух слотах; actual quantities/prices остаются пустыми. Не запускайте
+  эту команду перед ручной проверкой трёх собственных заказов.
+
+Для чистой проверки остановите работу с локальными заказами и выполните:
+
+```bash
+corepack pnpm db:reset:operations --confirm
+corepack pnpm db:seed:staff
+corepack pnpm db:seed:checkout
+```
+
+Reset удаляет **все заказы и волны выбранной локальной dev-БД**, включая созданные
+вручную тестовые заказы, а не только известные seed-строки. Он сохраняет товары,
+категории, staff/customers, app settings и delivery slots. Production/staging,
+удалённый хост и запуск без `--confirm` запрещены. Не направляйте dev-команды
+на БД с реальными заказами. Очистка не является обычным шагом ежедневного запуска.
 
 Build web:
 

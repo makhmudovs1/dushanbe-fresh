@@ -17,7 +17,10 @@
     "db:seed": "corepack pnpm --filter @dushanbe-fresh/api db:seed",
     "db:seed:checkout": "corepack pnpm --filter @dushanbe-fresh/api db:seed:checkout",
     "db:validate": "corepack pnpm --filter @dushanbe-fresh/api db:validate",
-    "db:seed:operations": "corepack pnpm --filter @dushanbe-fresh/api db:seed:operations"
+    "db:seed:operations": "corepack pnpm --filter @dushanbe-fresh/api db:seed:operations",
+    "db:seed:catalog": "corepack pnpm --filter @dushanbe-fresh/api db:seed",
+    "db:seed:staff": "corepack pnpm --filter @dushanbe-fresh/api db:seed:staff",
+    "db:reset:operations": "corepack pnpm --filter @dushanbe-fresh/api db:reset:operations"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "6.21.0",

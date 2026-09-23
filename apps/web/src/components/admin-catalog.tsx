@@ -266,14 +266,14 @@ export function AdminCatalog() {
               />
             </label>
             <label>
-              Продажная цена
+              Цена для клиента
               <input
                 value={form.sellingPrice}
                 onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })}
               />
             </label>
             <label>
-              Закупочная цена
+              Ориентир закупки
               <input
                 value={form.purchasePrice}
                 onChange={(event) => setForm({ ...form, purchasePrice: event.target.value })}

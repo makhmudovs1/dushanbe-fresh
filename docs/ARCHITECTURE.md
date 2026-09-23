@@ -311,6 +311,13 @@ delivery wave и расчета маржи.
 - `delivered`
 - `cancelled`
 
+Checkout сразу создаёт `confirmed` после серверной валидации; `draft` и `placed`
+сохранены для совместимости со старыми данными. Новые заказы автоматически
+создают волну своего слота при первом заказе или включаются в существующую открытую
+волну. Backend назначает дежурных из `app_settings.default_picker_id` и
+`default_courier_id`, не заменяя ручные назначения. Сборщик завершает волну в `picked`, курьер
+сам переводит `picked` в `out_for_delivery`. Последняя доставка закрывает волну.
+
 `substitution_policy`:
 
 - `replace_similar`
@@ -466,19 +473,27 @@ Backend не хранит неоформленную корзину как об�
 
 ### Admin Orders
 
-- `GET /admin/orders`
+- `GET /admin/orders?tab=active|completed|cancelled&date=YYYY-MM-DD&deliverySlotId=...&status=...`
 - `GET /admin/orders/:id`
+- `POST /admin/orders/:id/pack` - атомарная упаковка ещё не обработанных позиций
+  как заказано, без перезаписи исключений; доступна admin и назначенному picker.
+  Количества и цены берутся из заказа, тело запроса не задаёт суммы.
 - `PATCH /admin/orders/:id/status`
-- `PATCH /admin/order-items/:id` - финальный вес, цена, замена или удаление.
+- `PATCH /admin/orders/:id/items/:itemId` - финальный вес, замена или удаление.
+  Сборщику запрещено менять цену клиенту; admin-корректировка требует заметки,
+  исходная snapshot-цена не меняется.
 
 ### Admin Delivery Waves
 
-- `GET /admin/delivery-waves`
+- `GET /admin/delivery-waves?date=YYYY-MM-DD&tab=upcoming|working|completed`
 - `GET /admin/delivery-waves/:id`
-- `POST /admin/delivery-waves/:id/assign-picker`
-- `POST /admin/delivery-waves/:id/assign-courier`
-- `GET /admin/delivery-waves/:id/picking-list`
-- `PATCH /admin/delivery-waves/:id/wave-items/:itemId`
+- `POST /admin/delivery-waves` - совместимость и ручное восстановление старых данных;
+  обычный checkout создаёт волну автоматически, кнопки формирования в основном UI нет.
+- `PATCH /admin/delivery-waves/:id/assignments` - admin назначает сотрудников.
+- `PATCH /admin/delivery-waves/:id/status` - сборщик: picking/picked;
+  назначенный курьер: out_for_delivery; admin сохраняет контроль.
+- `POST /admin/delivery-waves/:id/items` - добавить закупку для замены.
+- `PATCH /admin/delivery-waves/:id/items/:itemId` - фактическая закупка.
 
 Сборочный лист должен агрегировать товары по всем заказам волны:
 товар, суммарное количество, единица измерения, заметки по качеству и список
@@ -488,13 +503,23 @@ Backend не хранит неоформленную корзину как об�
 суммарно заказанное количество, реально купленное количество, фактическую цену
 закупки и заметку поставщика.
 
+`reference_purchase_price` (Decimal, nullable для старых строк) фиксирует ориентир
+каталога при создании позиции волны. Отклонение actual purchase price строго выше
+настраиваемого процента отмечается для admin-проверки без блокировки сборки.
+Без введённой закупки, при нулевом закупленном количестве или неизвестном
+историческом ориентире предупреждение об отклонении не показывается.
+Курьер не получает закупочные поля ни при чтении, ни в ответе на смену статуса.
+
 В будущем можно добавить `delivery_runs` и `delivery_stops` для маршрутизации
 нескольких курьеров, но это явно не входит в MVP.
 
 ### Admin Settings
 
 - `GET /admin/settings`
-- `PATCH /admin/settings`
+- `PATCH /admin/settings/purchase-price-deviation` - строковый Decimal-процент,
+  0–100, по умолчанию 15; доступен только admin.
+- `PATCH /admin/settings/default-staff` - дежурные picker/courier; только admin.
+  Заполняет пустые назначения незавершённых волн, не заменяя уже назначенных людей.
 - `GET /admin/delivery-slots`
 - `POST /admin/delivery-slots`
 - `PATCH /admin/delivery-slots/:id`

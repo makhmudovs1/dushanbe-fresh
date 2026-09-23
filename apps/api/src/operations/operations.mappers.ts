@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { AdminOrder, AdminWave, StaffDto, WaveStatus } from "@dushanbe-fresh/shared";
 import { slotDto } from "../delivery-slots/delivery-slots.service";
-import { aggregateDemand, money } from "./operations.rules";
+import { aggregateDemand, money, purchaseReviewMessage } from "./operations.rules";
 
 export const orderInclude = { deliverySlot: true, items: { orderBy: { id: "asc" as const }, include: { replacementProduct: true } } } as const;
 export const waveInclude = { deliverySlot: true, picker: true, courier: true,
@@ -26,7 +26,7 @@ export function mapOrder(order: Order): AdminOrder {
       replacementProductId: item.replacementProductId, replacementName: item.replacementProduct?.name ?? null })) };
 }
 
-export function mapWave(wave: Wave): AdminWave {
+export function mapWave(wave: Wave, threshold = new Prisma.Decimal(15)): AdminWave {
   const activeOrders = wave.orders.filter(order => order.status !== "cancelled");
   const demand = aggregateDemand(activeOrders.flatMap(order => order.items));
   const items = activeOrders.flatMap(order => order.items);
@@ -37,16 +37,20 @@ export function mapWave(wave: Wave): AdminWave {
     ? money(wave.waveItems.reduce((sum, item) => sum.plus(item.purchaseTotal!), new Prisma.Decimal(0))) : null;
   const staff = (user: Wave["picker"]): StaffDto | null => user ? { id: user.id, name: user.name, role: user.role as StaffDto["role"] } : null;
   return { id: wave.id, status: wave.status as WaveStatus, deliverySlot: slotDto(wave.deliverySlot, 0), picker: staff(wave.picker), courier: staff(wave.courier),
-    orders: wave.orders.map(mapOrder),
+    orders: wave.orders.map(mapOrder), purchasePriceDeviationPercent: threshold.toString(),
     pickingList: wave.waveItems.map(item => {
       const group = demand.find(group => group.productId === item.productId);
       const allocated = items.filter(line => (line.replacementProductId ?? line.productId) === item.productId && ["picked", "replaced"].includes(line.status))
         .reduce((sum, line) => sum.plus(line.finalQuantity ?? 0), new Prisma.Decimal(0));
+      const review = item.purchasedQuantity?.gt(0) ? purchaseReviewMessage(item.purchaseUnitPrice, item.referencePurchasePrice, threshold) : null;
       return { id: item.id, productId: item.productId, name: item.productNameSnapshot, unit: item.unit,
         requestedQuantityTotal: item.requestedQuantityTotal.toString(), orderCount: group?.orders.size ?? 0,
         qualityPreferences: [...(group?.quality ?? [])].map(([label, quantity]) => ({ label, quantity: quantity.toString() })),
         purchasedQuantity: item.purchasedQuantity?.toString() ?? null, purchaseUnitPrice: item.purchaseUnitPrice?.toFixed(2) ?? null,
-        purchaseTotal: item.purchaseTotal?.toFixed(2) ?? null, allocatedQuantity: allocated.toString(), supplierNote: item.supplierNote };
+        referencePurchasePrice: item.referencePurchasePrice?.toFixed(2) ?? null,
+        purchaseNeedsReview: review !== null, purchaseReviewMessage: review,
+        purchaseTotal: item.purchaseTotal?.toFixed(2) ?? null, allocatedQuantity: allocated.toString(),
+        remainingQuantity: item.purchasedQuantity?.minus(allocated).toString() ?? null, supplierNote: item.supplierNote };
     }),
     metrics: { orderCount: activeOrders.length, productCount: wave.waveItems.length, estimatedRevenue: estimated.toFixed(2),
       finalRevenue: revenue?.toFixed(2) ?? null, purchaseCost: cost?.toFixed(2) ?? null,

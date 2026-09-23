@@ -1,5 +1,6 @@
 export const SERVICE_NAME = "Dushanbe Fresh";
 export type * from "./checkout";
+export { slotUnavailableLabels } from "./checkout";
 export type * from "./operations";
 
 export type HealthStatus = {

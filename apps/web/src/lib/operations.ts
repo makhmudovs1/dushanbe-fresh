@@ -2,7 +2,7 @@ import type { ItemStatus, OrderStatus, WaveStatus } from "@dushanbe-fresh/shared
 import { staffFetch } from "./staff-auth";
 
 export const orderLabels: Record<OrderStatus, string> = { draft: "Черновик", placed: "Новый", confirmed: "Подтверждён", picking: "Сборка", picked: "Собран", out_for_delivery: "У курьера", delivered: "Доставлен", cancelled: "Отменён" };
-export const waveLabels: Record<WaveStatus, string> = { open: "Формируется", picking: "Сборка", picked: "Собрана", out_for_delivery: "Доставка", delivered: "Завершена", cancelled: "Отменена" };
+export const waveLabels: Record<WaveStatus, string> = { open: "Ожидает сборки", picking: "Сборка", picked: "Собрана", out_for_delivery: "Доставка", delivered: "Завершена", cancelled: "Отменена" };
 export const itemLabels: Record<ItemStatus, string> = { requested: "Ожидает сборки", picked: "Собран", replaced: "Заменён", removed: "Убран", unavailable: "Нет в наличии" };
 export const paymentLabels: Record<string, string> = { pending: "Ожидает оплаты", paid: "Оплачен", failed: "Ошибка оплаты", refunded: "Возвращён" };
 export const policyLabels: Record<string, string> = { replace_similar: "Заменить похожим", contact_me: "Связаться с клиентом", remove_item: "Убрать отсутствующий товар" };

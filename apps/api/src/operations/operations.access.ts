@@ -10,7 +10,7 @@ export function assertAssignment(wave: { pickerUserId: string | null; courierUse
   if (!actor || actor.role === "admin") return;
   if (!wave || (actor.role === "picker" ? wave.pickerUserId : wave.courierUserId) !== actor.id) throw new ForbiddenException("Эта волна вам не назначена.");
 }
-export function presentWave(wave: AdminWave, actor?: StaffUser): AdminWave | Omit<AdminWave, "picker" | "pickingList" | "metrics"> {
+export function presentWave(wave: AdminWave, actor?: StaffUser): AdminWave | Pick<AdminWave, "id" | "status" | "deliverySlot" | "courier" | "orders"> {
   if (actor?.role !== "courier") return wave;
   // Explicit allowlist: procurement, supplier notes and margin never reach courier responses.
   return { id: wave.id, status: wave.status, deliverySlot: wave.deliverySlot, courier: wave.courier, orders: wave.orders };

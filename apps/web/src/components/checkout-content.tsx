@@ -1,5 +1,7 @@
 "use client";
 
+import { slotUnavailableLabels } from "@dushanbe-fresh/shared";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -119,7 +121,7 @@ export function CheckoutContent() {
           <div className="delivery-options">
             {slots.map(slot => <label className={`checkout-option ${deliverySlotId === slot.id ? "is-selected" : ""}`} key={slot.id}>
               <input type="radio" name="delivery-slot" value={slot.id} disabled={!slot.available} checked={deliverySlotId === slot.id} onChange={() => setDeliverySlotId(slot.id)} />
-              <span>{slotLabel(slot)}{!slot.available ? <small>{slot.remainingCapacity === 0 ? "Мест нет" : "Недоступно"}</small> : null}</span>
+              <span>{slotLabel(slot)}{slot.unavailableReasons.map(reason => <small key={reason}>{slotUnavailableLabels[reason]}</small>)}</span>
             </label>)}
           </div>
           <button type="button" className="secondary-link" onClick={() => void loadSlots()} disabled={slotsPending}>Обновить время доставки</button>

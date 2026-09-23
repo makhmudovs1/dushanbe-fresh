@@ -965,12 +965,33 @@ button:disabled {
 .operations-tabs button { flex: 1; min-height: 44px; font-weight: 700; font-size: 14px; padding: 8px 4px; }
 .operations-tabs button[aria-selected="true"] { border-bottom: 2px solid var(--color-primary); color: var(--color-primary); }
 .purchase-demand { font-size: 22px; }
-.purchase-item { scroll-margin-top: 90px; }
+.purchase-item { display: block; scroll-margin-top: 90px; padding: 12px; font-size: 14px; }
+.purchase-item summary { cursor: pointer; min-height: 24px; overflow-wrap: anywhere; }
+.purchase-item summary strong { font-size: 16px; }
+.purchase-title { display: inline; }
+.purchase-equation { display: block; margin-top: 4px; }
+.purchase-edit { display: block; margin-top: 4px; color: var(--color-primary); text-decoration: underline; }
+.purchase-item[open] .purchase-edit { display: none; }
+.purchase-content { display: grid; gap: 8px; margin-top: 10px; }
+.purchase-content p { margin: 0; }
+.purchase-item .field { font-size: 13px; gap: 4px; }
+.purchase-item .operations-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.purchase-item .operations-edit-grid .field:nth-child(3), .purchase-item .operations-edit-grid button { grid-column: 1 / -1; }
+.purchase-item input { min-width: 0; width: 100%; }
+.purchase-review { display: block; color: #8a4a12; margin-top: 4px; font-size: 13px; }
+.order-packing { display: grid; gap: 12px; min-width: 0; }
+.packing-item { padding: 12px 0; border-bottom: 1px solid var(--color-border); min-width: 0; }
+.packing-item-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.packing-item-heading strong { font-size: 16px; overflow-wrap: anywhere; }
+.packing-edit { color: var(--color-primary); text-decoration: underline; min-height: 44px; flex-shrink: 0; }
+.packing-meta { font-size: 14px; color: var(--color-muted); margin: 4px 0; overflow-wrap: anywhere; }
+.packing-item form { margin-top: 12px; }
+.packing-complete { color: var(--color-primary); font-weight: 700; margin: 0; }
 .quality-breakdown { margin: 0; padding-left: 20px; list-style: disc; }
 .quality-breakdown li { margin-bottom: 6px; }
 @media (min-width: 768px) {
   .operations h1 { font-size: 36px; }
-  .picking-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .picking-grid { grid-template-columns: minmax(0, 1fr); }
   .operations-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
   .operations-info, .operations-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

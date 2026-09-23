@@ -9,12 +9,21 @@ export type CheckoutItemInput = {
 };
 
 export type CheckoutInput = { items: CheckoutItemInput[]; deliverySlotId: string };
+export const slotUnavailableLabels = {
+  capacity_full: "Мест больше нет",
+  cutoff_passed: "Время заказа прошло",
+  wave_closed: "Приём заказов закрыт — сборка уже началась",
+  wave_cancelled: "Приём заказов закрыт — доставка отменена",
+  inactive: "Приём заказов на это окно закрыт"
+} as const;
+export type SlotUnavailableReason = keyof typeof slotUnavailableLabels;
 export type DeliverySlotDto = {
   id: string;
   date: string;
   startsAt: string;
   endsAt: string;
   available: boolean;
+  unavailableReasons: SlotUnavailableReason[];
   remainingCapacity: number;
 };
 export type AddressInput = {

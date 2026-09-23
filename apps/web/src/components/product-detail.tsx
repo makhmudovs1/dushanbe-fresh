@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { adjustQuantity } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
 import { getProduct, Product } from "@/lib/api";
+import { unitLabel } from "@/lib/checkout";
 
 export function ProductDetail({ slug }: { slug: string }) {
   const { addProduct } = useCart();
@@ -41,7 +42,7 @@ export function ProductDetail({ slug }: { slug: string }) {
         <p className="eyebrow">{product.category.name}</p>
         <h1>{product.name}</h1>
         <strong className="price">
-          {product.sellingPrice} сомони / {product.unit}
+          {product.sellingPrice} сомони / {unitLabel(product.unit)}
         </strong>
         <p>{product.description}</p>
 
@@ -82,7 +83,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               -
             </button>
             <strong>
-              {quantity} {product.unit}
+              {quantity} {unitLabel(product.unit)}
             </strong>
             <button
               onClick={() =>

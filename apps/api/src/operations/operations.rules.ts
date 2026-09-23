@@ -4,7 +4,7 @@ import { Prisma, OrderStatus, OrderItemStatus } from "@prisma/client";
 export const orderTransitions: Record<OrderStatus, OrderStatus[]> = {
   draft: ["placed", "cancelled"], placed: ["confirmed", "cancelled"],
   confirmed: ["picking", "cancelled"], picking: ["picked", "cancelled"],
-  picked: ["out_for_delivery", "cancelled"], out_for_delivery: ["delivered"], delivered: [], cancelled: []
+  picked: ["out_for_delivery", "cancelled"], out_for_delivery: ["delivered", "cancelled"], delivered: [], cancelled: []
 };
 export const waveTransitions: Record<string, string[]> = {
   open: ["picking", "cancelled"], picking: ["picked", "cancelled"],
@@ -32,6 +32,19 @@ export function money(value: Prisma.Decimal) {
   const result = value.toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
   if (result.abs().gt("9999999999.99")) throw new BadRequestException("Сумма слишком велика.");
   return result;
+}
+
+export function purchaseNeedsReview(actual: Prisma.Decimal | null, reference: Prisma.Decimal | null, threshold: Prisma.Decimal) {
+  if (actual === null) return false;
+  if (reference === null) return false;
+  return actual.minus(reference).abs().mul(100).gt(reference.mul(threshold));
+}
+
+export function purchaseReviewMessage(actual: Prisma.Decimal | null, reference: Prisma.Decimal | null, threshold: Prisma.Decimal) {
+  if (!purchaseNeedsReview(actual, reference, threshold) || actual === null || reference === null) return null;
+  if (reference.isZero()) return "Цена закупки выше нулевого ориентира. Нужна проверка администратора.";
+  const percent = actual.minus(reference).abs().mul(100).div(reference).toDecimalPlaces(2).toString();
+  return `Цена закупки ${actual.gt(reference) ? "выше" : "ниже"} ориентира на ${percent}%. Нужна проверка администратора.`;
 }
 export function dateFilter(value?: string) {
   if (!value) return undefined;

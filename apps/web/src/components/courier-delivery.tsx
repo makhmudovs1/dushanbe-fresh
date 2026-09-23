@@ -6,6 +6,9 @@ import { adminRequest, orderLabels, paymentLabels, waveLabels } from "@/lib/oper
 import { slotLabel } from "@/lib/checkout";
 
 export type CourierWave = Pick<AdminWave, "id" | "status" | "deliverySlot" | "courier" | "orders">;
+export function courierWaveLabel(status: AdminWave["status"]) {
+  return ["open", "picking"].includes(status) ? "Готовится" : status === "picked" ? "Готова к получению" : waveLabels[status];
+}
 function CourierOrders({ orders, busy, run }: { orders: AdminOrder[]; busy: boolean; run: (action: () => Promise<unknown>) => Promise<void> }) {
   return <div className="operations-list">{orders.map(order => <article className="operation-item" key={order.id}>
     <h2>{order.orderNumber}</h2><div><StatusBadge status={order.status} label={orderLabels[order.status]} /> <StatusBadge status={order.paymentStatus} label={paymentLabels[order.paymentStatus]} /></div>
@@ -21,14 +24,16 @@ function CourierOrders({ orders, busy, run }: { orders: AdminOrder[]; busy: bool
   </article>)}</div>;
 }
 export function CourierWaveDetail({ id }: { id: string }) {
-  const resource = useAdminResource<CourierWave>(`delivery-waves/${id}`);
+  const resource = useAdminResource<CourierWave>(`delivery-waves/${id}`, 10000);
   const wave = resource.data;
   return <><Link className="back-link" href="/admin/delivery-waves">Мои доставки</Link><AdminNotice error={resource.error} busy={resource.busy} />
-    {wave ? <><header className="page-heading"><h1>Доставка</h1><p>{slotLabel(wave.deliverySlot)}</p><StatusBadge status={wave.status} label={waveLabels[wave.status]} /></header><CourierOrders orders={wave.orders} busy={resource.busy} run={resource.run} /></> : null}
+    {wave ? <><header className="page-heading"><h1>Доставка</h1><p>{slotLabel(wave.deliverySlot)}</p><StatusBadge status={wave.status} label={courierWaveLabel(wave.status)} /></header>
+      {wave.status === "picked" ? <button className="primary-action" disabled={resource.busy} onClick={() => void resource.run(() => adminRequest(`delivery-waves/${id}/status`, "PATCH", { status: "out_for_delivery" }))}>Забрал заказы</button> : null}
+      {["open", "picking"].includes(wave.status) ? <p>Партия готовится. Заказов: {wave.orders.filter(order => order.status !== "cancelled").length}.</p> : <CourierOrders orders={wave.orders.filter(order => order.status !== "cancelled")} busy={resource.busy} run={resource.run} />}</> : null}
     <button className="secondary-link" onClick={resource.reload}>Обновить</button></>;
 }
 export function CourierOrderDetail({ id }: { id: string }) {
-  const resource = useAdminResource<AdminOrder>(`orders/${id}`);
+  const resource = useAdminResource<AdminOrder>(`orders/${id}`, 10000);
   return <><Link className="back-link" href="/admin/delivery-waves">Мои доставки</Link><AdminNotice error={resource.error} busy={resource.busy} />
     {resource.data ? <CourierOrders orders={[resource.data]} busy={resource.busy} run={resource.run} /> : null}</>;
 }

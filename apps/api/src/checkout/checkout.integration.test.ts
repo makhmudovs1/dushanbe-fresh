@@ -76,6 +76,18 @@ describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
     await expect(service.createOrder({ ...input, name: "Другой" })).rejects.toThrow("отправка уже использована");
   });
 
+  it("automatically creates one wave for concurrent orders and another for a different slot", async () => {
+    const input = await setup(5);
+    await Promise.all([service.createOrder(input), service.createOrder({ ...input, requestId: randomUUID() })]);
+    const other = await setup(5); await service.createOrder(other);
+    const waves = await prisma.deliveryWave.findMany({ where: { deliverySlotId: { in: [input.deliverySlotId, other.deliverySlotId] } }, include: { orders: true, waveItems: true } });
+    expect(waves).toHaveLength(2);
+    expect(waves.find(wave => wave.deliverySlotId === input.deliverySlotId)?.orders).toHaveLength(2);
+    expect(waves.find(wave => wave.deliverySlotId === other.deliverySlotId)?.orders).toHaveLength(1);
+    expect(waves.flatMap(wave => wave.orders).every(order => order.status === "confirmed" && order.deliveryWaveId)).toBe(true);
+    expect(waves.find(wave => wave.deliverySlotId === input.deliverySlotId)?.waveItems[0].requestedQuantityTotal.toString()).toBe("24");
+  });
+
   it("rejects a full slot after validation and releases capacity on cancellation", async () => {
     const input = await setup();
     await service.createOrder({ ...input, requestId: randomUUID() });

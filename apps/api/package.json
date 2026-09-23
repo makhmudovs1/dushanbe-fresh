@@ -15,7 +15,9 @@
     "db:seed": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed.ts",
     "db:seed:checkout": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-checkout.ts",
     "db:validate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma validate",
-    "db:seed:operations": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-operations.ts"
+    "db:seed:operations": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-operations.ts",
+    "db:seed:staff": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed-staff.ts",
+    "db:reset:operations": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/reset-operations.ts"
   },
   "dependencies": {
     "@dushanbe-fresh/shared": "workspace:*",

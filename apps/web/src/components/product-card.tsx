@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Product } from "@/lib/api";
+import { unitLabel } from "@/lib/checkout";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -21,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="product-card__description">{product.description}</p>
         <div className="product-card__footer">
           <strong>
-            {product.sellingPrice} сомони / {product.unit}
+            {product.sellingPrice} сомони / {unitLabel(product.unit)}
           </strong>
           <Link className="product-card__action" href={`/products/${product.slug}`}>
             Выбрать
