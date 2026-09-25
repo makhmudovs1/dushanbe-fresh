@@ -1,24 +1,24 @@
-# Project instructions
+# Инструкции по проекту
 
-This repository contains an MVP for a fresh grocery delivery service
-from local markets in Dushanbe.
+Этот репозиторий содержит MVP сервиса доставки свежих продуктов
+с местных рынков Душанбе.
 
-Before implementing product features:
-1. Read docs/PRODUCT.md.
-2. Read docs/MVP.md.
-3. Preserve existing product decisions unless explicitly asked to change them.
+Перед реализацией продуктовых функций:
+1. Прочитайте docs/PRODUCT.md.
+2. Прочитайте docs/MVP.md.
+3. Сохраняйте существующие продуктовые решения, если явно не запрошено их изменение.
 
-Priorities:
-- Simple MVP over complex architecture.
-- Web-first responsive application.
-- Mobile-friendly UX.
-- Fast ordering flow.
-- Keep business logic configurable.
-- Do not build features listed as "not in MVP".
-- Add tests for important business logic.
+Приоритеты:
+- Простой MVP важнее сложной архитектуры.
+- В первую очередь адаптивное веб-приложение.
+- Удобство использования на телефоне.
+- Быстрое оформление заказа.
+- Настраиваемая бизнес-логика.
+- Не реализовывать функции из раздела «Не входит в MVP».
+- Покрывать важную бизнес-логику тестами.
 
-When requirements are ambiguous:
-- prefer the simplest implementation;
-- document the assumption in docs/DECISIONS.md.
+Если требования неоднозначны:
+- предпочитайте самую простую реализацию;
+- фиксируйте допущение в docs/DECISIONS.md.
 
-Always run lint, tests, and build before finishing a task.
+Перед завершением задачи всегда запускайте проверку стиля кода (lint), тесты и сборку.

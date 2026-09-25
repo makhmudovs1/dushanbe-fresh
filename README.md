@@ -1,168 +1,172 @@
 # Dushanbe Fresh
 
-MVP skeleton for a fresh grocery delivery service from local markets in
-Dushanbe.
+Основа MVP сервиса доставки свежих продуктов с местных рынков Душанбе.
 
-## Stack
+## Технологии
 
-- pnpm monorepo
-- Next.js + TypeScript in `apps/web`
-- NestJS + TypeScript in `apps/api`
-- Shared TypeScript package in `packages/shared`
+- Монорепозиторий на pnpm
+- Next.js + TypeScript в `apps/web`
+- NestJS + TypeScript в `apps/api`
+- Общий пакет TypeScript в `packages/shared`
 - PostgreSQL
 - Prisma
-- Docker Compose for local PostgreSQL
+- Docker Compose для локального PostgreSQL
 
-Catalog browsing, catalog administration, a client-side cart, guest checkout,
-staff authentication, role-based admin operations, delivery waves and manual
-picking/distribution are implemented. Customer SMS authentication, online payments
-and automatic routing are not implemented.
+Реализованы просмотр и управление каталогом, корзина в браузере, оформление
+заказа без регистрации, вход сотрудников, разграничение доступа по ролям,
+волны доставки, закупка и упаковка заказов. Вход клиентов по SMS, онлайн-оплата
+и автоматическое построение маршрутов пока не реализованы.
 
-## Prerequisites
+## Требования
 
-- Node.js 18.16+ or newer
-- Docker Desktop or Docker daemon
+- Node.js версии 18.16 или новее
+- Docker Desktop или служба Docker
 - Corepack
 
-This repository pins pnpm through `packageManager`, so a global pnpm install is
-not required.
+Версия pnpm закреплена в `packageManager`, поэтому устанавливать pnpm глобально
+не требуется.
 
-## Local Setup
+## Локальный запуск
 
-Install dependencies:
+Установите зависимости:
 
 ```bash
 corepack pnpm install
 ```
 
-Generate Prisma Client:
+Сгенерируйте Prisma Client:
 
 ```bash
 corepack pnpm db:generate
 ```
 
-Run the project locally:
+Запустите проект локально:
 
 ```bash
 corepack pnpm dev
 ```
 
-That command starts PostgreSQL through Docker Compose and runs:
+Эта команда запускает PostgreSQL через Docker Compose, а также:
 
-- web app on `http://localhost:3000`
-- API on `http://localhost:4000`
+- веб-приложение по адресу `http://localhost:3000`;
+- API по адресу `http://localhost:4000`.
 
-Browser requests use `/api/v1` on the web app's own origin. Next.js proxies them
-to `http://localhost:4000/api/v1` (or the port set in `API_PORT`). This avoids
-cross-origin errors when opening the frontend on another port or a phone.
-For a separate API host, set the server-side `API_URL` including `/api/v1`
-when starting or building Next.js. `NEXT_PUBLIC_API_URL` is no longer used.
-Restart Next.js after changing the proxy configuration.
+Браузер отправляет запросы на `/api/v1` по тому же адресу, с которого открыт сайт.
+Next.js перенаправляет их на `http://localhost:4000/api/v1` (или порт из `API_PORT`).
+Это позволяет избежать ошибок междоменных запросов при открытии сайта на другом
+порту или с телефона. Если API размещён отдельно, задайте серверную переменную
+`API_URL`, включая `/api/v1`, при запуске или сборке Next.js.
+`NEXT_PUBLIC_API_URL` больше не используется. После изменения настроек
+проксирования перезапустите Next.js.
 
-For example, to use alternate ports:
+Пример запуска на других портах:
 
 ```bash
 WEB_PORT=3001 API_PORT=4001 corepack pnpm dev
 ```
 
-Run only one Next.js process per checkout: simultaneous instances share `.next`
-and can overwrite each other's bundles. Stop the dev server before `build:web`
-and restart it afterwards. Export variables in your shell or put Next.js-specific
-settings in `apps/web/.env.local`; the root `.env.example` is a reference, not an
-automatically loaded configuration for every workspace.
+В одной рабочей копии репозитория запускайте только один процесс Next.js:
+одновременные экземпляры используют общую папку `.next` и могут перезаписывать
+результаты сборки друг друга. Перед `build:web` остановите сервер разработки,
+а после сборки запустите его снова. Задавайте переменные в оболочке или сохраняйте
+настройки Next.js в `apps/web/.env.local`. Корневой `.env.example` служит образцом,
+а не автоматически загружаемой конфигурацией для всех пакетов монорепозитория.
 
-Health endpoint:
+Проверка работоспособности API:
 
 ```bash
 curl http://localhost:4000/api/v1/health
 ```
 
-Admin route:
+Админ-панель:
 
 ```text
 http://localhost:3000/admin
 ```
 
-Catalog route:
+Каталог:
 
 ```text
 http://localhost:3000/catalog
 ```
 
-Product page example:
+Пример страницы товара:
 
 ```text
 http://localhost:3000/products/tomatoes
 ```
 
-Cart route:
+Корзина:
 
 ```text
 http://localhost:3000/cart
 ```
 
-The cart is stored in browser `localStorage`. Checkout re-reads product
-availability, prices and quantity rules from PostgreSQL. Cart prices are only
-preliminary UI values. A successful order clears the cart.
+Корзина хранится в `localStorage` браузера. При оформлении заказа сервер заново
+читает из PostgreSQL доступность товаров, цены и правила количества. Цены в
+корзине предварительные и используются только для отображения. После успешного
+создания заказа корзина очищается.
 
-Checkout route: `http://localhost:3000/checkout`.
+Оформление заказа: `http://localhost:3000/checkout`.
 
-## Database
+## База данных
 
-The local default database URL is:
+Адрес локальной БД по умолчанию:
 
 ```text
 postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public
 ```
 
-Apply development migrations:
+Примените миграции в среде разработки:
 
 ```bash
 corepack pnpm db:migrate
 ```
 
-Seed the local catalog:
+Заполните локальный каталог тестовыми данными:
 
 ```bash
 corepack pnpm db:seed
 ```
 
-Prepare checkout settings and delivery slots after applying migrations:
+После применения миграций подготовьте настройки оформления заказа и окна доставки:
 
 ```bash
 corepack pnpm db:deploy
 corepack pnpm db:seed:checkout
 ```
 
-The checkout seed adds missing settings (`minimum_order_amount = "120.00"`,
-`delivery_fee = "20.00"`, `service_fee = "0.00"`) and slots at 10:00, 14:00 and
-18:00 for seven days, each with capacity 10. Times are local to Dushanbe (UTC+05).
-It preserves existing settings, slot capacity, availability and orders. Run it
-again to add dates as time advances. Unlike the catalog seed, it does not reset
-products or quality options. Monetary settings are JSON strings, not numbers.
+Скрипт начального заполнения добавляет отсутствующие настройки
+(`minimum_order_amount = "120.00"`, `delivery_fee = "20.00"`, `service_fee = "0.00"`)
+и окна на 10:00, 14:00 и 18:00 на семь дней, каждое вместимостью 10 заказов.
+Время местное, по Душанбе (UTC+05). Существующие настройки, вместимость и
+доступность окон, а также заказы сохраняются. Запускайте скрипт повторно для
+добавления новых дат. В отличие от заполнения каталога, он не сбрасывает товары
+и предпочтения по качеству. Денежные настройки хранятся строками JSON, не числами.
 
-For a fresh checkout, run `db:generate`, `db:deploy`, `db:seed`,
-`db:seed:checkout` and `db:seed:staff` once before `dev`. Do not use `prisma db push` for normal
-development: migrations are the source of truth. If an older local database was
-created with `db push`, compare its schema against the initial migration before
-baselining it with `prisma migrate resolve --applied 20260914000000_init`.
-Never reset a populated database just to initialize migration history.
+В новой рабочей копии репозитория перед первым `dev` выполните `db:generate`,
+`db:deploy`, `db:seed`, `db:seed:checkout` и `db:seed:staff`.
+Не используйте `prisma db push` при обычной разработке: источником истины являются
+миграции. Если старая локальная БД была создана через `db push`, сначала сравните
+её схему с начальной миграцией и только затем отметьте миграцию применённой через
+`prisma migrate resolve --applied 20260914000000_init`.
+Не очищайте заполненную БД только ради инициализации истории миграций.
 
-Apply migrations in deployed environments:
+Применение миграций в развёрнутых окружениях:
 
 ```bash
 corepack pnpm db:deploy
 ```
 
-Override `DATABASE_URL` when needed:
+При необходимости переопределите `DATABASE_URL`:
 
 ```bash
 DATABASE_URL="postgresql://user:password@host:5432/database?schema=public" corepack pnpm db:deploy
 ```
 
-## API Endpoints
+## Маршруты API
 
-Public catalog:
+Публичный каталог:
 
 ```text
 GET /api/v1/categories
@@ -172,7 +176,7 @@ GET /api/v1/products?search=помидоры
 GET /api/v1/products/:slug
 ```
 
-Guest checkout:
+Оформление заказа без регистрации:
 
 ```text
 GET  /api/v1/delivery-slots
@@ -180,40 +184,45 @@ POST /api/v1/checkout/validate
 POST /api/v1/checkout/orders
 ```
 
-`validate` accepts `{ items, deliverySlotId }`. Each item has `productId`,
-`quantity` (decimal string), nullable `qualityOptionId` and optional
-`observedPrice` (used only for price-change messages). Client names, prices,
-subtotals and payment fields never determine stored values.
+`validate` принимает `{ items, deliverySlotId }`. Каждая позиция содержит
+`productId`, `quantity` (десятичная строка), `qualityOptionId` (допускает null)
+и необязательный `observedPrice` (только для уведомления об изменении цены).
+Переданные клиентской частью названия, цены, суммы и поля оплаты не определяют
+значения, сохраняемые сервером.
 
-The response includes current items, per-item errors/warnings, `itemsSubtotal`,
-`deliveryFee`, `serviceFee`, `totalEstimated`, `minimumOrderAmount`,
-`minimumOrderShortfall`, `valid` and `reviewToken`. Money is serialized as decimal
-strings. Totals are rounded per line to two decimals with Decimal HALF_UP.
+Ответ содержит актуальные позиции, ошибки и предупреждения по каждой из них,
+`itemsSubtotal`, `deliveryFee`, `serviceFee`, `totalEstimated`, `minimumOrderAmount`,
+`minimumOrderShortfall`, `valid` и `reviewToken`. Деньги передаются десятичными
+строками. Итог каждой позиции округляется до двух знаков через Decimal HALF_UP.
 
-`orders` additionally requires `name`, `phone`, `address` (street/building required,
-apartment/entrance/floor/instructions optional), `substitutionPolicy`, the reviewed
-`reviewToken` and a UUID v4 `requestId`. Policies: `replace_similar`, `contact_me`,
-`remove_item`. Local nine-digit phone numbers are normalized to +992.
+`orders` дополнительно требует `name`, `phone`, `address` (street/building
+обязательны, apartment/entrance/floor/instructions необязательны),
+`substitutionPolicy`, подтверждённый `reviewToken` и `requestId` в формате UUID v4.
+Правила замены: `replace_similar`, `contact_me`, `remove_item`.
+К местным девятизначным номерам телефона добавляется префикс +992.
 
-Validation does not reserve a slot or guarantee creation. Creation repeats every
-check inside a Serializable transaction and locks the slot while booking it.
-Cancelled orders do not occupy capacity; all other statuses do. Changed prices,
-fees, product data or delivery time return HTTP 409 with a fresh `quote`, requiring
-the customer to review and confirm again. Invalid request fields return 400;
-missing/invalid price settings return 503. Identical retries with the same
-`requestId` return the original order; reuse with another payload is rejected.
+Предварительная проверка не резервирует место в окне и не гарантирует создание
+заказа. При создании все проверки повторяются в транзакции Serializable с
+блокировкой окна. Отменённые заказы не занимают места; все остальные занимают.
+Изменение цен, сборов, данных товаров или времени доставки возвращает HTTP 409
+с новым `quote`: клиент должен проверить и подтвердить данные заново.
+Некорректные поля запроса возвращают 400; отсутствующие или некорректные ценовые
+настройки возвращают 503. Одинаковые повторные запросы с тем же `requestId`
+возвращают исходный заказ; повторное использование ключа с другими данными отклоняется.
 
-Orders use `cash_on_delivery` / `pending`. Contact name and phone are stored
-alongside the address in `deliveryAddressSnapshot`; product name, unit, quantity,
-selling price and quality label are copied into order items. Final quantities and
-totals remain null until picking. Estimated weighted totals are not final bills.
+Для заказов используются `cash_on_delivery` / `pending`. Имя и телефон контакта
+сохраняются вместе с адресом в `deliveryAddressSnapshot`; название товара, единица,
+количество, продажная цена и предпочтение по качеству копируются в позиции заказа.
+Финальные количества и суммы остаются null до сборки. Предварительная стоимость
+весовых товаров не является окончательным счётом.
 
-The success page `/orders/[orderNumber]/success` uses only the creation response,
-kept in memory and `sessionStorage` in the ordering tab. There is no public order
-lookup by number, phone or customer ID. A guest phone match is not authentication
-and gives no access to previous orders or saved addresses.
+Страница успешного оформления `/orders/[orderNumber]/success` использует только
+ответ создания заказа, сохранённый в памяти и `sessionStorage` текущей вкладки.
+Публичного поиска заказа по номеру, телефону или идентификатору клиента нет.
+Совпадение телефона гостя не является аутентификацией и не открывает доступ
+к предыдущим заказам или сохранённым адресам.
 
-Admin catalog:
+Управление каталогом:
 
 ```text
 GET /api/v1/admin/categories
@@ -224,56 +233,59 @@ POST /api/v1/admin/products
 PATCH /api/v1/admin/products/:id
 ```
 
-Admin catalog endpoints require a staff access token and the `admin` role.
-Picker and courier access is limited to their assigned operational work.
+Маршруты управления каталогом требуют токен доступа сотрудника и роль `admin`.
+Доступ сборщика и курьера ограничен назначенными им операционными задачами.
 
-## Checks
+## Проверки
 
-Run lint:
+Проверка стиля кода:
 
 ```bash
 corepack pnpm lint
 ```
 
-Run TypeScript checks:
+Проверка типов TypeScript:
 
 ```bash
 corepack pnpm typecheck
 ```
 
-Run tests:
+Запуск тестов:
 
 ```bash
 corepack pnpm test
 ```
 
-PostgreSQL concurrency/integration tests use a separate test database or schema:
+Интеграционные тесты PostgreSQL, включая конкурентные запросы, используют
+отдельную тестовую БД или схему:
 
 ```bash
 DATABASE_URL='postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=checkout_test' corepack pnpm db:deploy
 TEST_DATABASE_URL='postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=checkout_test' corepack pnpm test
 ```
 
-Without `TEST_DATABASE_URL`, only database integration tests are skipped. CI
-creates a dedicated PostgreSQL database and runs the full suite, including two
-simultaneous bookings of the last slot place and duplicate request retries.
+Без `TEST_DATABASE_URL` пропускаются только интеграционные тесты с БД.
+Система непрерывной интеграции создаёт отдельную БД PostgreSQL и запускает весь
+набор тестов, включая два одновременных бронирования последнего места в окне
+и повторную отправку одинаковых запросов.
 
-Validate the Prisma schema:
+Проверка схемы Prisma:
 
 ```bash
 corepack pnpm db:validate
 ```
 
-Manual checkout check: add products worth at least the configured minimum, open
-the cart, choose checkout, fill contact/address, select an available slot, review
-the server totals, tick confirmation and submit. Check the success page and empty
-cart. On a test database, also change a product's availability/price or fill the
-selected slot after validation; submission must fail without creating an order
-until the customer resolves the problem and confirms the refreshed totals.
+Ручная проверка оформления: добавьте товары на сумму не ниже настроенного
+минимума, откройте корзину и перейдите к оформлению. Заполните контакты и адрес,
+выберите доступное окно, проверьте рассчитанные сервером суммы, поставьте отметку
+подтверждения и отправьте заказ. Проверьте страницу успеха и пустую корзину.
+В тестовой БД также измените доступность или цену товара либо заполните выбранное
+окно после предварительной проверки. Создание заказа должно отклоняться, пока
+клиент не устранит проблему и не подтвердит обновлённые суммы.
 
-## Admin Operations
+## Работа сотрудников
 
-Prepare staff for local development after applying migrations:
+После применения миграций создайте сотрудников для локальной разработки:
 
 ```bash
 corepack pnpm db:generate
@@ -281,19 +293,20 @@ corepack pnpm db:deploy
 corepack pnpm db:seed:staff
 ```
 
-The staff seed creates one active admin, picker and courier with password
-hashes only; it refuses to run in production. Existing staff password hashes are
-preserved. The default development credentials are documented below. Override the
-passwords only on their first creation with `DEV_ADMIN_PASSWORD`,
-`DEV_PICKER_PASSWORD` and `DEV_COURIER_PASSWORD`; use 12–72 UTF-8 bytes.
+Скрипт создаёт по одному активному администратору, сборщику и курьеру, сохраняя
+только хеши паролей; запуск в боевом окружении запрещён. Существующие хеши паролей
+не меняются. Учётные данные для разработки приведены ниже. При первом создании
+пароли можно переопределить через `DEV_ADMIN_PASSWORD`, `DEV_PICKER_PASSWORD`
+и `DEV_COURIER_PASSWORD`; длина должна составлять 12–72 байта в UTF-8.
 
-It also creates missing `default_picker_id` / `default_courier_id` settings.
-Existing defaults are preserved. Admin can change the duty staff in `/admin/settings`.
-Checkout assigns active users of the appropriate role to vacant wave assignments.
-If a default is missing/invalid, checkout still creates the order and wave; admin
-must resolve the vacant assignment. Existing manual assignments are never replaced.
+Также создаются отсутствующие настройки `default_picker_id` / `default_courier_id`.
+Существующие значения сохраняются. Администратор меняет дежурных в `/admin/settings`.
+При оформлении заказа на свободные назначения волны автоматически ставятся активные
+сотрудники соответствующих ролей. Если дежурный не задан или некорректен, заказ
+и волна всё равно создаются, а администратор должен назначить сотрудника.
+Существующие ручные назначения не заменяются.
 
-Pages:
+Страницы:
 
 ```text
 /admin/orders
@@ -303,12 +316,13 @@ Pages:
 /admin/login
 ```
 
-The order list filters by delivery date, slot and status. Order details use contact
-and address snapshots, show estimated/final totals and allow one-click packing with manual exceptions.
-Wave details provide procurement, distribution and courier tabs. Purchasing forms
-are mobile-friendly, with quantities and prices entered as decimal strings.
+Список заказов фильтруется по дате доставки, окну и статусу. Карточка заказа
+использует сохранённые при оформлении контакты и адрес, показывает предварительные
+и финальные суммы, позволяет упаковать заказ одной кнопкой и вручную внести
+исключения. В карточке волны есть вкладки закупки, упаковки и доставки.
+Формы закупки адаптированы для телефона; количества и цены вводятся десятичными строками.
 
-Endpoints (prefix `/api/v1/admin`):
+Маршруты (префикс `/api/v1/admin`):
 
 ```text
 GET   /orders?tab=active|completed|cancelled&date=YYYY-MM-DD&deliverySlotId=...&status=...
@@ -330,74 +344,81 @@ PATCH /settings/purchase-price-deviation     { value: "15.00" }
 PATCH /settings/default-staff                { pickerUserId?, courierUserId? }
 ```
 
-Full flow: checkout automatically confirms validated orders, creates the slot's
-wave if missing and assigns the default picker/courier. The picker starts picking, records purchases,
-packs each order as requested (editing exceptions only) and completes the wave (`picked`). The assigned
-courier sees the upcoming wave as "Готовится", then ready orders, presses
-"Забрал заказы" (`out_for_delivery`), marks delivery and cash received.
-The wave completes automatically when its last active order is delivered.
-No admin handoff is required. All legacy placed/confirmed orders for the slot
-must be included or cancelled before picking starts. Once picking starts the slot
-is no longer bookable, including at checkout's final transactional recheck.
+Полный процесс: оформление автоматически подтверждает прошедшие проверку заказы,
+при необходимости создаёт волну окна и назначает дежурных сборщика и курьера.
+Сборщик начинает сборку, фиксирует закупку, упаковывает заказы как заказано
+(вручную меняя только исключения) и завершает волну (`picked`). Назначенный курьер
+сначала видит «Готовится», затем готовые заказы, нажимает «Забрал заказы»
+(`out_for_delivery`), отмечает доставку и получение наличных.
+Волна завершается автоматически после доставки последнего активного заказа.
+Передача через администратора не требуется. Все старые заказы в placed/confirmed
+для этого окна должны быть включены или отменены до начала сборки. После начала
+сборки окно закрывается для новых заказов, в том числе при финальной проверке
+оформления в транзакции.
 
-New checkouts create or join the slot's open wave under the same slot lock.
-One wave per slot is enforced by PostgreSQL. Re-forming an open wave only adds
-unassigned confirmed orders and refreshes demand; existing purchase values are
-preserved. Re-forming a started/completed wave returns it unchanged. Mutations use
-Serializable transactions with a per-slot lock and retries for conflicts.
+Новые заказы создают волну окна или присоединяются к открытой под той же
+блокировкой окна. PostgreSQL гарантирует одну волну на окно. Повторное формирование
+открытой волны добавляет только непривязанные подтверждённые заказы и обновляет
+потребность в товарах; существующие данные закупки сохраняются. Для начатой или
+завершённой волны возвращаются неизменённые данные. Изменения выполняются
+в транзакциях Serializable с блокировкой окна и повторными попытками при конфликтах.
 
-Purchase totals and customer line totals are computed by the backend with Decimal
-and HALF_UP rounding. Sending `purchaseTotal` or `finalTotal` has no effect.
-Allocation cannot exceed purchased quantities. Customer final price defaults to
-the order's selling-price snapshot. Picker requests containing `finalUnitPrice`
-are rejected; exceptional admin overrides require a note and never change snapshots.
-`totalFinal` remains null until every line is resolved, then includes the order's
-original delivery/service fees and discount. Removed/unavailable lines cost zero;
-cancel an entirely unfulfilled order instead of dispatching it.
+Суммы закупки и клиентских позиций рассчитывает сервер через Decimal с округлением
+HALF_UP. Передача `purchaseTotal` или `finalTotal` не влияет на расчёт.
+Упаковать больше закупленного количества нельзя. Цена клиенту по умолчанию берётся
+из зафиксированной в заказе продажной цены. Запросы сборщика с `finalUnitPrice`
+отклоняются; исключительная корректировка администратором требует примечания
+и не меняет исходные данные заказа. `totalFinal` остаётся null до обработки всех
+позиций, затем включает исходные стоимость доставки, сервисный сбор и скидку.
+Удалённые и недоступные позиции имеют нулевой итог. Полностью невыполненный заказ
+следует отменить, а не отправлять клиенту.
 
-Replacements must use the same unit, respect the substitution policy and have
-recorded procurement in the wave. With `contact_me`, record customer agreement in
-the picker note; `remove_item` prohibits replacement. No weight conversion or
-automatic distribution of surplus purchase is implemented.
+Замена должна использовать ту же единицу измерения, соответствовать выбранному
+клиентом правилу и иметь сохранённую закупку в волне. При `contact_me` согласование
+с клиентом фиксируется в примечании сборщика; `remove_item` запрещает замену.
+Пересчёт единиц веса и автоматическое распределение излишка не реализованы.
 
-Wave metrics use goods-only revenue. Gross margin subtracts the entire actual
-purchase cost, including excess purchases, from final goods revenue. Delivery,
-service fees, wages, Porter and other operating costs are excluded. Incomplete
-cost/revenue/margin fields are null. The UI labels this “Валовая маржа по товарам”.
+Показатели волны учитывают выручку только от товаров. Валовая маржа равна финальной
+выручке по товарам за вычетом всей фактической закупки, включая излишек. Доставка,
+сервисные сборы, зарплаты, расходы на курьера и прочие операционные расходы
+не учитываются. Незавершённые показатели закупки, выручки и маржи имеют значение
+null. В интерфейсе используется название «Валовая маржа по товарам».
 
-Status changes cannot move delivered orders back to picking. Procurement and
-allocation are immutable after picking; completed waves retain purchase history.
-Payment can be marked paid only for delivered cash-on-delivery orders.
+Доставленные заказы нельзя вернуть в сборку сменой статуса. После сборки данные
+закупки и упаковки неизменяемы; завершённые волны сохраняют историю закупок.
+Отметить оплату можно только у доставленного заказа с оплатой наличными при получении.
 
-Each new wave item captures `referencePurchasePrice` from the catalog. The backend
-flags absolute purchase-price deviations strictly greater than the configured
-`purchase_price_deviation_percent` (default "15.00", editable by admin in Settings).
-Flags do not block picking or dispatch. Empty purchases, zero purchased quantities
-and legacy rows with unknown reference prices do not produce deviation warnings.
-Messages include the actual deviation, e.g. "Цена закупки выше ориентира на 18%.
-Нужна проверка администратора." No approval/audit workflow is implemented.
-Admin can reassign staff before wave completion, including replacing a courier
-in transit, and cancel unpaid orders before delivery. Staff views poll every 10s.
+Каждая новая позиция волны фиксирует `referencePurchasePrice` из каталога.
+Сервер отмечает абсолютное отклонение закупочной цены, строго превышающее
+`purchase_price_deviation_percent` (по умолчанию "15.00", администратор меняет
+порог в настройках). Предупреждения не блокируют сборку и отправку. Пустые закупки,
+нулевые количества и старые строки с неизвестным ориентиром предупреждений не дают.
+Сообщение содержит фактическое отклонение, например: «Цена закупки выше ориентира
+на 18%. Нужна проверка администратора». Процесс согласования и журнал аудита
+не реализованы. Администратор может переназначать сотрудников до завершения волны,
+включая курьера в пути, и отменять неоплаченные заказы до доставки.
+Страницы сотрудников опрашивают сервер каждые 10 секунд.
 
-Operational and catalog endpoints now require a real staff access token.
-The JWT access token lasts 10 minutes; the rotating refresh token is stored only
-as an SHA-256 hash in PostgreSQL and sent in an httpOnly `SameSite=Lax` cookie
-(`Secure` in production). In production set a random `STAFF_JWT_SECRET` of at
-least 32 bytes. Customer catalog and checkout endpoints remain public.
+Операционные маршруты и управление каталогом требуют действительный токен доступа
+сотрудника. JWT-токен доступа живёт 10 минут; обновляемый при использовании токен
+продления хранится в PostgreSQL только как хеш SHA-256 и передаётся в httpOnly
+cookie с `SameSite=Lax` (`Secure` в боевом окружении). В боевом окружении задайте
+случайный `STAFF_JWT_SECRET` длиной не менее 32 байтов.
+Клиентский каталог и оформление заказа остаются публичными.
 
-The operations migration adds a unique wave-slot index, an order-wave index and
-wave-item name/unit snapshots. Existing wave-item snapshots are backfilled from
-products. Existing duplicate waves must be resolved manually before migration;
-the migration never deletes procurement history.
+Миграция операционного модуля добавляет уникальный индекс связи волны с окном,
+индекс связи заказа с волной и копии названия и единицы товара в позиции волны.
+Для существующих позиций эти данные заполняются из товаров. Дубликаты волн нужно
+разобрать вручную до миграции; история закупок при миграции не удаляется.
 
-Integration tests include three customer orders, concurrent wave formation,
-quality aggregation, purchase/distribution arithmetic, oversubscription checks,
-substitutions, cancellation, delivery/payment and immutable completed procurement.
-Database test files run sequentially because they share settings; concurrent
-requests are still tested explicitly within each suite.
+Интеграционные тесты охватывают три клиентских заказа, конкурентное формирование
+волны, агрегацию предпочтений, расчёты закупки и упаковки, защиту от превышения
+закупленного количества, замены, отмену, доставку, оплату и неизменяемость
+завершённой закупки. Файлы тестов с БД выполняются последовательно из-за общих
+настроек; конкурентные запросы проверяются явно внутри отдельных наборов тестов.
 
-Not implemented: routing, multiple markets, inventory/warehouse management,
-courier tracking, online payments or a separate picker app.
+Не реализованы: построение маршрутов, работа с несколькими рынками, складской учёт,
+отслеживание курьеров, онлайн-оплата и отдельное приложение сборщика.
 
 ## Как проверить MVP вручную
 
@@ -416,15 +437,15 @@ corepack pnpm dev
 `http://localhost:3000/admin/login`. После входа приложение само открывает
 подходящий раздел для роли.
 
-| Роль | Email | Пароль | Открываемый раздел |
+| Роль | Электронная почта | Пароль | Открываемый раздел |
 | --- | --- | --- | --- |
 | Администратор | `admin@dushanbefresh.local` | `Dev-admin-only-2026!` | `/admin/orders` |
 | Сборщик | `picker@dushanbefresh.local` | `Dev-picker-only-2026!` | `/admin/delivery-waves` |
 | Курьер | `courier@dushanbefresh.local` | `Dev-courier-only-2026!` | `/admin/delivery-waves` |
 
 Эти пароли предназначены только для локальной разработки. Передавать их в
-production нельзя. Если staff seed уже был выполнен с переменными
-`DEV_*_PASSWORD`, используйте заданные тогда значения: seed намеренно не меняет
+боевое окружение нельзя. Если скрипт заполнения сотрудников уже был выполнен с переменными
+`DEV_*_PASSWORD`, используйте заданные тогда значения: скрипт намеренно не меняет
 существующий пароль.
 
 ### Каталог от администратора
@@ -450,18 +471,18 @@ production нельзя. Если staff seed уже был выполнен с �
 
 1. Для тестового заказа откройте клиентский сайт `http://localhost:3000/catalog`
 в отдельном окне или после выхода из админки. Добавьте товаров минимум на
-120 сомони, откройте корзину, перейдите к checkout, заполните контакты и адрес,
+120 сомони, откройте корзину, перейдите к оформлению, заполните контакты и адрес,
 выберите свободное окно, подтвердите условия и создайте заказ.
 2. Войдите как администратор. На «Заказы» по умолчанию открыты «Активные».
 Новый заказ уже имеет статус «Подтверждён»: отдельная кнопка не требуется.
 Вкладки «Завершённые» и «Отменённые» отделены; дата/слот/статус фильтруют
 заказы внутри выбранной вкладки.
 3. Волна уже создана автоматически, дежурные уже назначены. В «Волны доставки»
-admin может только проверить это: формировать волну вручную больше не нужно.
+администратор может просто проверить это: формировать волну вручную больше не нужно.
 4. Создайте ещё один заказ на тот же слот и третий на другой слот (для проверки
-даты удобно выбрать следующий день). В admin должны быть 3 заказа и 2 волны:
+даты удобно выбрать следующий день). В админке должны быть 3 заказа и 2 волны:
 в первой 2 заказа, во второй 1. Выберите дату доставки и нажмите «Показать»:
-в таблице должны остаться только заказы с этой delivery date, независимо от даты создания.
+в таблице должны остаться только заказы с этой датой доставки, независимо от даты создания.
 5. Войдите как сборщик. В «Мои волны» → «Предстоящие» сразу видны обе волны.
 Откройте первую и нажмите
 «Начать сборку». Во вкладке «Закупить товары» укажите «Куплено», «Цена закупки за 1 кг, сом»
@@ -470,33 +491,33 @@ admin может только проверить это: формировать 
 соответственно. «Ориентир рынка» доступен только для чтения.
 Начатая волна находится во вкладке «В работе», после сборки переходит в «Завершённые».
 6. Во вкладке «Упаковать заказы» видны компактные строки товаров каждого заказа.
-После физической упаковки нажмите «Всё упаковано как заказано»: backend сохранит
+После физической упаковки нажмите «Всё упаковано как заказано»: сервер сохранит
 requestedQuantity как finalQuantity для ещё не обработанных позиций. Появится
 «Заказ упакован». Открывать каждый заказ и повторять ввод количества больше не нужно.
 Если товара меньше, он отсутствует или заменён, нажмите «Изменить» у нужной строки,
 задайте фактическое количество/статус/примечание и сохраните изменение. После этого
 общая кнопка заполнит только остальные позиции, не перезаписывая исключение.
-Цена клиенту берётся из snapshot, итог позиции равен finalQuantity × snapshot-цена,
+Цена клиенту берётся из сохранённой копии данных заказа, итог позиции равен finalQuantity × зафиксированная цена,
 а не закупочной цене. Нажмите «Завершить сборку»: волна и заказы станут «Собран».
 7. Курьер в отдельном браузере/профиле заранее видит волну как «Готовится».
 После завершения сборки состояние обновится в течение 10 секунд (или нажмите
 «Обновить»). Когда партия физически получена, нажмите «Забрал заказы».
-Волна и заказы перейдут в «У курьера» без admin-подтверждения.
+Волна и заказы перейдут в «У курьера» без подтверждения администратора.
 8. В каждом заказе нажмите «Доставлен», затем «Наличные получены». После последней
 доставки волна завершится автоматически. Курьер не видит закупочные цены,
-поставщика и маржу. Admin видит доставленные заказы во вкладке «Завершённые».
+поставщика и маржу. Администратор видит доставленные заказы во вкладке «Завершённые».
 
-### Проверка отклонения закупки и вмешательства admin
+### Проверка отклонения закупки и вмешательства администратора
 
 **Цена за единицу и сумма закупки не взаимозаменяемы.** Для бананов с ориентиром
 `10.00 сом/кг` введите количество `16`, цену за 1 кг `10`, нажмите «Отметить купленным».
-Сохранённая карточка должна показать `16 кг × 10.00 сом/кг = 160.00 сом`, без warning.
-`purchaseTotal` считает только backend через Decimal; отклонение считается как
+Сохранённая карточка должна показать `16 кг × 10.00 сом/кг = 160.00 сом`, без предупреждения.
+`purchaseTotal` считает только сервер через Decimal; отклонение считается как
 `(purchaseUnitPrice - referencePurchasePrice) / referencePurchasePrice × 100`.
 При цене `12` отклонение составляет 20%, а сумма при 16 кг равна `192.00`.
 В поле цены не нужно вводить итог `160`: это означало бы 160 сом **за килограмм**.
 После сохранения следующий товар поднимается вверх: список одноколоночный
-на телефоне и desktop. Для повторного ввода нажмите «Изменить».
+на телефоне и компьютере. Для повторного ввода нажмите «Изменить».
 
 Для кинзы в тестовом каталоге «Цена для клиента» = `2.50 сом/пучок`,
 «Ориентир закупки» = `1.50 сом/пучок`. Это разные цены, не ошибка:
@@ -506,8 +527,8 @@ requestedQuantity как finalQuantity для ещё не обработанны
 В «Настройки» задайте «Порог отклонения закупочной цены, %» = `15` и сохраните.
 2. Сборщик вводит `8.30`: флага нет. При `9.20` (ровно 15%) флага также нет.
 При `9.44` появится «Цена закупки выше ориентира на 18%. Нужна проверка администратора.», но завершение
-сборки не блокируется. Admin видит предупреждение в той же волне.
-3. Admin может поменять назначенного сборщика/курьера в полях волны, в том числе
+сборки не блокируется. Администратор видит предупреждение в той же волне.
+3. Администратор может поменять назначенного сборщика/курьера в полях волны, в том числе
 заменить курьера в пути. Старый сотрудник потеряет доступ, новый увидит волну.
 4. Для проблемного неоплаченного заказа до доставки откройте его и нажмите
 «Отменить заказ». Он появится в «Отменённые». Закупочная история сохраняется.
@@ -527,19 +548,19 @@ requestedQuantity как finalQuantity для ещё не обработанны
    закупку или сохраните исключение и повторите. Списывать чужую закупку и
    упаковывать чужие волны нельзя. Повторное нажатие не меняет сохранённые позиции.
 
-API: `POST /api/v1/admin/orders/:id/pack`, без тела, только admin/назначенный picker.
-`remainingQuantity` в picking list считает backend через Decimal:
+API: `POST /api/v1/admin/orders/:id/pack`, без тела, только для администратора или назначенного сборщика.
+`remainingQuantity` в списке закупки считает сервер через Decimal:
 `purchasedQuantity - сумма finalQuantity` по активным позициям picked/replaced,
 с учётом фактического товара замены. До ввода закупки значение null.
-Массовая упаковка работает только в picking; статусы доставки не меняются до
+Массовая упаковка работает только в статусе picking; статусы доставки не меняются до
 «Завершить сборку». Складской учёт не добавлен.
 
 ### Почему окно доставки закрыто
 
-`GET /api/v1/delivery-slots` и checkout validation возвращают `unavailableReasons`:
+`GET /api/v1/delivery-slots` и проверка оформления заказа возвращают `unavailableReasons`:
 
-- `capacity_full`: «Мест больше нет»; все неотменённые заказы занимают capacity.
-- `cutoff_passed`: «Время заказа прошло»; в MVP cutoff совпадает с началом окна
+- `capacity_full`: «Мест больше нет»; все неотменённые заказы занимают места в окне.
+- `cutoff_passed`: «Время заказа прошло»; в MVP крайний срок заказа совпадает с началом окна
   по времени Душанбе (UTC+05:00), включая точную границу времени.
 - `wave_closed`: «Приём заказов закрыт — сборка уже началась»; волна в picking,
   picked, out_for_delivery или delivered. Завершение доставки не открывает слот заново.
@@ -547,8 +568,8 @@ API: `POST /api/v1/admin/orders/:id/pack`, без тела, только admin/�
 - `inactive`: «Приём заказов на это окно закрыт»; неактивные окна не включаются
   в публичный список, но причина возвращается при проверке ранее выбранного окна.
 
-Если действуют несколько причин, UI показывает все. У доступного окна массив
-пустой. Backend повторно проверяет доступность при создании заказа под блокировкой
+Если действуют несколько причин, интерфейс показывает все. У доступного окна массив
+пустой. Сервер повторно проверяет доступность при создании заказа под блокировкой
 слота, даже если клиент выбрал его до начала сборки.
 
 Диагностика локальной БД 23 сентября 2026 в 08:32 по Душанбе: окно 23.09
@@ -556,22 +577,22 @@ API: `POST /api/v1/admin/orders/:id/pack`, без тела, только admin/�
 из-за picking-волны (1 из 10). На момент проверки время начала ещё не наступило.
 Эти конкретные состояния относятся только к локальной тестовой БД.
 
-Все перечисленные действия доступны через UI. На текущем MVP через UI пока
+Все перечисленные действия доступны через интерфейс. В текущем MVP через интерфейс пока
 нельзя изменять существующую категорию или управлять сотрудниками и их
-паролями; это не требуется для сценария выше. Настройки checkout на странице
+паролями; это не требуется для сценария выше. Настройки оформления заказа на странице
 «Настройки» сейчас только для просмотра.
 Дежурные сотрудники и порог отклонения закупочной цены редактируются. Прикрепление подтверждения закупки
 и журнал согласований отклонений пока отсутствуют. Старые draft/placed-заказы
 не попадают в новые вкладки и не подтверждаются миграцией: их нужно отдельно
 разобрать через существующий API или сохранённую ссылку на заказ до запуска сборки.
 
-### Seeds и очистка локальной проверки
+### Тестовые данные и очистка для локальной проверки
 
-- `corepack pnpm db:seed:catalog`: каталог (`db:seed` остаётся совместимым alias).
-- `corepack pnpm db:seed:staff`: dev-сотрудники и дежурные, без заказов/закупок.
-- `corepack pnpm db:seed:checkout`: настройки checkout и будущие слоты.
-- `corepack pnpm db:seed:operations`: необязательное demo, 3 заказа через backend
-  checkout в двух слотах; actual quantities/prices остаются пустыми. Не запускайте
+- `corepack pnpm db:seed:catalog`: каталог (`db:seed` остаётся совместимым псевдонимом команды).
+- `corepack pnpm db:seed:staff`: тестовые сотрудники и дежурные, без заказов/закупок.
+- `corepack pnpm db:seed:checkout`: настройки оформления и будущие окна доставки.
+- `corepack pnpm db:seed:operations`: необязательная демонстрация, 3 заказа через серверное
+  оформление в двух окнах; фактические количества и цены остаются пустыми. Не запускайте
   эту команду перед ручной проверкой трёх собственных заказов.
 
 Для чистой проверки остановите работу с локальными заказами и выполните:
@@ -582,25 +603,25 @@ corepack pnpm db:seed:staff
 corepack pnpm db:seed:checkout
 ```
 
-Reset удаляет **все заказы и волны выбранной локальной dev-БД**, включая созданные
-вручную тестовые заказы, а не только известные seed-строки. Он сохраняет товары,
-категории, staff/customers, app settings и delivery slots. Production/staging,
-удалённый хост и запуск без `--confirm` запрещены. Не направляйте dev-команды
+Команда очистки удаляет **все заказы и волны выбранной локальной БД разработки**, включая созданные
+вручную тестовые заказы, а не только строки из скриптов заполнения. Она сохраняет товары,
+категории, сотрудников, клиентов, настройки приложения и окна доставки. Боевое и предрелизное окружения,
+удалённый хост и запуск без `--confirm` запрещены. Не направляйте команды для разработки
 на БД с реальными заказами. Очистка не является обычным шагом ежедневного запуска.
 
-Build web:
+Сборка веб-приложения:
 
 ```bash
 corepack pnpm build:web
 ```
 
-Build API:
+Сборка API:
 
 ```bash
 corepack pnpm build:api
 ```
 
-Build all packages:
+Сборка всех пакетов:
 
 ```bash
 corepack pnpm build
