@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { ProductDetail } from "@/components/product-detail";
+import { ProductData } from "@/components/product-data";
+import { ProductDetailSkeleton } from "@/components/loading-state";
+
+export const dynamic = "force-dynamic";
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
   return (
@@ -9,7 +13,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         <Link className="back-link" href="/catalog">
           Назад в каталог
         </Link>
-        <ProductDetail key={params.slug} slug={params.slug} />
+        <Suspense key={params.slug} fallback={<ProductDetailSkeleton />}>
+          <ProductData slug={params.slug} />
+        </Suspense>
       </section>
     </main>
   );

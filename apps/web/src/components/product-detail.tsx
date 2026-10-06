@@ -9,16 +9,17 @@ import { priceLabel, quantityLabel } from "@/lib/format";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
 
-export function ProductDetail({ slug }: { slug: string }) {
+export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
   const { addProduct } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState("1.000");
-  const [qualityOption, setQualityOption] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
+  const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
+  const [qualityOption, setQualityOption] = useState(initialProduct?.qualityOptions[0]?.id ?? "");
+  const [error, setError] = useState<string | null>(initialProduct === null ? "Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения." : null);
   const [notice, setNotice] = useState("");
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    if (initialProduct !== undefined && retry === 0) return;
     let cancelled = false;
     setProduct(null);
     setError(null);
@@ -32,7 +33,7 @@ export function ProductDetail({ slug }: { slug: string }) {
       })
       .catch(() => { if (!cancelled) setError("Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения."); });
     return () => { cancelled = true; };
-  }, [slug, retry]);
+  }, [slug, retry, initialProduct]);
 
   if (error) {
     return <div className="notice" role="alert"><p>{error}</p>

@@ -9,20 +9,24 @@ import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
 export function CatalogBrowser({
   initialCategory = "",
   initialSearch = "",
+  initialCategories,
+  initialProducts,
   hideSearch = false
 }: {
   initialCategory?: string;
   initialSearch?: string;
+  initialCategories?: Category[] | null;
+  initialProducts?: Product[] | null;
   hideSearch?: boolean;
 }) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories ?? []);
+  const [products, setProducts] = useState<Product[]>(initialProducts ?? []);
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState(initialSearch);
-  const [pending, setPending] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [categoriesPending, setCategoriesPending] = useState(true);
+  const [pending, setPending] = useState(initialProducts === undefined);
+  const [error, setError] = useState<string | null>(initialProducts === null ? "Не удалось загрузить товары. Попробуйте ещё раз." : null);
+  const [categoriesError, setCategoriesError] = useState<string | null>(initialCategories === null ? "Не удалось загрузить категории. Попробуйте ещё раз." : null);
+  const [categoriesPending, setCategoriesPending] = useState(initialCategories === undefined);
   const productRequest = useRef(0);
 
   const loadCategories = useCallback(async () => {
@@ -56,14 +60,24 @@ export function CatalogBrowser({
   }, []);
 
   useEffect(() => {
-    void loadProducts(initialCategory, initialSearch);
+    if (initialProducts === undefined) void loadProducts(initialCategory, initialSearch);
+    else {
+      setProducts(initialProducts ?? []);
+      setPending(false);
+      setError(initialProducts === null ? "Не удалось загрузить товары. Попробуйте ещё раз." : null);
+    }
     setCategory(initialCategory);
     setSearch(initialSearch);
-  }, [initialCategory, initialSearch, loadProducts]);
+  }, [initialCategory, initialSearch, initialProducts, loadProducts]);
 
   useEffect(() => {
-    void loadCategories();
-  }, [loadCategories]);
+    if (initialCategories === undefined) void loadCategories();
+    else {
+      setCategories(initialCategories ?? []);
+      setCategoriesPending(false);
+      setCategoriesError(initialCategories === null ? "Не удалось загрузить категории. Попробуйте ещё раз." : null);
+    }
+  }, [initialCategories, loadCategories]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

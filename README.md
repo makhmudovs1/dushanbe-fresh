@@ -78,6 +78,40 @@ WEB_PORT=3001 API_PORT=4001 corepack pnpm dev
 curl http://localhost:4000/api/v1/health
 ```
 
+### Проверка скорости
+
+Не оценивайте скорость для пользователей по `next dev`: первая загрузка включает
+компиляцию, а JS содержит инструменты разработки. Результаты измерений dev,
+production и ngrok: [аудит производительности](docs/PERFORMANCE.md).
+
+Для проверки production-сборки интерфейса остановите `pnpm dev`, затем:
+
+```bash
+corepack pnpm build:web
+corepack pnpm build:api
+docker compose up -d postgres
+```
+
+В первом терминале запустите скомпилированный API:
+
+```bash
+corepack pnpm --filter @dushanbe-fresh/api start
+```
+
+Во втором терминале запустите production-сервер Next.js:
+
+```bash
+corepack pnpm --filter @dushanbe-fresh/web exec next start -p 3000
+```
+
+Это локальная проверка сборки, не production deployment. Секреты и постоянное
+хранилище для настоящего production настраиваются отдельно. Для HTTPS-демо
+сохраните `STAFF_COOKIE_SECURE=true` и `WEB_ORIGIN` из раздела доступа через туннель.
+Если используете нестандартный `API_URL`, задайте его и при сборке, и при запуске web.
+Начальные публичные данные каталога и товара web теперь получает напрямую от API
+на сервере и передаёт в HTML-потоке; фильтры и остальные браузерные запросы остаются
+на `/api/v1`. Данные заказа не попадают в общий серверный кеш.
+
 Админ-панель:
 
 ```text

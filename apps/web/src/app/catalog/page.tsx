@@ -1,4 +1,8 @@
-import { CatalogBrowser } from "@/components/catalog-browser";
+import { Suspense } from "react";
+import { CatalogData } from "@/components/catalog-data";
+import { ProductGridSkeleton } from "@/components/loading-state";
+
+export const dynamic = "force-dynamic";
 
 export default function CatalogPage({
   searchParams
@@ -12,7 +16,9 @@ export default function CatalogPage({
           <h1>Каталог</h1>
           <p>Свежие продукты, доступные сегодня</p>
         </header>
-        <CatalogBrowser initialCategory={searchParams?.category ?? ""} />
+        <Suspense key={searchParams?.category ?? ""} fallback={<ProductGridSkeleton />}>
+          <CatalogData category={searchParams?.category ?? ""} />
+        </Suspense>
       </section>
     </main>
   );

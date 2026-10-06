@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { CatalogBrowser } from "@/components/catalog-browser";
+import { CatalogData } from "@/components/catalog-data";
+import { ProductGridSkeleton } from "@/components/loading-state";
+
+export const dynamic = "force-dynamic";
 
 const categories = [
   { name: "Овощи", slug: "vegetables", description: "Помидоры, огурцы, картофель" },
@@ -70,7 +74,7 @@ export default function HomePage() {
             Весь каталог
           </Link>
         </div>
-        <CatalogBrowser hideSearch />
+        <Suspense fallback={<ProductGridSkeleton />}><CatalogData hideSearch /></Suspense>
       </section>
     </main>
   );
