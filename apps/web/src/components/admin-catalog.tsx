@@ -9,8 +9,12 @@ import {
   getAdminCategories,
   getAdminProducts,
   Product,
-  updateAdminProduct
+  updateAdminProduct,
+  uploadProductImage
 } from "@/lib/api";
+import { priceLabel, unitLabel } from "@/lib/format";
+import { ProductPhotoField } from "./product-photo-field";
+import { ProductImage } from "./product-image";
 
 const emptyProduct = {
   categoryId: "",
@@ -38,6 +42,7 @@ export function AdminCatalog() {
   const [categoryForm, setCategoryForm] = useState({ name: "", slug: "", sortOrder: 0 });
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
 
   useEffect(() => {
     void load();
@@ -61,11 +66,13 @@ export function AdminCatalog() {
         categoryId: current.categoryId || nextCategories[0]?.id || ""
       }));
     } catch {
-      setNotice("Не удалось загрузить admin catalog. Проверьте API.");
+      setNotice("Не удалось загрузить каталог. Повторите попытку.");
     }
   }
 
   function selectProduct(product: Product) {
+    setPhoto(null);
+    setNotice("");
     setSelectedProductId(product.id);
     setForm({
       categoryId: product.category.id,
@@ -87,6 +94,7 @@ export function AdminCatalog() {
   }
 
   function resetForm() {
+    setPhoto(null);
     setSelectedProductId("");
     setForm({
       ...emptyProduct,
@@ -96,6 +104,10 @@ export function AdminCatalog() {
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (form.isActive && !form.image && !photo) {
+      setNotice("Добавьте фотографию товара или выключите товар, чтобы сохранить черновик.");
+      return;
+    }
     setPending(true);
     setNotice("");
 
@@ -108,6 +120,11 @@ export function AdminCatalog() {
     };
 
     try {
+      if (photo) {
+        payload.image = await uploadProductImage(photo);
+        setForm(current => ({ ...current, image: payload.image }));
+        setPhoto(null);
+      }
       if (selectedProductId) {
         await updateAdminProduct(selectedProductId, payload);
         setNotice("Товар обновлен.");
@@ -118,8 +135,8 @@ export function AdminCatalog() {
 
       await load();
       resetForm();
-    } catch {
-      setNotice("Не удалось сохранить товар. Проверьте поля формы.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Не удалось сохранить товар. Проверьте поля формы.");
     } finally {
       setPending(false);
     }
@@ -135,17 +152,21 @@ export function AdminCatalog() {
       await load();
       setNotice("Категория создана.");
     } catch {
-      setNotice("Не удалось создать категорию. Проверьте название и уникальность slug.");
+      setNotice("Не удалось создать категорию. Проверьте название и уникальность адреса.");
     } finally {
       setPending(false);
     }
   }
 
   async function toggleProduct(product: Product, field: "isActive" | "isAvailableToday") {
-    await updateAdminProduct(product.id, {
-      [field]: !(product[field] ?? true)
-    });
-    await load();
+    setPending(true);
+    try {
+      await updateAdminProduct(product.id, { [field]: !(product[field] ?? true) });
+      await load();
+      setNotice("");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Не удалось изменить товар.");
+    } finally { setPending(false); }
   }
 
   return (
@@ -162,7 +183,7 @@ export function AdminCatalog() {
             <div className="admin-row" key={category.id}>
               <span>{category.name}</span>
               <small>{category.slug}</small>
-              <strong>{category.isActive ? "active" : "inactive"}</strong>
+              <strong>{category.isActive ? "Включена" : "Выключена"}</strong>
             </div>
           ))}
         </div>
@@ -170,7 +191,7 @@ export function AdminCatalog() {
           <h3>Новая категория</h3>
           <div className="form-grid">
             <label>Название<input required value={categoryForm.name} onChange={(event) => setCategoryForm({ ...categoryForm, name: event.target.value })} /></label>
-            <label>Slug<input required value={categoryForm.slug} onChange={(event) => setCategoryForm({ ...categoryForm, slug: event.target.value })} /></label>
+            <label>Адрес в каталоге<input required value={categoryForm.slug} onChange={(event) => setCategoryForm({ ...categoryForm, slug: event.target.value })} /></label>
             <label>Порядок<input required type="number" value={categoryForm.sortOrder} onChange={(event) => setCategoryForm({ ...categoryForm, sortOrder: Number(event.target.value) })} /></label>
           </div>
           <button className="secondary-link" disabled={pending} type="submit">Создать категорию</button>
@@ -183,7 +204,7 @@ export function AdminCatalog() {
             <p className="eyebrow">Товары</p>
             <h2>Управление каталогом</h2>
           </div>
-          <button onClick={resetForm} type="button">
+          <button onClick={resetForm} disabled={pending} type="button">
             Новый товар
           </button>
         </div>
@@ -191,16 +212,17 @@ export function AdminCatalog() {
         <div className="admin-list">
           {products.map((product) => (
             <div className="admin-product-row" key={product.id}>
-              <button onClick={() => selectProduct(product)} type="button">
+              <button onClick={() => selectProduct(product)} disabled={pending} type="button">
+                <div className="admin-product-photo"><ProductImage src={product.image} name={product.name} /></div>
                 <span>{product.name}</span>
                 <small>
-                  {product.sellingPrice} сомони / {product.unit}
+                  {priceLabel(product.sellingPrice, product.unit)}
                 </small>
               </button>
-              <button onClick={() => toggleProduct(product, "isAvailableToday")} type="button">
+              <button onClick={() => void toggleProduct(product, "isAvailableToday")} disabled={pending} type="button">
                 {product.isAvailableToday ? "Сегодня: да" : "Сегодня: нет"}
               </button>
-              <button onClick={() => toggleProduct(product, "isActive")} type="button">
+              <button onClick={() => void toggleProduct(product, "isActive")} disabled={pending} type="button">
                 {product.isActive ? "Включен" : "Выключен"}
               </button>
             </div>
@@ -216,6 +238,7 @@ export function AdminCatalog() {
           </div>
         </div>
         <form className="admin-form" onSubmit={saveProduct}>
+          <fieldset className="product-form-fields" disabled={pending}>
           <label>
             Категория
             <select
@@ -237,7 +260,7 @@ export function AdminCatalog() {
             />
           </label>
           <label>
-            Slug
+            Адрес в каталоге
             <input
               value={form.slug}
               onChange={(event) => setForm({ ...form, slug: event.target.value })}
@@ -250,51 +273,50 @@ export function AdminCatalog() {
               onChange={(event) => setForm({ ...form, description: event.target.value })}
             />
           </label>
-          <label>
-            Изображение
-            <input
-              value={form.image}
-              onChange={(event) => setForm({ ...form, image: event.target.value })}
-            />
-          </label>
+          <ProductPhotoField key={selectedProductId || "new"} image={form.image} file={photo} disabled={pending}
+            onChange={(file, image) => { setPhoto(file); setForm({ ...form, image }); setNotice(""); }} />
           <div className="form-grid">
             <label>
               Единица
-              <input
+              <select
                 value={form.unit}
                 onChange={(event) => setForm({ ...form, unit: event.target.value })}
-              />
+              >{["kg", "g", "piece", "pack", "bunch"].map(unit => <option key={unit} value={unit}>{unitLabel(unit)}</option>)}</select>
             </label>
             <label>
               Цена для клиента
               <input
+                inputMode="decimal"
                 value={form.sellingPrice}
-                onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })}
+                onChange={(event) => setForm({ ...form, sellingPrice: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
               Ориентир закупки
               <input
+                inputMode="decimal"
                 value={form.purchasePrice}
-                onChange={(event) => setForm({ ...form, purchasePrice: event.target.value })}
+                onChange={(event) => setForm({ ...form, purchasePrice: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
-              Min quantity
+              Минимальное количество
               <input
+                inputMode="decimal"
                 value={form.minQuantity}
-                onChange={(event) => setForm({ ...form, minQuantity: event.target.value })}
+                onChange={(event) => setForm({ ...form, minQuantity: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
-              Quantity step
+              Шаг количества
               <input
+                inputMode="decimal"
                 value={form.quantityStep}
-                onChange={(event) => setForm({ ...form, quantityStep: event.target.value })}
+                onChange={(event) => setForm({ ...form, quantityStep: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
-              Sort order
+              Порядок
               <input
                 type="number"
                 value={form.sortOrder}
@@ -303,7 +325,7 @@ export function AdminCatalog() {
             </label>
           </div>
           <label>
-            Quality options, по одному на строку
+            Предпочтения по качеству, по одному на строку
             <textarea
               value={form.qualityOptionsText}
               onChange={(event) => setForm({ ...form, qualityOptionsText: event.target.value })}
@@ -340,6 +362,8 @@ export function AdminCatalog() {
           <button className="primary-action" disabled={pending} type="submit">
             {pending ? "Сохраняем..." : "Сохранить"}
           </button>
+          {notice ? <p className="notice" role="status">{notice}</p> : null}
+          </fieldset>
         </form>
       </section>
     </div>

@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Prisma, OrderStatus, OrderItemStatus } from "@prisma/client";
 
 export const orderTransitions: Record<OrderStatus, OrderStatus[]> = {
+  pending_review: ["confirmed", "cancelled"],
   draft: ["placed", "cancelled"], placed: ["confirmed", "cancelled"],
   confirmed: ["picking", "cancelled"], picking: ["picked", "cancelled"],
   picked: ["out_for_delivery", "cancelled"], out_for_delivery: ["delivered", "cancelled"], delivered: [], cancelled: []

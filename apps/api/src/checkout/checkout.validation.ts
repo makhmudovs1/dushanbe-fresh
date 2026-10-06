@@ -1,5 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
 import type { CheckoutInput, CreateOrderInput, SubstitutionPolicy } from "@dushanbe-fresh/shared";
+import { normalizePhone } from "../customers/phone";
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -46,9 +47,7 @@ export function parseCreateOrder(value: unknown): CreateOrderInput {
   const body = record(value);
   const checkout = parseCheckout(body);
   const address = record(body.address);
-  let phone = text(body.phone, "Телефон", 32).replace(/[\s()-]/g, "");
-  if (/^\d{9}$/.test(phone)) phone = `+992${phone}`;
-  if (!/^\+[1-9]\d{7,14}$/.test(phone)) throw new BadRequestException("Введите телефон с кодом страны, например +992 900 00 00 00.");
+  const phone = normalizePhone(text(body.phone, "Телефон", 32));
   const policies = ["replace_similar", "contact_me", "remove_item"];
   if (!policies.includes(String(body.substitutionPolicy))) throw new BadRequestException("Выберите правило замены товара.");
   const reviewToken = text(body.reviewToken, "Подтверждение суммы", 64);

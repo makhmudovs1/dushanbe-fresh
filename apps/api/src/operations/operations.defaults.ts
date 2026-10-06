@@ -10,7 +10,7 @@ export async function defaultAssignments(tx: Prisma.TransactionClient) {
   for (const role of ["picker", "courier"] as const) {
     const id = settings.find(setting => setting.key === `default_${role}_id`)?.value;
     if (typeof id !== "string" || !id) continue;
-    const user = await tx.user.findFirst({ where: { id, role, status: "active" }, select: { id: true } });
+    const user = await tx.user.findFirst({ where: { id, roles: { has: role }, status: "active" }, select: { id: true } });
     if (user) assignments[role === "picker" ? "pickerUserId" : "courierUserId"] = user.id;
   }
   return assignments;

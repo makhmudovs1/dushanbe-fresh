@@ -17,7 +17,7 @@ const product = {
   name: "Помидоры",
   slug: "tomatoes",
   description: "Свежие помидоры",
-  imageUrl: "/img/products/tomatoes.jpg",
+  imageUrl: "/api/v1/media/00000000-0000-4000-8000-000000000001.webp",
   unit: "kg",
   currentPurchasePrice: new Prisma.Decimal("8.00"),
   currentSalePrice: new Prisma.Decimal("10.50"),
@@ -51,6 +51,7 @@ function createService() {
     product: {
       findMany: vi.fn().mockResolvedValue([product]),
       findFirst: vi.fn().mockResolvedValue(product),
+      findUnique: vi.fn().mockResolvedValue(product),
       create: vi.fn().mockResolvedValue(product),
       update: vi.fn().mockResolvedValue(product)
     }
@@ -63,6 +64,47 @@ function createService() {
 }
 
 describe("CatalogService", () => {
+  it("requires a photo for new enabled products but permits drafts", async () => {
+    const { prisma, service } = createService();
+    const input = { categoryId: category.id, name: "Зелень", slug: "greens", unit: "bunch", sellingPrice: "2.50", purchasePrice: "1.50", minQuantity: "1", quantityStep: "1", image: null };
+    await expect(service.createAdminProduct(input)).rejects.toThrow("Добавьте фотографию");
+    expect(prisma.product.create).not.toHaveBeenCalled();
+    await service.createAdminProduct({ ...input, isActive: false });
+    expect(prisma.product.create).toHaveBeenCalledOnce();
+  });
+
+  it("requires a photo when editing a legacy enabled product, including price-only updates", async () => {
+    const { prisma, service } = createService();
+    prisma.product.findUnique.mockResolvedValue({ ...product, imageUrl: null } as never);
+    await expect(service.updateAdminProduct(product.id, { sellingPrice: "12" })).rejects.toThrow("Добавьте фотографию");
+    await expect(service.updateAdminProduct(product.id, { isAvailableToday: true })).rejects.toThrow("Добавьте фотографию");
+    await service.updateAdminProduct(product.id, { isActive: false });
+  });
+
+  it("rejects clearing an enabled photo and does not allow base64 in drafts", async () => {
+    const { service } = createService();
+    await expect(service.updateAdminProduct(product.id, { image: null })).rejects.toThrow("Добавьте фотографию");
+    await expect(service.updateAdminProduct(product.id, { isActive: false, image: "data:image/png;base64,AAAA" })).rejects.toThrow("HTTPS");
+  });
+
+  it("treats nonexistent old seed paths as missing photos", async () => {
+    const { prisma, service } = createService();
+    const legacy = { ...product, imageUrl: "/img/products/tomatoes.jpg" };
+    prisma.product.findUnique.mockResolvedValue(legacy);
+    prisma.product.findMany.mockResolvedValue([legacy]);
+    expect((await service.listPublicProducts())[0].image).toBeNull();
+    await expect(service.updateAdminProduct(product.id, { sellingPrice: "12" })).rejects.toThrow("Добавьте фотографию");
+  });
+
+  it("replaces the persisted image without changing the public image contract", async () => {
+    const { prisma, service } = createService();
+    const image = "/api/v1/media/00000000-0000-4000-8000-000000000001.webp";
+    prisma.product.update.mockResolvedValue({ ...product, imageUrl: image });
+    const result = await service.updateAdminProduct(product.id, { image });
+    expect(prisma.product.update).toHaveBeenCalledWith(expect.objectContaining({ data: { imageUrl: image } }));
+    expect(result.image).toBe(image);
+  });
+
   it("requests only active and available today products for public listing", async () => {
     const { prisma, service } = createService();
 
@@ -85,6 +127,7 @@ describe("CatalogService", () => {
     const [dto] = await service.listPublicProducts();
 
     expect(dto.sellingPrice).toBe("10.5");
+    expect(dto.image).toBe(product.imageUrl);
     expect(dto).not.toHaveProperty("purchasePrice");
     expect(JSON.stringify(dto)).not.toContain("currentPurchasePrice");
   });
@@ -131,7 +174,7 @@ describe("CatalogService", () => {
       name: "Огурцы",
       slug: "cucumbers",
       description: "Хрустящие",
-      image: "/img/products/cucumbers.jpg",
+      image: "/api/v1/media/00000000-0000-4000-8000-000000000002.webp",
       unit: "kg",
       sellingPrice: "8.50",
       purchasePrice: "6.25",

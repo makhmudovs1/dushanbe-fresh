@@ -10,9 +10,10 @@ import { useStaff } from "./staff-layout";
 import { CourierWave, courierWaveLabel } from "./courier-delivery";
 
 export function AdminWaves() {
-  const isAdmin = useStaff().role === "admin";
-  const isCourier = useStaff().role === "courier";
-  const isPicker = useStaff().role === "picker";
+  const user = useStaff();
+  const isAdmin = user.roles.includes("admin");
+  const isCourier = user.roles.includes("courier") && !user.roles.includes("picker");
+  const isPicker = user.roles.includes("picker") && !user.roles.includes("courier") && !isAdmin;
   const [tab, setTab] = useState("upcoming");
   const [date, setDate] = useState("");
   const waves = useAdminResource<Array<AdminWave | CourierWave>>(`delivery-waves?date=${date}${isPicker ? `&tab=${tab}` : ""}`, 10000);

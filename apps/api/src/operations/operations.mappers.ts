@@ -12,6 +12,7 @@ export type Wave = Prisma.DeliveryWaveGetPayload<{ include: typeof waveInclude }
 
 export function mapOrder(order: Order): AdminOrder {
   return { id: order.id, orderNumber: order.orderNumber, createdAt: order.createdAt.toISOString(), status: order.status,
+    orderKind: order.orderKind, requiresPicking: order.requiresPicking,
     address: order.deliveryAddressSnapshot as AdminOrder["address"], deliverySlot: slotDto(order.deliverySlot, 0),
     deliveryWaveId: order.deliveryWaveId, substitutionPolicy: order.substitutionPolicy,
     customerComment: order.customerComment, qualityComment: order.qualityComment,
@@ -28,19 +29,23 @@ export function mapOrder(order: Order): AdminOrder {
 
 export function mapWave(wave: Wave, threshold = new Prisma.Decimal(15)): AdminWave {
   const activeOrders = wave.orders.filter(order => order.status !== "cancelled");
-  const demand = aggregateDemand(activeOrders.flatMap(order => order.items));
+  const pickingItems = activeOrders.filter(order => order.requiresPicking).flatMap(order => order.items);
+  const demand = aggregateDemand(pickingItems);
   const items = activeOrders.flatMap(order => order.items);
   const estimated = activeOrders.reduce((sum, order) => sum.plus(order.itemsSubtotal), new Prisma.Decimal(0));
   const complete = activeOrders.length > 0 && activeOrders.every(order => order.totalFinal !== null);
   const revenue = complete ? money(items.reduce((sum, item) => sum.plus(item.finalTotal ?? 0), new Prisma.Decimal(0))) : null;
   const cost = wave.waveItems.length && wave.waveItems.every(item => item.purchaseTotal !== null)
     ? money(wave.waveItems.reduce((sum, item) => sum.plus(item.purchaseTotal!), new Prisma.Decimal(0))) : null;
-  const staff = (user: Wave["picker"]): StaffDto | null => user ? { id: user.id, name: user.name, role: user.role as StaffDto["role"] } : null;
+  const staff = (user: Wave["picker"]): StaffDto | null => user ? { id: user.id, name: user.name, roles: user.roles, status: user.status } : null;
   return { id: wave.id, status: wave.status as WaveStatus, deliverySlot: slotDto(wave.deliverySlot, 0), picker: staff(wave.picker), courier: staff(wave.courier),
+    progress: { purchased: wave.waveItems.filter(item => item.purchaseTotal !== null).length, products: wave.waveItems.length,
+      packed: activeOrders.filter(order => order.totalFinal !== null).length, orders: activeOrders.length,
+      delivered: activeOrders.filter(order => order.status === "delivered").length, paid: activeOrders.filter(order => order.paymentStatus === "paid").length },
     orders: wave.orders.map(mapOrder), purchasePriceDeviationPercent: threshold.toString(),
     pickingList: wave.waveItems.map(item => {
       const group = demand.find(group => group.productId === item.productId);
-      const allocated = items.filter(line => (line.replacementProductId ?? line.productId) === item.productId && ["picked", "replaced"].includes(line.status))
+      const allocated = pickingItems.filter(line => (line.replacementProductId ?? line.productId) === item.productId && ["picked", "replaced"].includes(line.status))
         .reduce((sum, line) => sum.plus(line.finalQuantity ?? 0), new Prisma.Decimal(0));
       const review = item.purchasedQuantity?.gt(0) ? purchaseReviewMessage(item.purchaseUnitPrice, item.referencePurchasePrice, threshold) : null;
       return { id: item.id, productId: item.productId, name: item.productNameSnapshot, unit: item.unit,

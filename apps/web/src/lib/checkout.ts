@@ -1,4 +1,6 @@
 import type { CheckoutInput, CheckoutQuote, CreateOrderInput, DeliverySlotDto, OrderReceipt } from "@dushanbe-fresh/shared";
+import { errorMessage } from "./error-message";
+import { rememberTracking } from "./tracking";
 
 export class CheckoutError extends Error {
   constructor(message: string, public quote?: CheckoutQuote) { super(message); }
@@ -11,7 +13,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new CheckoutError(
-    typeof data?.message === "string" ? data.message : "Не удалось связаться с магазином. Попробуйте ещё раз.", data?.quote
+    errorMessage(data?.message, "Не удалось связаться с магазином. Попробуйте ещё раз."), data?.quote
   );
   return data as T;
 }
@@ -25,6 +27,7 @@ let recentReceipt: OrderReceipt | null = null;
 
 export function rememberReceipt(receipt: OrderReceipt) {
   recentReceipt = receipt;
+  rememberTracking(receipt.publicTrackingToken);
   try { window.sessionStorage.setItem(receiptKey, JSON.stringify(receipt)); } catch { /* Memory still supports navigation when storage is unavailable. */ }
 }
 
@@ -43,10 +46,6 @@ export async function finishCheckout(input: CreateOrderInput, clearCart: () => v
   return receipt;
 }
 
-export function slotLabel(slot: DeliverySlotDto) {
+export function slotLabel(slot: Pick<DeliverySlotDto, "date" | "startsAt" | "endsAt">) {
   return `${new Date(`${slot.date}T00:00:00Z`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" })}, ${slot.startsAt}–${slot.endsAt}`;
-}
-
-export function unitLabel(unit: string) {
-  return ({ kg: "кг", g: "г", piece: "шт.", bunch: "пучок", pack: "уп." } as Record<string, string>)[unit] ?? unit;
 }

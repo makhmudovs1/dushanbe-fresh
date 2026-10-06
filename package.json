@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.12.3",
   "scripts": {
+    "dev:share": "ngrok http http://localhost:${WEB_PORT:-3000} --inspect=false",
     "dev": "docker compose up -d postgres && corepack pnpm --parallel --filter @dushanbe-fresh/shared --filter @dushanbe-fresh/api --filter @dushanbe-fresh/web dev",
     "lint": "corepack pnpm -r lint",
     "typecheck": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm -r typecheck",

@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import { Product } from "@/lib/api";
-import { unitLabel } from "@/lib/checkout";
+import { priceLabel } from "@/lib/format";
+import { ProductImage } from "./product-image";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
-      <Link className="product-card__media" href={`/products/${product.slug}`}>
-        <span>{product.name.slice(0, 1)}</span>
+      <Link className="product-card__media" href={`/products/${product.slug}`} aria-label={product.name}>
+        <ProductImage src={product.image} name={product.name} />
       </Link>
       <div className="product-card__body">
         <div>
@@ -22,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="product-card__description">{product.description}</p>
         <div className="product-card__footer">
           <strong>
-            {product.sellingPrice} сомони / {unitLabel(product.unit)}
+            {priceLabel(product.sellingPrice, product.unit)}
           </strong>
           <Link className="product-card__action" href={`/products/${product.slug}`}>
             Выбрать

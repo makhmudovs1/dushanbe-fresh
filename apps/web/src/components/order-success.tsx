@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { OrderReceipt } from "@dushanbe-fresh/shared";
 import { readReceipt, slotLabel } from "@/lib/checkout";
+import { decimalLabel } from "@/lib/format";
+import { trackingPath } from "@/lib/tracking";
 
 export function OrderSuccess({ orderNumber }: { orderNumber: string }) {
   const [receipt, setReceipt] = useState<OrderReceipt | null>(null);
@@ -14,14 +16,15 @@ export function OrderSuccess({ orderNumber }: { orderNumber: string }) {
   return <div className="order-success">
     <p className="eyebrow">Dushanbe Fresh</p>
     <h1>Заказ оформлен</h1>
-    <p>Мы свяжемся с вами, если во время сборки потребуется уточнение.</p>
+    <p>{receipt.requiresConfirmation ? "Заказ требует подтверждения оператора. Мы свяжемся с вами." : "Мы свяжемся с вами, если во время сборки потребуется уточнение."}</p>
     <dl>
       <div><dt>Номер заказа</dt><dd>{receipt.orderNumber}</dd></div>
       <div><dt>Доставка</dt><dd>{slotLabel(receipt.deliverySlot)}</dd></div>
       <div><dt>Адрес</dt><dd>{receipt.address.city}, {receipt.address.street}, {receipt.address.building}{receipt.address.apartment ? `, кв. ${receipt.address.apartment}` : ""}</dd></div>
-      <div><dt>Предварительная сумма</dt><dd>{receipt.totalEstimated} сомони</dd></div>
+      <div><dt>Предварительная сумма</dt><dd>{decimalLabel(receipt.totalEstimated)} сомони</dd></div>
       <div><dt>Оплата</dt><dd>Наличными при получении</dd></div>
     </dl>
-    <Link className="primary-link" href="/catalog">Вернуться в каталог</Link>
+    {receipt.publicTrackingToken && <Link className="primary-link" href={trackingPath(receipt.publicTrackingToken)}>Отслеживать заказ</Link>}
+    <Link className="text-link" href="/catalog">Вернуться в каталог</Link>
   </div>;
 }

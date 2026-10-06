@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Category, getCategories, getProducts, Product } from "@/lib/api";
 import { ProductCard } from "./product-card";
+import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
 
 export function CatalogBrowser({
   initialCategory = "",
@@ -21,17 +22,23 @@ export function CatalogBrowser({
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [categoriesPending, setCategoriesPending] = useState(true);
+  const productRequest = useRef(0);
 
   const loadCategories = useCallback(async () => {
+    setCategoriesPending(true);
     setCategoriesError(null);
     try {
       setCategories(await getCategories());
     } catch {
       setCategoriesError("Не удалось загрузить категории. Попробуйте ещё раз.");
+    } finally {
+      setCategoriesPending(false);
     }
   }, []);
 
   const loadProducts = useCallback(async (nextCategory: string, nextSearch: string) => {
+    const request = ++productRequest.current;
     setPending(true);
     setError(null);
 
@@ -40,11 +47,11 @@ export function CatalogBrowser({
         category: nextCategory || undefined,
         search: nextSearch || undefined
       });
-      setProducts(nextProducts);
+      if (request === productRequest.current) setProducts(nextProducts);
     } catch {
-      setError("Не удалось загрузить товары. Попробуйте ещё раз.");
+      if (request === productRequest.current) setError("Не удалось загрузить товары. Попробуйте ещё раз.");
     } finally {
-      setPending(false);
+      if (request === productRequest.current) setPending(false);
     }
   }, []);
 
@@ -97,6 +104,7 @@ export function CatalogBrowser({
             {item.name}
           </button>
         ))}
+        {categoriesPending && !categories.length ? <CategorySkeleton /> : null}
       </div>
 
       {categoriesError ? (
@@ -115,14 +123,14 @@ export function CatalogBrowser({
           </button>
         </div>
       ) : null}
-      {pending ? <p className="notice">Загружаем свежий каталог...</p> : null}
+      {pending ? <ProductGridSkeleton /> : null}
       {!pending && !error && products.length === 0 ? <p>По вашему запросу ничего не найдено.</p> : null}
 
-      <div className="product-grid">
+      {!pending && !error ? <div className="product-grid">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
-      </div>
+      </div> : null}
     </section>
   );
 }

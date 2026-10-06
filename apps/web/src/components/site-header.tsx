@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { lastOrderEvent, lastTracking, trackingPath } from "@/lib/tracking";
 
 import { useCart } from "@/cart/cart-context";
 
 export function SiteHeader() {
-  const { lineCount } = useCart();
+  const { lineCount, hydrated } = useCart();
   const pathname = usePathname();
+  const [tracking, setTracking] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () => setTracking(lastTracking());
+    read(); window.addEventListener("storage", read); window.addEventListener(lastOrderEvent, read);
+    return () => { window.removeEventListener("storage", read); window.removeEventListener(lastOrderEvent, read); };
+  }, []);
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
   return (
@@ -17,13 +25,13 @@ export function SiteHeader() {
       </Link>
       <nav className="site-nav" aria-label="Основная навигация">
         <Link href="/catalog">Каталог</Link>
-        <Link className="desktop-only" href="/#categories">
+        {tracking ? <Link href={trackingPath(tracking)}>Мой заказ</Link> : <Link className="desktop-only" href="/#categories">
           Категории
-        </Link>
-        <Link className="cart-link" href="/cart" aria-label={`Корзина, позиций: ${lineCount}`}>
+        </Link>}
+        <Link className="cart-link" href="/cart" aria-label={hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина"}>
           <span className="cart-icon" aria-hidden="true" />
           <span>Корзина</span>
-          <strong>{lineCount}</strong>
+          <strong aria-hidden={!hydrated}>{hydrated ? lineCount : ""}</strong>
         </Link>
       </nav>
     </header>

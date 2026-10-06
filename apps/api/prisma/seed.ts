@@ -271,7 +271,6 @@ function toProductData(product: (typeof products)[number], categoryId: string) {
     name: product.name,
     slug: product.slug,
     description: product.description,
-    imageUrl: `/img/products/${product.slug}.jpg`,
     unit: product.unit,
     currentPurchasePrice: new Prisma.Decimal(product.currentPurchasePrice),
     currentSalePrice: new Prisma.Decimal(product.currentSalePrice),

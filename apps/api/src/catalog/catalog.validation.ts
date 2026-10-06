@@ -4,10 +4,17 @@ import { CategoryInput, ProductInput, ProductUpdateInput } from "./catalog.types
 
 const decimalPattern = /^\d+(\.\d{1,3})?$/;
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
+const fieldLabels: Record<string, string> = {
+  categoryId: "Категория", name: "Название", slug: "Адрес в каталоге", description: "Описание",
+  image: "Фотография", unit: "Единица измерения", sellingPrice: "Цена для клиента",
+  purchasePrice: "Ориентир закупки", minQuantity: "Минимальное количество", quantityStep: "Шаг количества",
+  sortOrder: "Порядок", isActive: "Включён", isAvailableToday: "Доступен сегодня", isWeighted: "Весовой товар"
+};
+const fieldLabel = (field: string) => fieldLabels[field] ?? "Предпочтения по качеству";
 
 function assertString(value: unknown, field: string) {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new BadRequestException(`${field} is required`);
+    throw new BadRequestException(`Заполните поле «${fieldLabel(field)}».`);
   }
 
   return value.trim();
@@ -27,7 +34,7 @@ function optionalBoolean(value: unknown, field: string): boolean | undefined {
   }
 
   if (typeof value !== "boolean") {
-    throw new BadRequestException(`${field} must be a boolean`);
+    throw new BadRequestException(`Проверьте переключатель «${fieldLabel(field)}».`);
   }
 
   return value;
@@ -39,7 +46,7 @@ function optionalNumber(value: unknown, field: string): number | undefined {
   }
 
   if (typeof value !== "number" || !Number.isInteger(value)) {
-    throw new BadRequestException(`${field} must be an integer`);
+    throw new BadRequestException(`В поле «${fieldLabel(field)}» нужно целое число.`);
   }
 
   return value;
@@ -49,7 +56,7 @@ function money(value: unknown, field: string) {
   const parsed = assertString(value, field);
 
   if (!moneyPattern.test(parsed)) {
-    throw new BadRequestException(`${field} must be a decimal money value`);
+    throw new BadRequestException(`В поле «${fieldLabel(field)}» нужна неотрицательная сумма, до двух знаков после точки.`);
   }
 
   return parsed;
@@ -59,7 +66,7 @@ function quantity(value: unknown, field: string) {
   const parsed = assertString(value, field);
 
   if (!decimalPattern.test(parsed)) {
-    throw new BadRequestException(`${field} must be a decimal quantity value`);
+    throw new BadRequestException(`В поле «${fieldLabel(field)}» нужно количество, до трёх знаков после точки.`);
   }
 
   return parsed;
@@ -139,12 +146,12 @@ function parseQualityOptions(value: unknown): ProductInput["qualityOptions"] {
   }
 
   if (!Array.isArray(value)) {
-    throw new BadRequestException("qualityOptions must be an array");
+    throw new BadRequestException("Предпочтения по качеству должны быть списком.");
   }
 
   return value.map((option, index) => {
     if (typeof option !== "object" || option === null) {
-      throw new BadRequestException(`qualityOptions.${index} must be an object`);
+      throw new BadRequestException(`Проверьте предпочтение по качеству №${index + 1}.`);
     }
 
     const record = option as Record<string, unknown>;

@@ -27,7 +27,7 @@ function fixture() {
     waveItem: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     order: { count: vi.fn().mockResolvedValue(0), findUnique: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       create: vi.fn().mockImplementation(async ({ data }) => ({ ...data, deliverySlot: slot })) },
-    user: { upsert: vi.fn().mockResolvedValue({ id: "customer", role: "customer", status: "active" }) },
+    customer: { upsert: vi.fn().mockResolvedValue({ id: "customer", codPolicy: "allowed", riskStatus: "normal", isActive: true }) },
     $queryRaw: vi.fn().mockResolvedValue([{ id: "slot" }])
   };
   const prisma = { $transaction: vi.fn().mockImplementation(async fn => fn(tx)) };

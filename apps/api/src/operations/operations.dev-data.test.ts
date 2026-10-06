@@ -11,10 +11,10 @@ describe("operational dev reset", () => {
     expect(db.$transaction).not.toHaveBeenCalled();
   });
   it("deletes only operational rows in one transaction and keeps catalog/staff/settings/slots", async () => {
-    const tx = Object.fromEntries(["orderItem", "order", "waveItem", "deliveryWave", "product", "category", "user", "appSetting", "deliverySlot"].map(key => [key, { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) }]));
+    const tx = Object.fromEntries(["orderItem", "order", "waveItem", "deliveryWave", "product", "category", "user", "appSetting", "deliverySlot", "cashTransaction", "courierShift", "paymentIssue", "orderFinancialAdjustment", "replacementDelivery", "deliveryIssueItem", "deliveryIssue", "deliveryAttempt", "customer", "operationalAudit"].map(key => [key, { deleteMany: vi.fn().mockResolvedValue({ count: 1 }), findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn() }]));
     const db = { $transaction: vi.fn(async callback => callback(tx)) };
     expect(await resetOperations(db as never, env, true)).toEqual({ orderItems: 1, orders: 1, waveItems: 1, waves: 1 });
     expect(db.$transaction).toHaveBeenCalledOnce();
-    for (const key of ["product", "category", "user", "appSetting", "deliverySlot"]) expect(tx[key].deleteMany).not.toHaveBeenCalled();
+    for (const key of ["product", "category", "user", "appSetting", "deliverySlot", "customer"]) expect(tx[key].deleteMany).not.toHaveBeenCalled();
   });
 });

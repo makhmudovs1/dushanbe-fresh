@@ -4,11 +4,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CheckoutService } from "../checkout/checkout.service";
 import { CatalogService } from "../catalog/catalog.service";
 import { OperationsService } from "./operations.service";
+import { DeliveryFinanceService } from "../delivery-finance/delivery-finance.service";
+import { clearTestFinances } from "../delivery-finance/test-cleanup";
 
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("operations PostgreSQL flow", () => {
-  const db = new PrismaClient({ datasources: { db: { url } } });
-  const ops = new OperationsService(db as never);
+  const db = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
+  const ops = new OperationsService(db as never, new DeliveryFinanceService(db as never));
   const checkout = new CheckoutService(db as never);
   const marker = `ops-test-${randomUUID()}`;
   const slots: string[] = [];
@@ -24,13 +26,15 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
       currentPurchasePrice: "8", currentSalePrice: "68", minQuantity: "0.5", quantityStep: "0.25", isWeighted: true,
       qualityOptions: { create: [{ id: `${marker}${suffix}-ripe`, label: "спелые" }, { id: `${marker}${suffix}-firm`, label: "твёрдые" }] }
     } });
-    await db.user.createMany({ data: [{ id: pickerId, name: "Сборщик", role: "picker" }, { id: courierId, name: "Курьер", role: "courier" }] });
+    await db.user.createMany({ data: [{ id: pickerId, name: "Сборщик", role: "picker", roles: ["picker"] }, { id: courierId, name: "Курьер", role: "courier", roles: ["courier"] }] });
     for (const [key, value] of Object.entries({ minimum_order_amount: "120.00", delivery_fee: "20.00", service_fee: "0.00" })) {
       await db.appSetting.upsert({ where: { key }, update: { value }, create: { key, value } });
     }
   });
   afterAll(async () => {
+    await clearTestFinances(db, (await db.order.findMany({ where: { deliverySlotId: { in: slots } }, select: { id: true } })).map(order => order.id));
     await db.order.deleteMany({ where: { deliverySlotId: { in: slots } } });
+    await db.customer.deleteMany({ where: { phoneNormalized: { in: phones } } });
     await db.deliverySlot.deleteMany({ where: { id: { in: slots } } });
     await db.product.deleteMany({ where: { id: { in: [marker, `${marker}-replacement`] } } });
     await db.category.deleteMany({ where: { id: marker } });

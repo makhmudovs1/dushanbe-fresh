@@ -32,12 +32,12 @@ export function StaffLayout({ children }: { children: React.ReactNode }) {
   if (!ready) return <main className="shell operations" role="status">Проверяем сессию...</main>;
   if (!user) return loginPage ? <>{children}</> : null;
   if (loginPage || !canOpenStaffPage(pathname, user)) return null;
-  const links = user.role === "admin" ? [["/admin", "Каталог"], ["/admin/orders", "Заказы"], ["/admin/delivery-waves", "Волны доставки"], ["/admin/settings", "Настройки"]]
-    : [["/admin/delivery-waves", user.role === "picker" ? "Мои волны" : "Доставка"]];
+  const links = user.roles.includes("admin") ? [["/admin", "Каталог"], ["/admin/orders", "Заказы"], ["/admin/delivery-waves", "Волны доставки"], ["/admin/problems", "Проблемы"], ["/admin/customers", "Клиенты"], ["/admin/cash", "Касса"], ["/admin/settings", "Настройки"]]
+    : [["/admin/delivery-waves", user.roles.includes("picker") ? "Мои волны" : "Доставка"], ...(user.roles.includes("courier") ? [["/admin/cash", "Моя касса"]] : [])];
   return <StaffContext.Provider value={user}><div className="staff-app">
     <header className="staff-header"><div className="shell staff-header-inner">
-      <Link className="staff-brand" href={staffHome(user)}>Dushanbe Fresh <span>Admin</span></Link>
-      <div className="staff-account"><div><strong>{user.name ?? user.email}</strong><span>{roleLabels[user.role]}</span></div>
+      <Link className="staff-brand" href={staffHome(user)}>Dushanbe Fresh <span>Команда</span></Link>
+      <div className="staff-account"><div><strong>{user.name ?? user.email}</strong><span>{user.roles.map(role => roleLabels[role]).join(", ")}</span></div>
         <button className="secondary-link" disabled={loggingOut} onClick={async () => {
           setLoggingOut(true); setError("");
           try { await logoutStaff(); router.replace("/admin/login"); }

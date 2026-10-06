@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AdminOrder, AdminOrderItem, FinalItemInput } from "@dushanbe-fresh/shared";
 import type { Product } from "@/lib/api";
 import { itemLabels } from "@/lib/operations";
-import { unitLabel } from "@/lib/checkout";
+import { decimalLabel, priceLabel, quantityLabel, unitLabel } from "@/lib/format";
 
 type Props = {
   order: AdminOrder; products: Product[]; disabled: boolean; isAdmin: boolean;
@@ -15,6 +15,8 @@ type Props = {
 export function OrderPacking({ order, products, disabled, isAdmin, pack, saveItem }: Props) {
   const packed = order.items.length > 0 && order.totalFinal !== null && order.items.every(item => item.status !== "requested");
   return <div className="order-packing">
+    {order.orderKind === "service_recovery" ? <p>Замена по обращению клиента</p> : null}
+    {order.requiresPicking === false ? <p>Повторная доставка: товары уже упакованы</p> : null}
     <div className="packing-list">{order.items.map(item => <PackingItem key={`${item.id}:${item.status}:${item.finalQuantity}:${item.finalUnitPrice}:${item.pickerNote}`} item={item} products={products} disabled={disabled} isAdmin={isAdmin} save={(body, onSaved) => saveItem(item.id, body, onSaved)} />)}</div>
     {packed ? <p className="packing-complete" role="status">✓ Заказ упакован</p> : <button className="primary-action" disabled={disabled} onClick={() => void pack()}>Всё упаковано как заказано</button>}
   </div>;
@@ -30,9 +32,9 @@ function PackingItem({ item, products, disabled, save, isAdmin }: {
     replacementProductId: item.replacementProductId ?? "", pickerNote: item.pickerNote ?? "" });
   const excluded = ["removed", "unavailable"].includes(form.status);
   return <div className="packing-item">
-    <div className="packing-item-heading"><strong>{item.replacementName ?? item.name} — {item.finalQuantity ?? item.requestedQuantity} {unitLabel(item.unit)}{item.status === "picked" || item.status === "replaced" ? " ✓" : ""}</strong>
+    <div className="packing-item-heading"><strong>{item.replacementName ?? item.name} — {quantityLabel(item.finalQuantity ?? item.requestedQuantity, item.unit)}{item.status === "picked" || item.status === "replaced" ? " ✓" : ""}</strong>
       <button className="packing-edit" type="button" disabled={disabled} aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Закрыть" : "Изменить"}</button></div>
-    <p className="packing-meta">{item.status === "requested" ? "К упаковке" : itemLabels[item.status]} · Заказано: {item.requestedQuantity} {unitLabel(item.unit)}{item.qualityPreference ? ` · ${item.qualityPreference}` : ""}</p>
+    <p className="packing-meta">{item.status === "requested" ? "К упаковке" : itemLabels[item.status]} · Заказано: {quantityLabel(item.requestedQuantity, item.unit)}{item.qualityPreference ? ` · ${item.qualityPreference}` : ""}</p>
     {item.replacementName ? <p className="packing-meta">Вместо: {item.name}</p> : null}
     {item.pickerNote ? <p className="packing-meta">{item.pickerNote}</p> : null}
     {editing ? <form onSubmit={event => { event.preventDefault(); void save(form, () => setEditing(false)); }}><fieldset className="operations-edit-grid" disabled={disabled}>
@@ -42,6 +44,6 @@ function PackingItem({ item, products, disabled, save, isAdmin }: {
       <label className="field">Примечание сборщика<input maxLength={500} value={form.pickerNote} onChange={event => setForm({ ...form, pickerNote: event.target.value })} /></label>
       <button type="submit" className="primary-action">Сохранить изменение</button>
     </fieldset></form> : null}
-    {isAdmin ? <p className="packing-meta">Цена при заказе: {item.estimatedPrice} сом/{unitLabel(item.unit)} · Итог: {item.finalTotal ?? item.estimatedTotal} сом</p> : null}
+    {isAdmin ? <p className="packing-meta">Цена при заказе: {priceLabel(item.estimatedPrice, item.unit)} · Итог: {decimalLabel(item.finalTotal ?? item.estimatedTotal)} сом</p> : null}
   </div>;
 }

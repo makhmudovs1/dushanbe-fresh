@@ -15,7 +15,7 @@ export class StaffGuard implements CanActivate {
     // Fail closed for every admin endpoint, including future controllers without a decorator.
     if (!roles && !/^\/api\/v1\/admin(?:\/|$)/i.test(request.path)) return true;
     request.staff = await this.auth.authenticate(request.headers.authorization);
-    if (!(roles ?? ["admin"]).includes(request.staff.role)) throw new ForbiddenException("Недостаточно прав.");
+    if (!(roles ?? ["admin"]).some(role => request.staff.roles.includes(role))) throw new ForbiddenException("Недостаточно прав.");
     return true;
   }
 }

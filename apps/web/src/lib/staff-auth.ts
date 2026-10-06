@@ -42,8 +42,8 @@ export async function staffFetch(url: string, init?: RequestInit) {
   if (response.status === 401) { await refreshStaff(); response = await request(); }
   return response;
 }
-export const staffHome = (user: StaffUser) => user.role === "admin" ? "/admin/orders" : "/admin/delivery-waves";
+export const staffHome = (user: StaffUser) => user.roles.includes("admin") ? "/admin/orders" : "/admin/delivery-waves";
 export const roleLabels = { admin: "Администратор", picker: "Сборщик", courier: "Курьер" };
 export function canOpenStaffPage(path: string, user: StaffUser) {
-  return user.role === "admin" || path === "/admin/delivery-waves" || /^\/admin\/(delivery-waves|orders)\/[^/]+$/.test(path);
+  return user.roles.includes("admin") || path === "/admin/delivery-waves" || (path === "/admin/cash" && user.roles.includes("courier")) || /^\/admin\/(delivery-waves|orders)\/[^/]+$/.test(path);
 }

@@ -47,6 +47,7 @@ export type CheckoutLine = {
   warnings: string[];
 };
 export type CheckoutQuote = {
+  serviceFeePercentSnapshot?: string | null;
   valid: boolean;
   items: CheckoutLine[];
   deliverySlot: DeliverySlotDto | null;
@@ -68,6 +69,8 @@ export type CreateOrderInput = CheckoutInput & {
   requestId: string;
 };
 export type OrderReceipt = {
+  publicTrackingToken: string;
+  requiresConfirmation?: boolean;
   orderNumber: string;
   deliverySlot: DeliverySlotDto;
   address: AddressInput & { city: string; recipientName: string; phone: string };

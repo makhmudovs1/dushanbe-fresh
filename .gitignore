@@ -8,3 +8,4 @@ coverage
 *.log
 *.tsbuildinfo
 .DS_Store
+**/var/product-images/

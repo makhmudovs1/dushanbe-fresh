@@ -1,7 +1,8 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { DeliverySlot, Prisma } from "@prisma/client";
 import type { DeliverySlotDto, SlotUnavailableReason } from "@dushanbe-fresh/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { deliveryDateRange, ensureDeliverySlots } from "./delivery-schedule";
 
 export function slotDto(slot: DeliverySlot, used: number, now = new Date(), waveStatus?: string): DeliverySlotDto {
   const date = slot.date.toISOString().slice(0, 10);
@@ -28,16 +29,19 @@ export async function readSlot(tx: Prisma.TransactionClient, id: string) {
 }
 
 @Injectable()
-export class DeliverySlotsService {
+export class DeliverySlotsService implements OnModuleInit {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    await ensureDeliverySlots(this.prisma);
+  }
 
   async list() {
     const now = new Date();
-    const today = new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const until = new Date(`${today}T00:00:00Z`);
-    until.setUTCDate(until.getUTCDate() + 7);
+    await ensureDeliverySlots(this.prisma, now);
+    const { from, until } = deliveryDateRange(now);
     const slots = await this.prisma.deliverySlot.findMany({
-      where: { isActive: true, date: { gte: new Date(today), lt: until } },
+      where: { isActive: true, date: { gte: from, lt: until } },
       orderBy: [{ date: "asc" }, { startsAt: "asc" }],
       include: { wave: { select: { status: true } }, _count: { select: { orders: { where: { status: { not: "cancelled" } } } } } }
     });

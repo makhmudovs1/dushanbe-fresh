@@ -1,4 +1,5 @@
 "use client";
+import { decimalLabel, priceLabel, quantityLabel } from "@/lib/format";
 
 import Link from "next/link";
 
@@ -9,12 +10,16 @@ import {
   hasWeightedItems
 } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
+import { CartSkeleton } from "./loading-state";
+import { ProductImage } from "./product-image";
 
 export function CartPageContent() {
-  const { state, incrementItem, decrementItem, removeItem, lineCount } = useCart();
+  const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount } = useCart();
   const subtotalMinor = calculateCartSubtotalMinor(state);
   const containsWeightedProducts = hasWeightedItems(state);
   const subtotalPrefix = containsWeightedProducts ? "≈ " : "";
+
+  if (!hydrated) return <CartSkeleton />;
 
   if (state.items.length === 0) {
     return (
@@ -45,8 +50,8 @@ export function CartPageContent() {
 
           return (
             <article className="cart-item" key={itemKey}>
-              <Link className="cart-item__media" href={`/products/${item.slug}`}>
-                <span>{item.name.slice(0, 1)}</span>
+              <Link className="cart-item__media" href={`/products/${item.slug}`} aria-label={item.name}>
+                <ProductImage src={item.imageUrl} name={item.name} />
               </Link>
               <div className="cart-item__body">
                 <div>
@@ -57,7 +62,7 @@ export function CartPageContent() {
                     <p>Качество: {item.qualityOptionLabel}</p>
                   ) : null}
                   <p>
-                    {item.sellingPrice} сомони / {item.unit}
+                    {priceLabel(item.sellingPrice, item.unit)}
                   </p>
                 </div>
 
@@ -66,7 +71,7 @@ export function CartPageContent() {
                     -
                   </button>
                   <strong>
-                    {item.quantity} {item.unit}
+                    {quantityLabel(item.quantity, item.unit)}
                   </strong>
                   <button onClick={() => incrementItem(item)} type="button">
                     +
@@ -76,7 +81,7 @@ export function CartPageContent() {
                 <div className="cart-item__footer">
                   <strong>
                     {item.isWeighted ? "≈ " : ""}
-                    {itemSubtotal} сомони
+                    {decimalLabel(itemSubtotal)} сомони
                   </strong>
                   <button onClick={() => removeItem(item)} type="button">
                     Удалить
@@ -94,7 +99,7 @@ export function CartPageContent() {
           <span>Товары</span>
           <strong>
             {subtotalPrefix}
-            {formatMoneyFromMinor(subtotalMinor)} сомони
+            {decimalLabel(formatMoneyFromMinor(subtotalMinor))} сомони
           </strong>
         </div>
         <div className="summary-row">
@@ -105,7 +110,7 @@ export function CartPageContent() {
           <span>Предварительно</span>
           <strong>
             {subtotalPrefix}
-            {formatMoneyFromMinor(subtotalMinor)} сомони
+            {decimalLabel(formatMoneyFromMinor(subtotalMinor))} сомони
           </strong>
         </div>
         <p>Позиций в корзине: {lineCount}</p>

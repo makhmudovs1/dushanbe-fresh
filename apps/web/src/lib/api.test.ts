@@ -28,7 +28,7 @@ describe("catalog requests", () => {
   });
 
   it("reports an API failure instead of returning fallback categories", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
-    await expect(getCategories()).rejects.toThrow("API request failed: 503");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503, json: async () => null }));
+    await expect(getCategories()).rejects.toThrow("Не удалось выполнить запрос");
   });
 });

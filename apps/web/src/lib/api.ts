@@ -1,3 +1,5 @@
+import { errorMessage } from "./error-message";
+
 export type Category = {
   id: string;
   name: string;
@@ -46,7 +48,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    const data = await response.json().catch(() => null);
+    throw new Error(errorMessage(data?.message));
   }
 
   return response.json() as Promise<T>;
@@ -98,5 +101,15 @@ export function updateAdminProduct(id: string, payload: Record<string, unknown>)
     method: "PATCH",
     body: JSON.stringify(payload)
   });
+}
+
+export async function uploadProductImage(file: File): Promise<string> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await staffFetch(`${apiBaseUrl}/admin/product-images`, { method: "POST", body });
+  if (response.status === 413) throw new Error("Фотография должна быть не больше 5 МБ.");
+  const data = await response.json().catch(() => null);
+  if (!response.ok || typeof data?.image !== "string") throw new Error(errorMessage(data?.message, "Не удалось загрузить фотографию. Повторите попытку."));
+  return data.image;
 }
 import { staffFetch } from "./staff-auth";

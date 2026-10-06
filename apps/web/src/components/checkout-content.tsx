@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { CheckoutInput, CheckoutQuote, CreateOrderInput, DeliverySlotDto, SubstitutionPolicy } from "@dushanbe-fresh/shared";
 import { useCart } from "@/cart/cart-context";
-import { CheckoutError, finishCheckout, getDeliverySlots, slotLabel, unitLabel, validateCheckout } from "@/lib/checkout";
+import { CheckoutError, finishCheckout, getDeliverySlots, slotLabel, validateCheckout } from "@/lib/checkout";
+import { decimalLabel, priceLabel, quantityLabel } from "@/lib/format";
+import { CheckoutSkeleton, DeliverySlotsSkeleton, SummarySkeleton } from "./loading-state";
 
 export function CheckoutContent() {
   const { state, hydrated, clearCart, removeItem } = useCart();
@@ -88,12 +90,16 @@ export function CheckoutContent() {
     } finally { sendingRef.current = false; setSending(false); }
   }
 
-  if (!hydrated || completed) return <p role="status">{completed ? "Заказ оформлен. Открываем подтверждение..." : "Загружаем корзину..."}</p>;
+  const heading = <>
+    <Link className="back-link" href="/cart">Вернуться в корзину</Link>
+    <header className="page-heading"><h1>Оформление заказа</h1><p>Свежие продукты с доставкой по Душанбе</p></header>
+  </>;
+  if (!hydrated) return <>{heading}<CheckoutSkeleton /></>;
+  if (completed) return <>{heading}<p role="status">Заказ оформлен. Открываем подтверждение...</p></>;
   if (!state.items.length) return <div className="empty-cart"><h1>Корзина пока пустая</h1><p>Добавьте свежие продукты из каталога.</p><Link className="primary-link" href="/catalog">Перейти в каталог</Link></div>;
 
   return <>
-    <Link className="back-link" href="/cart">Вернуться в корзину</Link>
-    <header className="page-heading"><h1>Оформление заказа</h1><p>Свежие продукты с доставкой по Душанбе</p></header>
+    {heading}
     <form onSubmit={submit} className="checkout-layout">
       <fieldset className="checkout-fields" disabled={sending}>
         <section className="checkout-section">
@@ -115,15 +121,15 @@ export function CheckoutContent() {
         </section>
         <section className="checkout-section">
           <h2>Окно доставки</h2>
-          {slotsPending ? <p role="status">Загружаем время доставки...</p> : null}
+          {slotsPending ? <DeliverySlotsSkeleton /> : null}
           {slotsError ? <p role="alert">{slotsError}</p> : null}
           {!slotsPending && !slotsError && !slots.length ? <p>Пока нет окон доставки. Попробуйте позже.</p> : null}
-          <div className="delivery-options">
+          {!slotsPending ? <div className="delivery-options">
             {slots.map(slot => <label className={`checkout-option ${deliverySlotId === slot.id ? "is-selected" : ""}`} key={slot.id}>
               <input type="radio" name="delivery-slot" value={slot.id} disabled={!slot.available} checked={deliverySlotId === slot.id} onChange={() => setDeliverySlotId(slot.id)} />
               <span>{slotLabel(slot)}{slot.unavailableReasons.map(reason => <small key={reason}>{slotUnavailableLabels[reason]}</small>)}</span>
             </label>)}
-          </div>
+          </div> : null}
           <button type="button" className="secondary-link" onClick={() => void loadSlots()} disabled={slotsPending}>Обновить время доставки</button>
         </section>
         <fieldset className="checkout-section substitution-options">
@@ -135,22 +141,22 @@ export function CheckoutContent() {
       <aside className="checkout-summary">
         <h2>Проверка заказа</h2>
         {!deliverySlotId ? <p>Выберите окно доставки, чтобы проверить товары и сумму заказа.</p> : null}
-        {pending ? <p role="status">Проверяем товары и сумму...</p> : null}
+        {pending ? <SummarySkeleton /> : null}
         {currentQuote && !pending ? <>
           <ul className="checkout-lines">
             {currentQuote.items.map((item, index) => <li key={`${item.productId}:${index}`}>
-              <div className="summary-row"><strong>{item.name}</strong><span>{item.estimatedTotal} сомони</span></div>
-              <p>{item.requestedQuantity} {unitLabel(item.unit)}{item.sellingPrice ? ` · ${item.sellingPrice} сомони / ${unitLabel(item.unit)}` : ""}</p>
+              <div className="summary-row"><strong>{item.name}</strong><span>{decimalLabel(item.estimatedTotal)} сомони</span></div>
+              <p>{quantityLabel(item.requestedQuantity, item.unit)}{item.sellingPrice ? ` · ${priceLabel(item.sellingPrice, item.unit)}` : ""}</p>
               {item.qualityOption ? <p>{item.qualityOption.label}</p> : null}
               {item.warnings.map(warning => <p className="notice" key={warning}>{warning}</p>)}
               {item.errors.map(error => <p className="checkout-error" role="alert" key={error}>{error}</p>)}
               {item.errors.length ? <button className="secondary-link" type="button" disabled={sending} onClick={() => removeItem(state.items[index])}>Удалить {item.name}</button> : null}
             </li>)}
           </ul>
-          <div className="summary-row"><span>Товары</span><span>{currentQuote.itemsSubtotal} сомони</span></div>
-          <div className="summary-row"><span>Доставка</span><span>{currentQuote.deliveryFee} сомони</span></div>
-          {currentQuote.serviceFee !== "0.00" ? <div className="summary-row"><span>Сервисный сбор</span><span>{currentQuote.serviceFee} сомони</span></div> : null}
-          <div className="summary-row summary-total"><strong>Предварительно</strong><strong>{currentQuote.totalEstimated} сомони</strong></div>
+          <div className="summary-row"><span>Товары</span><span>{decimalLabel(currentQuote.itemsSubtotal)} сомони</span></div>
+          <div className="summary-row"><span>Доставка</span><span>{decimalLabel(currentQuote.deliveryFee)} сомони</span></div>
+          {currentQuote.serviceFee !== "0.00" ? <div className="summary-row"><span>Сервисный сбор</span><span>{decimalLabel(currentQuote.serviceFee)} сомони</span></div> : null}
+          <div className="summary-row summary-total"><strong>Предварительно</strong><strong>{decimalLabel(currentQuote.totalEstimated)} сомони</strong></div>
           {currentQuote.errors.map(error => <p className="checkout-error" role="alert" key={error}>{error}</p>)}
           {currentQuote.items.some(item => item.isWeighted) ? <p>Итоговая сумма может немного измениться после фактического взвешивания.</p> : null}
           <p>Оплата наличными при получении</p>

@@ -1,8 +1,9 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
 import { mapAdminProduct, mapCategory, mapPublicProduct } from "./catalog.mappers";
+import { catalogImage } from "./catalog.image";
 import {
   CategoryInput,
   ProductFilters,
@@ -54,7 +55,7 @@ export class CatalogService {
     });
 
     if (!product) {
-      throw new NotFoundException("Product not found");
+      throw new NotFoundException("Товар не найден.");
     }
 
     return mapPublicProduct(product);
@@ -106,6 +107,7 @@ export class CatalogService {
   }
 
   async createAdminProduct(input: ProductInput) {
+    this.assertProductImage(input.isActive ?? true, input.image);
     const product = await this.prisma.product.create({
       data: this.toCreateProductData(input),
       include: productInclude
@@ -115,6 +117,9 @@ export class CatalogService {
   }
 
   async updateAdminProduct(id: string, input: ProductUpdateInput) {
+    const existing = await this.prisma.product.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Товар не найден.");
+    this.assertProductImage(input.isActive ?? existing.isActive, input.image === undefined ? existing.imageUrl : input.image);
     const product = await this.prisma.product.update({
       where: { id },
       data: this.toUpdateProductData(input),
@@ -122,6 +127,13 @@ export class CatalogService {
     });
 
     return mapAdminProduct(product);
+  }
+
+  private assertProductImage(active: boolean, image: string | null | undefined) {
+    if (active && !catalogImage(image)) throw new BadRequestException("Добавьте фотографию товара или выключите товар, чтобы сохранить черновик.");
+    if (image && !/^(\/(?!\/)[^\s]+|https:\/\/[^\s]+)$/.test(image)) {
+      throw new BadRequestException("Фотография должна быть загруженным файлом или HTTPS-ссылкой.");
+    }
   }
 
   private publicProductWhere(filters: ProductFilters): Prisma.ProductWhereInput {

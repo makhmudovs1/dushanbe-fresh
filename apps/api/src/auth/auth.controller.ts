@@ -4,9 +4,10 @@ import { AuthService } from "./auth.service";
 import { Roles, StaffRequest } from "./staff.guard";
 
 type Response = { setHeader(name: string, value: string): void };
-export const cookieName = () => process.env.NODE_ENV === "production" ? "__Secure-df_refresh" : "df_refresh";
+const secureCookie = () => process.env.NODE_ENV === "production" || process.env.STAFF_COOKIE_SECURE === "true";
+export const cookieName = () => secureCookie() ? "__Secure-df_refresh" : "df_refresh";
 export function refreshCookie(token: string, expiresAt = new Date(Date.now() + 7 * 86400000)) {
-  return serialize(cookieName(), token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/api/v1/auth", expires: token ? expiresAt : new Date(0), maxAge: token ? Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)) : 0 });
+  return serialize(cookieName(), token, { httpOnly: true, secure: secureCookie(), sameSite: "lax", path: "/api/v1/auth", expires: token ? expiresAt : new Date(0), maxAge: token ? Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)) : 0 });
 }
 
 @Controller()

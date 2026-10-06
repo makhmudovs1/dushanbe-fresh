@@ -9,15 +9,15 @@ const issuer = "dushanbe-fresh";
 const audience = "staff";
 const sessionDays = 7;
 export const digest = (value: string) => createHash("sha256").update(value).digest("hex");
-export const staffSelect = { id: true, email: true, name: true, role: true, status: true } as const;
+export const staffSelect = { id: true, email: true, name: true, roles: true, status: true } as const;
 export function authSecret() {
   const secret = process.env.STAFF_JWT_SECRET;
   if (secret && Buffer.byteLength(secret) >= 32) return secret;
   if (process.env.NODE_ENV === "production") throw new Error("STAFF_JWT_SECRET must contain at least 32 bytes");
   return "local-development-only-staff-key-not-for-deployment";
 }
-export function staffDto(user: { id: string; email: string | null; name: string | null; role: string }): StaffUser {
-  return { id: user.id, email: user.email!, name: user.name, role: user.role as StaffUser["role"] };
+export function staffDto(user: { id: string; email: string | null; name: string | null; roles: StaffUser["roles"] }): StaffUser {
+  return { id: user.id, email: user.email!, name: user.name, roles: user.roles };
 }
 
 @Injectable()
@@ -34,7 +34,7 @@ export class AuthService {
     if (!email || email.length > 254 || !password || Buffer.byteLength(password) > 72) throw new UnauthorizedException("Неверный email или пароль.");
     const user = await this.prisma.user.findUnique({ where: { email } });
     const matches = await compare(password, user?.passwordHash ?? await this.dummyHash);
-    if (!matches || !user?.passwordHash || user.status !== "active" || !["admin", "picker", "courier"].includes(user.role)) {
+    if (!matches || !user?.passwordHash || user.status !== "active" || !user.roles.length) {
       throw new UnauthorizedException("Неверный email или пароль.");
     }
     const id = randomUUID();
@@ -51,7 +51,7 @@ export class AuthService {
     const id = this.sessionId(token);
     const session = await this.prisma.refreshSession.findUnique({ where: { id }, include: { user: true } });
     const now = new Date();
-    if (!session || session.revokedAt || session.expiresAt <= now || session.tokenHash !== digest(token!) || session.user.status !== "active" || !["admin", "picker", "courier"].includes(session.user.role)) throw new UnauthorizedException();
+    if (!session || session.revokedAt || session.expiresAt <= now || session.tokenHash !== digest(token!) || session.user.status !== "active" || !session.user.roles.length) throw new UnauthorizedException();
     const refreshToken = `${id}.${randomBytes(32).toString("base64url")}`;
     // Compare-and-swap makes each refresh token single-use, even across concurrent requests.
     const rotated = await this.prisma.refreshSession.updateMany({ where: { id, tokenHash: digest(token!), revokedAt: null, expiresAt: { gt: now } }, data: { tokenHash: digest(refreshToken) } });
@@ -78,7 +78,7 @@ export class AuthService {
     catch { throw new UnauthorizedException(); }
     if (typeof payload.sub !== "string" || typeof payload.sid !== "string") throw new UnauthorizedException();
     const session = await this.prisma.refreshSession.findFirst({ where: { id: payload.sid, userId: payload.sub, revokedAt: null, expiresAt: { gt: new Date() } }, include: { user: { select: staffSelect } } });
-    if (!session || session.user.status !== "active" || !["admin", "picker", "courier"].includes(session.user.role)) throw new UnauthorizedException();
+    if (!session || session.user.status !== "active" || !session.user.roles.length) throw new UnauthorizedException();
     return staffDto(session.user);
   }
 }

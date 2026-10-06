@@ -9,7 +9,7 @@ import { slotLabel } from "@/lib/checkout";
 
 export function AdminOrders() {
   const tabs: Record<string, { label: string; statuses: OrderStatus[] }> = {
-    active: { label: "Активные", statuses: ["confirmed", "picking", "picked", "out_for_delivery"] },
+    active: { label: "Активные", statuses: ["pending_review", "confirmed", "picking", "picked", "out_for_delivery"] },
     completed: { label: "Завершённые", statuses: ["delivered"] }, cancelled: { label: "Отменённые", statuses: ["cancelled"] }
   };
   const [tab, setTab] = useState("active");

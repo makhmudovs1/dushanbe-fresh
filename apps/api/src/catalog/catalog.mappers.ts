@@ -1,4 +1,5 @@
 import { Category, ProductQualityOption } from "@prisma/client";
+import { catalogImage } from "./catalog.image";
 
 import {
   AdminProductDto,
@@ -45,7 +46,7 @@ export function mapPublicProduct(
     name: product.name,
     slug: product.slug,
     description: product.description,
-    image: product.imageUrl,
+    image: catalogImage(product.imageUrl),
     unit: product.unit,
     sellingPrice: decimalToString(product.currentSalePrice),
     isWeighted: product.isWeighted,

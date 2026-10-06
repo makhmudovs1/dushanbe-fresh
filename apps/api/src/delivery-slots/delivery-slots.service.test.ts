@@ -24,7 +24,7 @@ describe("delivery slot availability reasons", () => {
   });
   it("includes the same wave reason in the listing and checkout lookup", async () => {
     const record = { ...slot, wave: { status: "picking" }, _count: { orders: 1 } };
-    const db = { deliverySlot: { findMany: vi.fn().mockResolvedValue([record]), findUnique: vi.fn().mockResolvedValue(record) }, order: { count: vi.fn().mockResolvedValue(1) } };
+    const db = { deliverySlot: { findMany: vi.fn().mockResolvedValue([record]), createMany: vi.fn(), findUnique: vi.fn().mockResolvedValue(record) }, order: { count: vi.fn().mockResolvedValue(1) } };
     const list = await new DeliverySlotsService(db as never).list();
     expect(list[0]).toEqual(await readSlot(db as never, slot.id));
     expect(list[0].unavailableReasons).toEqual(["wave_closed"]);

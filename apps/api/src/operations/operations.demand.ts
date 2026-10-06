@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { aggregateDemand } from "./operations.rules";
 
 export async function refreshDemand(tx: Prisma.TransactionClient, id: string) {
-  const orders = await tx.order.findMany({ where: { deliveryWaveId: id, status: { not: "cancelled" } }, include: { items: true } });
+  const orders = await tx.order.findMany({ where: { deliveryWaveId: id, status: { not: "cancelled" }, requiresPicking: true }, include: { items: true } });
   const groups = aggregateDemand(orders.flatMap(order => order.items));
   // Preserve procurement history when an order is cancelled or new orders arrive.
   await tx.waveItem.updateMany({ where: { deliveryWaveId: id }, data: { requestedQuantityTotal: "0" } });

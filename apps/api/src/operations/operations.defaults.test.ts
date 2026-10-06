@@ -6,7 +6,7 @@ function fixture() {
   const wave = { id: "wave", status: "open", pickerUserId: "manual-picker", courierUserId: null };
   const tx = {
     appSetting: { findMany: vi.fn().mockResolvedValue(settings) },
-    user: { findFirst: vi.fn(async ({ where }) => where.id === where.role ? { id: where.id } : null) },
+    user: { findFirst: vi.fn(async ({ where }) => where.id === where.roles.has ? { id: where.id } : null) },
     deliveryWave: { upsert: vi.fn().mockResolvedValue(wave), update: vi.fn().mockResolvedValue(wave) },
     order: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) }, waveItem: { updateMany: vi.fn() }
   };
@@ -16,7 +16,7 @@ describe("default wave assignments", () => {
   it("uses active users of the correct role and ignores missing/invalid defaults", async () => {
     const { tx, settings } = fixture();
     expect(await defaultAssignments(tx as never)).toEqual({ pickerUserId: "picker", courierUserId: "courier" });
-    expect(tx.user.findFirst).toHaveBeenCalledWith({ where: { id: "picker", role: "picker", status: "active" }, select: { id: true } });
+    expect(tx.user.findFirst).toHaveBeenCalledWith({ where: { id: "picker", roles: { has: "picker" }, status: "active" }, select: { id: true } });
     settings[0].value = "courier"; settings[1].value = "";
     expect(await defaultAssignments(tx as never)).toEqual({});
   });

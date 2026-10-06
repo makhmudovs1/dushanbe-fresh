@@ -4,13 +4,19 @@ import { PrismaService } from "../prisma/prisma.service";
 import { dateFilter, decimal, finalOrderTotal, money, object, orderTransitions, text, transition, waveTransitions } from "./operations.rules";
 import { mapOrder, mapWave, orderInclude, waveInclude, Wave } from "./operations.mappers";
 import type { StaffUser } from "@dushanbe-fresh/shared";
-import { assertAssignment, waveScope } from "./operations.access";
+import { assertAssignment, assertRole, isAdmin, waveScope } from "./operations.access";
+import { audit } from "./operations.audit";
+import { staffDto, staffSelect } from "../auth/auth.service";
 import { refreshDemand } from "./operations.demand";
 import { attachConfirmedOrders, defaultAssignments, defaultStaffKeys } from "./operations.defaults";
+import { ensureDeliverySlots } from "../delivery-slots/delivery-schedule";
+import { DeliveryFinanceService } from "../delivery-finance/delivery-finance.service";
+import { readSlot } from "../delivery-slots/delivery-slots.service";
 
 @Injectable()
 export class OperationsService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(DeliveryFinanceService) private readonly finance: DeliveryFinanceService) {}
 
   private async transaction<T>(run: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -31,29 +37,38 @@ export class OperationsService {
     if (!rows.length) throw new NotFoundException("Окно доставки не найдено.");
   }
 
-  private async lockedOrder(tx: Prisma.TransactionClient, id: string, actor?: StaffUser) {
+  private async currentActor(tx: Prisma.TransactionClient, actor?: StaffUser) {
+    if (!actor) return undefined;
+    const user = await tx.user.findUnique({ where: { id: actor.id }, select: staffSelect });
+    if (!user || user.status !== "active" || !user.roles.length) throw new ForbiddenException("Доступ сотрудника отключён.");
+    return staffDto(user);
+  }
+
+  private async lockedOrder(tx: Prisma.TransactionClient, id: string, actor?: StaffUser, role?: "picker" | "courier") {
+    actor = await this.currentActor(tx, actor);
     const order = await tx.order.findUnique({ where: { id }, include: orderInclude });
     if (!order) throw new NotFoundException("Заказ не найден.");
     await this.lockSlot(tx, order.deliverySlotId);
-    if (actor && actor.role !== "admin") assertAssignment(order.deliveryWaveId ? await tx.deliveryWave.findUnique({ where: { id: order.deliveryWaveId } }) : null, actor);
+    assertAssignment(order.deliveryWaveId ? await tx.deliveryWave.findUnique({ where: { id: order.deliveryWaveId } }) : null, actor, role);
     return order;
   }
 
-  private async lockedWave(tx: Prisma.TransactionClient, id: string, actor?: StaffUser) {
+  private async lockedWave(tx: Prisma.TransactionClient, id: string, actor?: StaffUser, role?: "picker" | "courier") {
+    actor = await this.currentActor(tx, actor);
     const wave = await tx.deliveryWave.findUnique({ where: { id }, include: waveInclude });
     if (!wave) throw new NotFoundException("Волна не найдена.");
     await this.lockSlot(tx, wave.deliverySlotId);
-    assertAssignment(wave, actor);
+    assertAssignment(wave, actor, role);
     return wave;
   }
 
   async orders(filters: { date?: string; deliverySlotId?: string; status?: string; tab?: string }, actor?: StaffUser) {
     if (filters.status && !Object.keys(orderTransitions).includes(filters.status)) throw new BadRequestException("Неизвестный статус заказа.");
-    const tabs: Record<string, OrderStatus[]> = { active: ["confirmed", "picking", "picked", "out_for_delivery"], completed: ["delivered"], cancelled: ["cancelled"] };
+    const tabs: Record<string, OrderStatus[]> = { active: ["pending_review", "confirmed", "picking", "picked", "out_for_delivery"], completed: ["delivered"], cancelled: ["cancelled"] };
     if (filters.tab && !Object.prototype.hasOwnProperty.call(tabs, filters.tab)) throw new BadRequestException("Неизвестная вкладка заказов.");
     const statuses = filters.tab ? tabs[filters.tab].filter(status => !filters.status || status === filters.status) : undefined;
     const orders = await this.prisma.order.findMany({
-      where: { ...(actor && actor.role !== "admin" ? { deliveryWave: waveScope(actor) } : {}), deliverySlot: { date: dateFilter(filters.date) }, deliverySlotId: filters.deliverySlotId || undefined,
+      where: { ...(!isAdmin(actor) ? { deliveryWave: waveScope(actor) } : {}), deliverySlot: { date: dateFilter(filters.date) }, deliverySlotId: filters.deliverySlotId || undefined,
         status: statuses ? { in: statuses } : filters.status as OrderStatus | undefined }, orderBy: { createdAt: "desc" }, include: orderInclude
     });
     return orders.map(mapOrder);
@@ -62,24 +77,23 @@ export class OperationsService {
   async order(id: string, actor?: StaffUser) {
     const order = await this.prisma.order.findUnique({ where: { id }, include: orderInclude });
     if (!order) throw new NotFoundException("Заказ не найден.");
-    if (actor && actor.role !== "admin") assertAssignment(order.deliveryWaveId ? await this.prisma.deliveryWave.findUnique({ where: { id: order.deliveryWaveId } }) : null, actor);
+    if (!isAdmin(actor)) assertAssignment(order.deliveryWaveId ? await this.prisma.deliveryWave.findUnique({ where: { id: order.deliveryWaveId } }) : null, actor);
     return mapOrder(order);
   }
 
   async slots(date?: string) {
+    await ensureDeliverySlots(this.prisma);
     return this.prisma.deliverySlot.findMany({ where: { date: dateFilter(date) },
       orderBy: [{ date: "desc" }, { startsAt: "asc" }], include: { wave: { select: { id: true, status: true } } } });
   }
 
-  staff() { return this.prisma.user.findMany({ where: { role: { in: ["picker", "courier"] }, status: "active" },
-    select: { id: true, name: true, role: true }, orderBy: { name: "asc" } }); }
-
   async waves(date?: string, actor?: StaffUser, tab?: string) {
     const tabs: Record<string, string[]> = { upcoming: ["open"], working: ["picking"], completed: ["picked", "out_for_delivery", "delivered", "cancelled"] };
     if (tab && !Object.prototype.hasOwnProperty.call(tabs, tab)) throw new BadRequestException("Неизвестная вкладка волн.");
-    const selected = tab ?? (actor?.role === "picker" ? "upcoming" : undefined);
+    const pickerOnly = actor?.roles.includes("picker") && !actor.roles.includes("courier") && !isAdmin(actor);
+    const selected = tab ?? (pickerOnly ? "upcoming" : undefined);
     const waves = await this.prisma.deliveryWave.findMany({ where: { ...waveScope(actor), deliverySlot: { date: dateFilter(date) }, ...(selected ? { status: { in: tabs[selected] } } : {}) },
-      include: waveInclude, orderBy: actor?.role === "picker" && selected !== "completed"
+      include: waveInclude, orderBy: pickerOnly && selected !== "completed"
         ? [{ deliverySlot: { date: "asc" } }, { deliverySlot: { startsAt: "asc" } }]
         : { createdAt: "desc" } });
     const threshold = await this.purchaseThreshold();
@@ -105,13 +119,14 @@ export class OperationsService {
       create: { key: "purchase_price_deviation_percent", value: threshold.toFixed(2) }, update: { value: threshold.toFixed(2) } });
   }
 
-  async updateDefaultStaff(value: unknown) {
+  async updateDefaultStaff(value: unknown, actor?: StaffUser) {
     const body = object(value);
     await this.transaction(async tx => {
+      assertRole(await this.currentActor(tx, actor), "admin");
       for (const [field, role] of [["pickerUserId", "picker"], ["courierUserId", "courier"]] as const) {
         if (body[field] === undefined) continue;
         const id = text(body[field], "Дежурный сотрудник", true, 100);
-        if (id && !await tx.user.findFirst({ where: { id, role, status: "active" } })) throw new BadRequestException("Выберите активного сотрудника с подходящей ролью.");
+        if (id && !await tx.user.findFirst({ where: { id, roles: { has: role }, status: "active" } })) throw new BadRequestException("Выберите активного сотрудника с подходящей ролью.");
         await tx.appSetting.upsert({ where: { key: `default_${role}_id` }, create: { key: `default_${role}_id`, value: id }, update: { value: id } });
       }
       const defaults = await defaultAssignments(tx);
@@ -119,6 +134,7 @@ export class OperationsService {
       for (const field of ["pickerUserId", "courierUserId"] as const) {
         if (defaults[field]) await tx.deliveryWave.updateMany({ where: { status: { in: ["open", "picking", "picked"] }, [field]: null }, data: { [field]: defaults[field] } });
       }
+      await audit(tx, actor, "staff.defaults_changed", "default_staff");
     });
     return this.prisma.appSetting.findMany({ where: { key: { in: defaultStaffKeys } } });
   }
@@ -139,17 +155,26 @@ export class OperationsService {
 
   async updateOrderStatus(id: string, value: unknown, actor?: StaffUser) {
     const status = text(object(value).status, "Статус") as OrderStatus;
+    if (!isAdmin(actor) && !["picking", "picked", "delivered"].includes(status)) throw new ForbiddenException("Недостаточно прав.");
     await this.transaction(async tx => {
-      const order = await this.lockedOrder(tx, id, actor);
+      const order = await this.lockedOrder(tx, id, actor, status === "delivered" ? "courier" : "picker");
+      if (!isAdmin(await this.currentActor(tx, actor)) && !["picking", "picked", "delivered"].includes(status)) throw new ForbiddenException("Недостаточно прав.");
       transition(order.status, status, orderTransitions);
       if (status === order.status) return;
+      if (status === "cancelled" && order.status === "out_for_delivery") throw new ConflictException("Заказ уже у курьера. Оформите проблему при доставке вместо отмены.");
       if (order.paymentStatus === "paid" && status === "cancelled") throw new ConflictException("Оплаченный заказ нельзя отменить без возврата.");
       const wave = order.deliveryWaveId ? await tx.deliveryWave.findUnique({ where: { id: order.deliveryWaveId } }) : null;
       if (wave && ["delivered", "cancelled"].includes(wave.status)) throw new ConflictException("Волна завершена.");
       if (status === "picking" && wave?.status !== "picking") throw new ConflictException("Сначала начните сборку волны.");
       if (status === "picked" && (wave?.status !== "picking" || order.totalFinal === null)) throw new ConflictException("Сначала распределите все товары заказа.");
       if (status === "out_for_delivery" && (wave?.status !== "out_for_delivery" || !wave.courierUserId)) throw new ConflictException("Сначала отправьте волну с назначенным курьером.");
+      if (status === "confirmed" && order.status === "pending_review") {
+        const slot = await readSlot(tx, order.deliverySlotId);
+        // Pending orders already reserve capacity, but cannot join an expired or started slot.
+        if (!slot || slot.unavailableReasons.some(reason => reason !== "capacity_full")) throw new ConflictException("Приём в этом окне закрыт. Сначала перенесите заказ в доступное окно.");
+      }
       await tx.order.update({ where: { id }, data: { status } });
+      await audit(tx, actor, `order.${status}`, id);
       if (status === "confirmed" && !order.deliveryWaveId) await attachConfirmedOrders(tx, order.deliverySlotId);
       if (status === "cancelled" && order.deliveryWaveId) await refreshDemand(tx, order.deliveryWaveId);
       if (wave?.status === "out_for_delivery" && ["delivered", "cancelled"].includes(status)) {
@@ -157,42 +182,45 @@ export class OperationsService {
         if (!remaining) {
           const delivered = await tx.order.count({ where: { deliveryWaveId: wave.id, status: "delivered" } });
           await tx.deliveryWave.update({ where: { id: wave.id }, data: { status: delivered ? "delivered" : "cancelled" } });
+          await audit(tx, actor, delivered ? "wave.delivered" : "wave.cancelled", wave.id);
         }
       }
     });
     return this.order(id, actor);
   }
 
-  async markPaid(id: string, actor?: StaffUser) {
-    await this.transaction(async tx => {
-      const order = await this.lockedOrder(tx, id, actor);
-      if (order.status !== "delivered" || order.paymentMethod !== "cash_on_delivery" || order.totalFinal === null) {
-        throw new ConflictException("Наличные отмечаются после доставки и расчёта итоговой суммы.");
-      }
-      if (!["pending", "paid"].includes(order.paymentStatus)) throw new ConflictException("Проверьте состояние оплаты.");
-      await tx.order.update({ where: { id }, data: { paymentStatus: "paid" } });
-    });
+  async markPaid(id: string, actor?: StaffUser, note?: string) {
+    const order = await this.prisma.order.findUniqueOrThrow({ where: { id }, include: { deliveryWave: true } });
+    if (!actor && order.deliveryWave?.courierUserId) actor = staffDto(await this.prisma.user.findUniqueOrThrow({ where: { id: order.deliveryWave.courierUserId }, select: staffSelect }));
+    if (!actor) throw new ForbiddenException("Нужен назначенный курьер.");
+    const current = await this.finance.get(id, actor);
+    if (order.status !== "delivered" || order.paymentMethod !== "cash_on_delivery") throw new ConflictException("Сначала отметьте доставку.");
+    if (!current.collectionReported) await this.finance.collect(id, { requestId: `legacy-paid:${id}`, version: current.version, mode: "full", note: note ?? "" }, actor);
     return this.order(id, actor);
   }
 
-  async assign(id: string, value: unknown) {
+  async assign(id: string, value: unknown, actor?: StaffUser) {
     const body = object(value);
     await this.transaction(async tx => {
+      assertRole(await this.currentActor(tx, actor), "admin");
       const wave = await this.lockedWave(tx, id);
-      if (["delivered", "cancelled"].includes(wave.status)) throw new ConflictException("Волна завершена.");
+      const unpaid = wave.orders.some(order => order.status === "delivered" && order.paymentStatus === "pending");
+      if (wave.status === "cancelled" || (wave.status === "delivered" && !unpaid)) throw new ConflictException("Волна завершена.");
+      if (wave.status === "delivered" && body.pickerUserId !== undefined) throw new ConflictException("В доставленной волне можно переназначить только курьера для отметки оплаты.");
       const data: Prisma.DeliveryWaveUpdateInput = {};
       for (const [field, role, relation] of [["pickerUserId", "picker", "picker"], ["courierUserId", "courier", "courier"]] as const) {
         if (body[field] === undefined) continue;
         const userId = text(body[field], role, true, 100);
         if (!userId) {
-          if (relation === "courier" && wave.status === "out_for_delivery") throw new ConflictException("В пути можно заменить курьера, но нельзя оставить волну без курьера.");
+          if (relation === "courier" && (wave.status === "out_for_delivery" || unpaid)) throw new ConflictException("В пути или до отметки оплаты можно заменить курьера, но нельзя оставить волну без курьера.");
           data[relation] = { disconnect: true }; continue;
         }
-        const user = await tx.user.findFirst({ where: { id: userId, role, status: "active" } });
+        const user = await tx.user.findFirst({ where: { id: userId, roles: { has: role }, status: "active" } });
         if (!user) throw new BadRequestException("Выберите активного сотрудника с подходящей ролью.");
         data[relation] = { connect: { id: userId } };
       }
       await tx.deliveryWave.update({ where: { id }, data });
+      await audit(tx, actor, "wave.assignments_changed", id);
     });
     return this.wave(id);
   }
@@ -200,18 +228,19 @@ export class OperationsService {
   async addReplacementPurchase(id: string, value: unknown, actor?: StaffUser) {
     const productId = text(object(value).productId, "Товар", false, 100);
     await this.transaction(async tx => {
-      const wave = await this.lockedWave(tx, id, actor);
+      const wave = await this.lockedWave(tx, id, actor, "picker");
       if (wave.status !== "picking") throw new ConflictException("Добавлять закупку можно только во время сборки.");
       const product = await tx.product.findFirst({ where: { id: productId, isActive: true, isAvailableToday: true } });
       if (!product) throw new BadRequestException("Товар недоступен.");
       await tx.waveItem.upsert({ where: { deliveryWaveId_productId: { deliveryWaveId: id, productId } }, update: {},
         create: { deliveryWaveId: id, productId, productNameSnapshot: product.name, unit: product.unit, requestedQuantityTotal: "0", referencePurchasePrice: product.currentPurchasePrice } });
+      await audit(tx, actor, "wave.replacement_added", id);
     });
     return this.wave(id, actor);
   }
 
   private allocated(wave: Wave, productId: string, exceptItem?: string) {
-    return wave.orders.filter(order => order.status !== "cancelled").flatMap(order => order.items)
+    return wave.orders.filter(order => order.status !== "cancelled" && order.requiresPicking).flatMap(order => order.items)
       .filter(item => item.id !== exceptItem && (item.replacementProductId ?? item.productId) === productId && ["picked", "replaced"].includes(item.status))
       .reduce((sum, item) => sum.plus(item.finalQuantity ?? 0), new Prisma.Decimal(0));
   }
@@ -222,24 +251,26 @@ export class OperationsService {
     const price = decimal(body.purchaseUnitPrice, 2, "Закупочная цена");
     const note = text(body.supplierNote, "Примечание продавца", true);
     await this.transaction(async tx => {
-      const wave = await this.lockedWave(tx, id, actor);
+      const wave = await this.lockedWave(tx, id, actor, "picker");
       if (wave.status !== "picking") throw new ConflictException("Закупку можно изменять только во время сборки.");
       const item = wave.waveItems.find(item => item.id === itemId);
       if (!item) throw new NotFoundException("Товар закупки не найден.");
       if (quantity.lt(this.allocated(wave, item.productId))) throw new ConflictException("Уже распределено больше, чем указано в закупке.");
       await tx.waveItem.update({ where: { id: itemId }, data: { purchasedQuantity: quantity, purchaseUnitPrice: price,
         purchaseTotal: money(quantity.mul(price)), supplierNote: note || null } });
+      await audit(tx, actor, "purchase.updated", itemId);
     });
     return this.wave(id, actor);
   }
 
   async distribute(id: string, itemId: string, value: unknown, actor?: StaffUser) {
     const body = object(value);
-    if (actor?.role === "picker" && body.finalUnitPrice !== undefined) throw new ForbiddenException("Сборщик не может изменять цену клиенту.");
+    if (!isAdmin(actor) && body.finalUnitPrice !== undefined) throw new ForbiddenException("Сборщик не может изменять цену клиенту.");
     const status = text(body.status, "Статус позиции");
     if (!["picked", "replaced", "removed", "unavailable"].includes(status)) throw new BadRequestException("Выберите результат сборки позиции.");
     await this.transaction(async tx => {
-      const order = await this.lockedOrder(tx, id, actor);
+      const order = await this.lockedOrder(tx, id, actor, "picker");
+      if (!isAdmin(await this.currentActor(tx, actor)) && body.finalUnitPrice !== undefined) throw new ForbiddenException("Сборщик не может изменять цену клиенту.");
       if (!order.deliveryWaveId || order.status !== "picking") throw new ConflictException("Заказ должен находиться в сборке.");
       const wave = await tx.deliveryWave.findUniqueOrThrow({ where: { id: order.deliveryWaveId }, include: waveInclude });
       if (wave.status !== "picking") throw new ConflictException("Сборка волны уже завершена.");
@@ -272,14 +303,14 @@ export class OperationsService {
       } });
       const items = await tx.orderItem.findMany({ where: { orderId: id } });
       await tx.order.update({ where: { id }, data: { totalFinal: finalOrderTotal(items, order) } });
+      await audit(tx, actor, "packing.item_updated", itemId);
     });
     return this.order(id, actor);
   }
 
   async packOrder(id: string, actor?: StaffUser) {
-    if (actor?.role === "courier") throw new ForbiddenException();
     await this.transaction(async tx => {
-      const order = await this.lockedOrder(tx, id, actor);
+      const order = await this.lockedOrder(tx, id, actor, "picker");
       if (!order.deliveryWaveId || order.status !== "picking") throw new ConflictException("Заказ должен находиться в сборке.");
       const wave = await tx.deliveryWave.findUniqueOrThrow({ where: { id: order.deliveryWaveId }, include: waveInclude });
       if (wave.status !== "picking") throw new ConflictException("Сборка волны уже завершена.");
@@ -303,16 +334,17 @@ export class OperationsService {
       }
       const items = await tx.orderItem.findMany({ where: { orderId: id } });
       await tx.order.update({ where: { id }, data: { totalFinal: finalOrderTotal(items, order) } });
+      if (pending.length) await audit(tx, actor, "order.packed", id);
     });
     return this.order(id, actor);
   }
 
   async waveStatus(id: string, value: unknown, actor?: StaffUser) {
+    if (!isAdmin(actor) && !["picking", "picked", "out_for_delivery"].includes(String(object(value).status))) throw new ForbiddenException("Недостаточно прав.");
     const status = text(object(value).status, "Статус волны");
-    if (actor?.role === "courier" && status !== "out_for_delivery") throw new ForbiddenException();
-    if (actor?.role === "picker" && !["picking", "picked"].includes(status)) throw new ForbiddenException();
     await this.transaction(async tx => {
-      const wave = await this.lockedWave(tx, id, actor);
+      const wave = await this.lockedWave(tx, id, actor, status === "out_for_delivery" ? "courier" : "picker");
+      if (!isAdmin(await this.currentActor(tx, actor)) && !["picking", "picked", "out_for_delivery"].includes(status)) throw new ForbiddenException("Недостаточно прав.");
       transition(wave.status, status, waveTransitions);
       if (wave.status === status) return;
       const active = wave.orders.filter(order => order.status !== "cancelled");
@@ -327,11 +359,13 @@ export class OperationsService {
       }
       if (status === "out_for_delivery" && !wave.courierUserId) throw new ConflictException("Назначьте курьера.");
       for (const order of active) {
+        if (status === "picking" && !order.requiresPicking) continue;
         transition(order.status, status, orderTransitions);
         if (status === "cancelled" && order.paymentStatus === "paid") throw new ConflictException("В волне есть оплаченный заказ.");
       }
-      await tx.order.updateMany({ where: { deliveryWaveId: id, status: { not: "cancelled" } }, data: { status: status as OrderStatus } });
+      await tx.order.updateMany({ where: { deliveryWaveId: id, status: { not: "cancelled" }, ...(status === "picking" ? { requiresPicking: true } : {}) }, data: { status: status as OrderStatus } });
       await tx.deliveryWave.update({ where: { id }, data: { status } });
+      await audit(tx, actor, `wave.${status}`, id);
       if (status === "cancelled") await refreshDemand(tx, id);
     });
     return this.wave(id, actor);

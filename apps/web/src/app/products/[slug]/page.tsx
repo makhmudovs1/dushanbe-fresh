@@ -9,7 +9,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         <Link className="back-link" href="/catalog">
           Назад в каталог
         </Link>
-        <ProductDetail slug={params.slug} />
+        <ProductDetail key={params.slug} slug={params.slug} />
       </section>
     </main>
   );

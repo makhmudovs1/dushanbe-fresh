@@ -13,9 +13,9 @@ async function main() {
     if (!existing?.passwordHash) {
       const passwordHash = await hash(password, 12);
       user = existing ? await prisma.user.update({ where: { id: existing.id }, data: { email, passwordHash } })
-        : await prisma.user.create({ data: { id: `dev-${role}`, email, passwordHash, name, role } });
+        : await prisma.user.create({ data: { id: `dev-${role}`, email, passwordHash, name, role, roles: [role] } });
     }
-    if (role !== "admin" && user?.role === role && user.status === "active") {
+    if (role !== "admin" && user?.roles.includes(role) && user.status === "active") {
       await prisma.appSetting.upsert({ where: { key: `default_${role}_id` }, update: {}, create: { key: `default_${role}_id`, value: user.id } });
     }
   }

@@ -8,7 +8,7 @@ import type { CheckoutInput } from "@dushanbe-fresh/shared";
 const url = process.env.TEST_DATABASE_URL;
 
 describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
-  const prisma = new PrismaClient({ datasources: { db: { url } } });
+  const prisma = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
   const service = new CheckoutService(prisma as never);
   const marker = `checkout-test-${randomUUID()}`;
   const ids: string[] = [];
@@ -33,6 +33,7 @@ describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
 
   afterAll(async () => {
     await prisma.order.deleteMany({ where: { deliverySlotId: { in: ids } } });
+    await prisma.customer.deleteMany({ where: { phoneNormalized: phone } });
     await prisma.deliverySlot.deleteMany({ where: { id: { in: ids } } });
     await prisma.product.deleteMany({ where: { id: marker } });
     await prisma.category.deleteMany({ where: { id: marker } });
@@ -72,6 +73,11 @@ describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
     const input = await setup(2);
     const [a, b] = await Promise.all([service.createOrder(input), service.createOrder(input)]);
     expect(a.orderNumber).toBe(b.orderNumber);
+    expect(a.publicTrackingToken).toMatch(/^[a-f0-9]{64}$/);
+    expect(b.publicTrackingToken).toBe(a.publicTrackingToken);
+    const stored = await prisma.order.findUniqueOrThrow({ where: { orderNumber: a.orderNumber } });
+    expect(a.publicTrackingToken).toBe(stored.publicTrackingToken);
+    expect(a.publicTrackingToken).not.toBe(stored.id);
     expect(await prisma.order.count({ where: { deliverySlotId: input.deliverySlotId } })).toBe(1);
     await expect(service.createOrder({ ...input, name: "Другой" })).rejects.toThrow("отправка уже использована");
   });
@@ -85,6 +91,7 @@ describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
     expect(waves.find(wave => wave.deliverySlotId === input.deliverySlotId)?.orders).toHaveLength(2);
     expect(waves.find(wave => wave.deliverySlotId === other.deliverySlotId)?.orders).toHaveLength(1);
     expect(waves.flatMap(wave => wave.orders).every(order => order.status === "confirmed" && order.deliveryWaveId)).toBe(true);
+    expect(new Set(waves.flatMap(wave => wave.orders).map(order => order.publicTrackingToken)).size).toBe(3);
     expect(waves.find(wave => wave.deliverySlotId === input.deliverySlotId)?.waveItems[0].requestedQuantityTotal.toString()).toBe("24");
   });
 
