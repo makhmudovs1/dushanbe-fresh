@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ShoppingBag } from "lucide-react";
 import { lastOrderEvent, lastTracking, trackingPath } from "@/lib/tracking";
 
 import { useCart } from "@/cart/cart-context";
@@ -25,11 +26,10 @@ export function SiteHeader() {
       </Link>
       <nav className="site-nav" aria-label="Основная навигация">
         <Link href="/catalog">Каталог</Link>
-        {tracking ? <Link href={trackingPath(tracking)}>Мой заказ</Link> : <Link className="desktop-only" href="/#categories">
-          Категории
-        </Link>}
+        {tracking ? <Link href={trackingPath(tracking)}>Мой заказ</Link> :
+          <span className="site-nav__inactive" aria-disabled="true" title="Нет сохранённого заказа">Мой заказ</span>}
         <Link className="cart-link" href="/cart" aria-label={hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина"}>
-          <span className="cart-icon" aria-hidden="true" />
+          <ShoppingBag size={20} aria-hidden="true" />
           <span>Корзина</span>
           <strong aria-hidden={!hydrated}>{hydrated ? lineCount : ""}</strong>
         </Link>

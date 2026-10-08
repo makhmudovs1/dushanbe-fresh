@@ -139,6 +139,7 @@ model Category {
   slug      String    @unique
   sortOrder Int       @default(0) @map("sort_order")
   isActive  Boolean   @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
   products  Product[]
 
   @@map("categories")
@@ -159,6 +160,7 @@ model Product {
   quantityStep         Decimal                @map("quantity_step") @db.Decimal(12, 3)
   isActive             Boolean                @default(true) @map("is_active")
   isAvailableToday     Boolean                @default(true) @map("is_available_today")
+  deletedAt            DateTime?              @map("deleted_at")
   sortOrder            Int                    @default(0) @map("sort_order")
   createdAt            DateTime               @default(now()) @map("created_at")
   updatedAt            DateTime               @updatedAt @map("updated_at")

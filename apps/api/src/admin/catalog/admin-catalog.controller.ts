@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { CatalogService } from "../../catalog/catalog.service";
 import {
@@ -33,6 +33,16 @@ export class AdminCatalogController {
   @Get("products")
   listProducts(@Query("category") category?: string, @Query("search") search?: string) {
     return this.catalogService.listAdminProducts({ category, search });
+  }
+
+  @Delete("categories/:id")
+  deleteCategory(@Param("id") id: string) {
+    return this.catalogService.deleteAdminCategory(id);
+  }
+
+  @Delete("products/:id")
+  deleteProduct(@Param("id") id: string) {
+    return this.catalogService.deleteAdminProduct(id);
   }
 
   @Post("products")

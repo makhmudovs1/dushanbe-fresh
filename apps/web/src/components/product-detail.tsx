@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { adjustQuantity } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
 import { getProduct, Product } from "@/lib/api";
-import { priceLabel, quantityLabel } from "@/lib/format";
+import { priceLabel } from "@/lib/format";
+import { isMinimumQuantity } from "@/cart/catalog-selection";
+import { QuantityStepper } from "./quantity-stepper";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
-  const { addProduct } = useCart();
+  const { addProduct, hydrated } = useCart();
   const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
   const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
   const [qualityOption, setQualityOption] = useState(initialProduct?.qualityOptions[0]?.id ?? "");
@@ -83,37 +85,17 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
 
         <div className="field">
           <span>Количество</span>
-          <div className="quantity-control quantity-control--wide">
-            <button
-              onClick={() =>
-                setQuantity(
-                  adjustQuantity(quantity, product.minQuantity, product.quantityStep, "decrement")
-                )
-              }
-              type="button"
-            >
-              -
-            </button>
-            <strong>
-              {quantityLabel(quantity, product.unit)}
-            </strong>
-            <button
-              onClick={() =>
-                setQuantity(
-                  adjustQuantity(quantity, product.minQuantity, product.quantityStep, "increment")
-                )
-              }
-              type="button"
-            >
-              +
-            </button>
-          </div>
+          <QuantityStepper name={product.name} quantity={quantity} unit={product.unit}
+            decreaseDisabled={isMinimumQuantity({ ...product, quantity })}
+            onDecrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "decrement"))}
+            onIncrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "increment"))} />
         </div>
 
         {notice ? <p className="notice">{notice}</p> : null}
 
         <button
           className="primary-action"
+          disabled={!hydrated}
           onClick={() => {
             addProduct({
               product,

@@ -100,6 +100,67 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     for (const role of ["picker", "courier"]) for (const path of ["/admin/products", "/admin/categories", "/admin/settings", "/admin/staff"]) expect((await request(path, role)).status).toBe(403);
     expect((await request("/admin/products", "picker", "POST", {})).status).toBe(403);
     expect((await request(`/admin/products/${marker}`, "courier", "PATCH", { sellingPrice: "1" })).status).toBe(403);
+    for (const resource of ["products", "categories"]) {
+      expect((await request(`/admin/${resource}/${marker}`, undefined, "DELETE")).status).toBe(401);
+      for (const role of ["picker", "courier"]) expect((await request(`/admin/${resource}/${marker}`, role, "DELETE")).status).toBe(403);
+    }
+  });
+
+  it("deletes catalog entries without damaging orders or allowing stale-cart checkout", async () => {
+    const id = `${marker}-deletion`;
+    await db.category.create({ data: { id, slug: id, name: "Удаляемая категория" } });
+    await db.product.create({ data: { id, slug: id, name: "Удаляемый товар", categoryId: id, unit: "piece", currentSalePrice: "10", currentPurchasePrice: "8", minQuantity: "1", quantityStep: "1" } });
+    await db.orderItem.create({ data: { id, orderId: orders[0], productId: id, productNameSnapshot: "Историческое имя", unit: "piece", requestedQuantity: "2", saleUnitPriceSnapshot: "10", estimatedTotal: "20" } });
+    await db.waveItem.create({ data: { id, deliveryWaveId: waves[0], productId: id, productNameSnapshot: "Историческое имя", unit: "piece", requestedQuantityTotal: "2" } });
+    try {
+      expect((await request(`/admin/categories/${id}`, "admin", "DELETE")).status).toBe(409);
+      await db.product.update({ where: { id }, data: { isActive: false } });
+      expect((await request(`/admin/categories/${id}`, "admin", "DELETE")).status).toBe(409);
+      const before = await db.orderItem.findUniqueOrThrow({ where: { id } });
+      expect((await request(`/admin/products/${id}`, "admin", "DELETE")).status).toBe(200);
+      const saved = await db.product.findUniqueOrThrow({ where: { id } });
+      expect(saved.deletedAt).toBeInstanceOf(Date);
+      expect(saved.isActive).toBe(false); expect(saved.isAvailableToday).toBe(false);
+      expect(await db.orderItem.findUniqueOrThrow({ where: { id } })).toEqual(before);
+      expect(await db.waveItem.count({ where: { id } })).toBe(1);
+      expect((await request(`/products/${id}`)).status).toBe(404);
+      for (const path of ["/products", "/admin/products"]) {
+        expect((await (await request(path, "admin")).json()).some((p: { id: string }) => p.id === id)).toBe(false);
+      }
+      expect((await request(`/admin/products/${id}`, "admin", "PATCH", { isActive: true })).status).toBe(404);
+      expect((await request(`/admin/products/${id}`, "admin", "DELETE")).status).toBe(404);
+      for (const [key, value] of Object.entries({ minimum_order_amount: "120.00", delivery_fee: "20.00", service_fee: "0.00" })) await db.appSetting.upsert({ where: { key }, update: { value }, create: { key, value } });
+      const quote = await (await request("/checkout/validate", undefined, "POST", { deliverySlotId: slots[0], items: [{ productId: id, quantity: "1" }] })).json();
+      expect(quote.valid).toBe(false);
+      expect(quote.items[0].errors.join(" ")).toContain("недоступны");
+      expect((await request(`/admin/categories/${id}`, "admin", "DELETE")).status).toBe(200);
+      for (const path of ["/categories", "/admin/categories"]) {
+        expect((await (await request(path, "admin")).json()).some((c: { id: string }) => c.id === id)).toBe(false);
+      }
+      expect((await request(`/admin/categories/${id}`, "admin", "PATCH", { isActive: true })).status).toBe(404);
+      const input = { categoryId: id, name: "Новый", slug: `${id}-new`, unit: "piece", sellingPrice: "10", purchasePrice: "8", minQuantity: "1", quantityStep: "1", isActive: false };
+      expect((await request("/admin/products", "admin", "POST", input)).status).toBe(404);
+    } finally {
+      await db.orderItem.deleteMany({ where: { id } }); await db.waveItem.deleteMany({ where: { id } });
+      await db.product.deleteMany({ where: { categoryId: id } }); await db.category.delete({ where: { id } });
+    }
+  });
+
+  it("serializes category deletion with concurrent product creation", async () => {
+    const id = `${marker}-delete-race`;
+    await db.category.create({ data: { id, slug: id, name: "Конкурентная проверка" } });
+    try {
+      const [deletion, creation] = await Promise.all([
+        request(`/admin/categories/${id}`, "admin", "DELETE"),
+        request("/admin/products", "admin", "POST", { categoryId: id, name: "Новый", slug: id, unit: "piece", sellingPrice: "10", purchasePrice: "8", minQuantity: "1", quantityStep: "1", isActive: false })
+      ]);
+      expect([[200, 404], [409, 201]]).toContainEqual([deletion.status, creation.status]);
+      const category = await db.category.findUniqueOrThrow({ where: { id } });
+      const count = await db.product.count({ where: { categoryId: id, deletedAt: null } });
+      expect(category.deletedAt ? count === 0 : count === 1).toBe(true);
+    } finally {
+      await db.product.deleteMany({ where: { categoryId: id } }); await db.category.delete({ where: { id } });
+    }
   });
   it("protects finance and customer APIs with live roles and courier assignment", async () => {
     for (const role of ["picker", "courier"]) {

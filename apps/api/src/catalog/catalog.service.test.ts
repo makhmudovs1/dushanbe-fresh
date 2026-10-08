@@ -43,12 +43,14 @@ const product = {
 
 function createService() {
   const prisma = {
+    $queryRaw: vi.fn().mockResolvedValue([{ deleted_at: null }]),
     category: {
       findMany: vi.fn().mockResolvedValue([category]),
       create: vi.fn().mockResolvedValue(category),
       update: vi.fn().mockResolvedValue(category)
     },
     product: {
+      count: vi.fn().mockResolvedValue(0),
       findMany: vi.fn().mockResolvedValue([product]),
       findFirst: vi.fn().mockResolvedValue(product),
       findUnique: vi.fn().mockResolvedValue(product),
@@ -57,6 +59,7 @@ function createService() {
     }
   };
 
+  Object.assign(prisma, { $transaction: vi.fn(async (run: (tx: typeof prisma) => Promise<unknown>) => run(prisma)) });
   return {
     prisma,
     service: new CatalogService(prisma as never)
@@ -64,6 +67,46 @@ function createService() {
 }
 
 describe("CatalogService", () => {
+  it("soft-deletes products without deleting their relations", async () => {
+    const { prisma, service } = createService();
+    expect(await service.deleteAdminProduct(product.id)).toEqual({ deleted: true });
+    expect(prisma.product.update).toHaveBeenCalledWith({ where: { id: product.id }, data: {
+      deletedAt: expect.any(Date), isActive: false, isAvailableToday: false
+    } });
+  });
+
+  it("refuses category deletion while any nondeleted products remain", async () => {
+    const { prisma, service } = createService();
+    prisma.product.count.mockResolvedValue(2);
+    await expect(service.deleteAdminCategory(category.id)).rejects.toThrow("Сначала перенесите или удалите");
+    expect(prisma.product.count).toHaveBeenCalledWith({ where: { categoryId: category.id, deletedAt: null } });
+    expect(prisma.category.update).not.toHaveBeenCalled();
+  });
+
+  it("soft-deletes an empty category", async () => {
+    const { prisma, service } = createService();
+    await service.deleteAdminCategory(category.id);
+    expect(prisma.category.update).toHaveBeenCalledWith({ where: { id: category.id }, data: {
+      deletedAt: expect.any(Date), isActive: false
+    } });
+  });
+
+  it.each([{ rows: [] }, { rows: [{ deleted_at: new Date() }] }])("rejects missing or deleted records", async ({ rows }) => {
+    const { prisma, service } = createService();
+    prisma.$queryRaw.mockResolvedValue(rows);
+    await expect(service.deleteAdminProduct(product.id)).rejects.toThrow("Товар не найден");
+    await expect(service.updateAdminProduct(product.id, { isActive: true })).rejects.toThrow("Товар не найден");
+    await expect(service.deleteAdminCategory(category.id)).rejects.toThrow("Категория не найдена");
+    await expect(service.updateAdminCategory(category.id, { isActive: true })).rejects.toThrow("Категория не найдена");
+  });
+
+  it("excludes deleted entries from admin lists", async () => {
+    const { prisma, service } = createService();
+    await service.listAdminCategories(); await service.listAdminProducts();
+    expect(prisma.category.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { deletedAt: null } }));
+    expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { deletedAt: null } }));
+  });
+
   it("requires a photo for new enabled products but permits drafts", async () => {
     const { prisma, service } = createService();
     const input = { categoryId: category.id, name: "Зелень", slug: "greens", unit: "bunch", sellingPrice: "2.50", purchasePrice: "1.50", minQuantity: "1", quantityStep: "1", image: null };
@@ -115,7 +158,7 @@ describe("CatalogService", () => {
         where: expect.objectContaining({
           isActive: true,
           isAvailableToday: true,
-          category: { isActive: true }
+          category: { isActive: true, deletedAt: null }
         })
       })
     );
@@ -142,6 +185,7 @@ describe("CatalogService", () => {
         where: expect.objectContaining({
           category: {
             isActive: true,
+            deletedAt: null,
             slug: "vegetables"
           }
         })

@@ -226,6 +226,8 @@ async function main() {
   const categoryBySlug = new Map<string, string>();
 
   for (const category of categories) {
+    const existing = await prisma.category.findUnique({ where: { slug: category.slug } });
+    if (existing?.deletedAt) continue;
     const saved = await prisma.category.upsert({
       where: { slug: category.slug },
       update: category,
@@ -238,9 +240,9 @@ async function main() {
   for (const product of products) {
     const categoryId = categoryBySlug.get(product.categorySlug);
 
-    if (!categoryId) {
-      throw new Error(`Missing category ${product.categorySlug}`);
-    }
+    if (!categoryId) continue;
+    const existing = await prisma.product.findUnique({ where: { slug: product.slug } });
+    if (existing?.deletedAt) continue;
 
     const saved = await prisma.product.upsert({
       where: { slug: product.slug },

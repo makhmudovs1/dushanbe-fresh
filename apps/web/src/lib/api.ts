@@ -89,6 +89,14 @@ export function getAdminProducts() {
   return request<Product[]>("/admin/products");
 }
 
+export function deleteAdminProduct(id: string) {
+  return request<{ deleted: boolean }>(`/admin/products/${id}`, { method: "DELETE" });
+}
+
+export function deleteAdminCategory(id: string) {
+  return request<{ deleted: boolean }>(`/admin/categories/${id}`, { method: "DELETE" });
+}
+
 export function createAdminProduct(payload: Record<string, unknown>) {
   return request<Product>("/admin/products", {
     method: "POST",

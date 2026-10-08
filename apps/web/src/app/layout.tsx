@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./catalog-ui.css";
 
 import { CartProvider } from "@/cart/cart-context";
 import { SiteHeader } from "@/components/site-header";

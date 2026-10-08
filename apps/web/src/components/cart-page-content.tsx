@@ -1,5 +1,7 @@
 "use client";
-import { decimalLabel, priceLabel, quantityLabel } from "@/lib/format";
+import { decimalLabel, priceLabel } from "@/lib/format";
+import { Trash2 } from "lucide-react";
+import { isMinimumQuantity } from "@/cart/catalog-selection";
 
 import Link from "next/link";
 
@@ -12,6 +14,7 @@ import {
 import { useCart } from "@/cart/cart-context";
 import { CartSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
+import { QuantityStepper } from "./quantity-stepper";
 
 export function CartPageContent() {
   const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount } = useCart();
@@ -66,25 +69,18 @@ export function CartPageContent() {
                   </p>
                 </div>
 
-                <div className="quantity-control" aria-label={`Количество ${item.name}`}>
-                  <button onClick={() => decrementItem(item)} type="button">
-                    -
-                  </button>
-                  <strong>
-                    {quantityLabel(item.quantity, item.unit)}
-                  </strong>
-                  <button onClick={() => incrementItem(item)} type="button">
-                    +
-                  </button>
-                </div>
+                <QuantityStepper name={`${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`}
+                  quantity={item.quantity} unit={item.unit} decreaseDisabled={isMinimumQuantity(item)}
+                  onDecrease={() => decrementItem(item)} onIncrease={() => incrementItem(item)} />
 
                 <div className="cart-item__footer">
                   <strong>
                     {item.isWeighted ? "≈ " : ""}
                     {decimalLabel(itemSubtotal)} сомони
                   </strong>
-                  <button onClick={() => removeItem(item)} type="button">
-                    Удалить
+                  <button className="catalog-icon-action" onClick={() => removeItem(item)} type="button"
+                    aria-label={`Удалить: ${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`} title="Удалить из корзины">
+                    <Trash2 size={18} aria-hidden="true" />
                   </button>
                 </div>
               </div>
