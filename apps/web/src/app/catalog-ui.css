@@ -17,12 +17,12 @@
 .product-card__line small { color: var(--color-muted); overflow-wrap: anywhere; }
 .catalog-text-action { min-height: 32px; padding: 0; border: 0; background: transparent; color: var(--color-primary); text-decoration: underline; cursor: pointer; font-size: 13px; }
 .catalog-quality { display: flex; align-items: center; gap: 4px; max-width: 100%; }
-.catalog-quality select { min-width: 0; width: 200px; max-width: calc(100% - 48px); min-height: 44px; padding: 6px; border: 1px solid var(--color-border); border-radius: 4px; background: white; font-size: 14px; }
-.quantity-stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; width: 184px; max-width: 100%; min-height: 44px; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; background: white; align-items: center; }
-.quantity-stepper button { display: grid; place-items: center; min-height: 44px; padding: 0; border: 0; color: var(--color-primary); background: #eef5ef; cursor: pointer; }
+.catalog-quality select { min-width: 0; width: 200px; max-width: calc(100% - 48px); min-height: 44px; padding: 6px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-surface); font-size: 14px; }
+.quantity-stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; width: 184px; max-width: 100%; min-height: 44px; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; background: var(--color-surface); align-items: center; }
+.quantity-stepper button { display: grid; place-items: center; min-height: 44px; padding: 0; border: 0; color: var(--color-primary); background: var(--color-surface-muted); cursor: pointer; }
 .quantity-stepper output { padding: 2px 4px; text-align: center; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; line-height: 1.3; }
 .catalog-icon-action { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--color-primary); cursor: pointer; }
-.catalog-icon-action:hover { background: #edf4ee; }
+.catalog-icon-action:hover { background: var(--color-secondary); }
 .quantity-stepper button:focus-visible, .catalog-icon-action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -3px; }
 .catalog-text-action:focus-visible, .product-card a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .catalog-search { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
@@ -36,7 +36,7 @@
 .product-detail__content .primary-action { width: fit-content; min-height: 44px; box-shadow: none; font-weight: 650; }
 .site-header { padding-block: 10px; gap: 12px; }
 .site-nav { gap: 8px; align-items: center; }
-.site-nav__inactive { color: #737d76; white-space: nowrap; padding: 10px 8px; font-weight: 600; }
+.site-nav__inactive { color: var(--color-muted); white-space: nowrap; padding: 10px 8px; font-weight: 600; }
 .cart-link { min-height: 44px; }
 .cart-items { gap: 0; }
 .cart-item { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 14px 0; border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; box-shadow: none; background: transparent; }
@@ -47,7 +47,7 @@
 .cart-item__footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .cart-item__footer strong { font-size: 16px; font-weight: 650; }
 .cart-item__footer .catalog-icon-action { background: transparent; }
-.cart-item__footer .catalog-icon-action:hover { background: #edf4ee; }
+.cart-item__footer .catalog-icon-action:hover { background: var(--color-secondary); }
 .cart-summary { padding: 16px 0; gap: 12px; border: 0; border-top: 1px solid var(--color-border); border-radius: 0; box-shadow: none; background: transparent; }
 .cart-summary h2 { font-size: 22px; }
 .cart-summary .summary-row { font-size: 15px; gap: 12px; }
@@ -72,14 +72,14 @@
 .catalog-admin__toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; cursor: pointer; }
 .catalog-admin__toggle input { width: 18px; height: 18px; accent-color: var(--color-primary); }
 .catalog-admin__row-actions { display: flex; grid-row: 1; grid-column: 3; }
-.catalog-delete-icon, .catalog-delete-category { color: #aa302a; }
+.catalog-delete-icon, .catalog-delete-category { color: var(--color-danger); }
 .catalog-admin__category-actions { margin-bottom: 12px; }
 .catalog-delete-category { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border: 0; background: transparent; cursor: pointer; }
-.catalog-danger-action { min-height: 44px; padding: 0 16px; border: 0; border-radius: 4px; background: #aa302a; color: white; cursor: pointer; }
+.catalog-danger-action { min-height: 44px; padding: 0 16px; border: 0; border-radius: 4px; background: var(--color-danger); color: var(--color-primary-contrast); cursor: pointer; }
 .catalog-admin__empty { padding-block: 24px; }
-.catalog-dialog { width: min(820px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text); background: white; }
+.catalog-dialog { width: min(820px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text); background: var(--color-surface); }
 .catalog-dialog::backdrop { background: rgb(18 31 22 / 42%); }
-.catalog-dialog__header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; background: white; border-bottom: 1px solid var(--color-border); }
+.catalog-dialog__header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
 .catalog-dialog__header h2 { margin: 0; font-size: 22px; overflow-wrap: anywhere; }
 .catalog-dialog__body { padding: 16px; }
 .catalog-dialog .admin-form { margin: 0; padding: 0; }

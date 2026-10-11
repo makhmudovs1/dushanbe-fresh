@@ -24,12 +24,11 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="product-card">
       <Link className="product-card__media" href={`/products/${product.slug}`} aria-label={product.name}>
         <ProductImage src={product.image} name={product.name} />
+        {product.isAvailableToday !== false && product.isActive !== false ?
+          <span className="availability-badge">Сегодня в наличии</span> : null}
       </Link>
       <div className="product-card__body">
         <div>
-          <div className="product-card__meta">
-            <span>Сегодня в наличии</span>
-          </div>
           <h3>
             <Link href={`/products/${product.slug}`}>{product.name}</Link>
           </h3>

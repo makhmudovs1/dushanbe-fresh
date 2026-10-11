@@ -34,7 +34,7 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   const row = page.locator(".cart-item").filter({ hasText: product.name });
   await expect(row.locator("output")).toHaveText(quantityLabel(increased, product.unit));
   await row.getByRole("button", { name: /^Уменьшить количество/ }).click();
-  await page.getByRole("navigation").getByRole("link", { name: "Каталог", exact: true }).click();
+  await page.getByRole("navigation", { name: "Основная навигация" }).getByRole("link", { name: "Каталог", exact: true }).click();
   await expect(item.locator("output")).toHaveText(quantityLabel(minimum, product.unit));
   await item.getByRole("button", { name: /^Уменьшить количество/ }).click();
   await expect(item.getByRole("button", { name: "Выбрать", exact: true })).toBeVisible();

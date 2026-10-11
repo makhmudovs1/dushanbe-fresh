@@ -56,34 +56,22 @@ export function CartPageContent() {
               <Link className="cart-item__media" href={`/products/${item.slug}`} aria-label={item.name}>
                 <ProductImage src={item.imageUrl} name={item.name} />
               </Link>
-              <div className="cart-item__body">
-                <div>
-                  <h3>
-                    <Link href={`/products/${item.slug}`}>{item.name}</Link>
-                  </h3>
-                  {item.qualityOptionLabel ? (
-                    <p>Качество: {item.qualityOptionLabel}</p>
-                  ) : null}
-                  <p>
-                    {priceLabel(item.sellingPrice, item.unit)}
-                  </p>
-                </div>
-
-                <QuantityStepper name={`${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`}
-                  quantity={item.quantity} unit={item.unit} decreaseDisabled={isMinimumQuantity(item)}
-                  onDecrease={() => decrementItem(item)} onIncrease={() => incrementItem(item)} />
-
-                <div className="cart-item__footer">
-                  <strong>
-                    {item.isWeighted ? "≈ " : ""}
-                    {decimalLabel(itemSubtotal)} сомони
-                  </strong>
-                  <button className="catalog-icon-action" onClick={() => removeItem(item)} type="button"
-                    aria-label={`Удалить: ${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`} title="Удалить из корзины">
-                    <Trash2 size={18} aria-hidden="true" />
-                  </button>
-                </div>
+              <div className="cart-item__info">
+                <h3><Link href={`/products/${item.slug}`}>{item.name}</Link></h3>
+                {item.qualityOptionLabel ? <p>Качество: {item.qualityOptionLabel}</p> : null}
+                <p>{priceLabel(item.sellingPrice, item.unit)}</p>
               </div>
+              <QuantityStepper name={`${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`}
+                quantity={item.quantity} unit={item.unit} decreaseDisabled={isMinimumQuantity(item)}
+                onDecrease={() => decrementItem(item)} onIncrease={() => incrementItem(item)} />
+              <strong className="cart-item__total" title={`${item.isWeighted ? "≈ " : ""}${decimalLabel(itemSubtotal)} сомони`}>
+                <span>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)}</span>
+                <small>сомони</small>
+              </strong>
+              <button className="catalog-icon-action cart-item__delete" onClick={() => removeItem(item)} type="button"
+                aria-label={`Удалить: ${item.name}${item.qualityOptionLabel ? `, ${item.qualityOptionLabel}` : ""}`} title="Удалить из корзины">
+                <Trash2 size={18} aria-hidden="true" />
+              </button>
             </article>
           );
         })}

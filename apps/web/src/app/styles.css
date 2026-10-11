@@ -1,0 +1,4 @@
+/* A single entry keeps the override order stable in production CSS chunks. */
+@import "./globals.css";
+@import "./catalog-ui.css";
+@import "./ui-polish.css";
