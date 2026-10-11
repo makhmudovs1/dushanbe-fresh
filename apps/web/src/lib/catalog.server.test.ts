@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getInitialCatalog, getInitialProduct } from "./catalog.server";
 
+// React cache is supplied by Next's server renderer, not the React 18 test runtime.
+vi.mock("react", () => ({ cache: (fn: unknown) => fn }));
+
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("streamed public catalog data", () => {

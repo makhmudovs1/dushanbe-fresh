@@ -1,4 +1,5 @@
 import type { Category, Product } from "./api";
+import { cache } from "react";
 
 // Only public catalog DTOs: never forward staff cookies or fetch order data here.
 async function readPublicCatalog<T>(path: string): Promise<T | null> {
@@ -26,6 +27,11 @@ export async function getInitialCatalog(category = "") {
   return { categories, products };
 }
 
-export function getInitialProduct(slug: string) {
+// Request-scoped only: share metadata/page reads without caching prices across requests.
+export const getInitialProduct = cache(async (slug: string) => {
   return readPublicCatalog<Product>(`/products/${encodeURIComponent(slug)}`);
+});
+
+export function getPublicProducts() {
+  return readPublicCatalog<Product[]>("/products");
 }

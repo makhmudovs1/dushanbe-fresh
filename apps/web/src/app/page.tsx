@@ -3,6 +3,9 @@ import { Suspense } from "react";
 
 import { CatalogData } from "@/components/catalog-data";
 import { ProductGridSkeleton } from "@/components/loading-state";
+import { HOME_TITLE, SITE_DESCRIPTION, publicMetadata } from "@/lib/seo";
+
+export const metadata = publicMetadata("/", HOME_TITLE, SITE_DESCRIPTION);
 
 export const dynamic = "force-dynamic";
 

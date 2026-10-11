@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata = { title: "О сервисе | Dushanbe Fresh" };
+export const metadata = publicMetadata("/about", "О сервисе | Dushanbe Fresh", "Как работает Dushanbe Fresh: выбираем свежие продукты на рынках Душанбе, проверяем качество, упаковываем и доставляем домой.");
 
 export default function AboutPage() {
   return <main className="page"><div className="shell about-page">
