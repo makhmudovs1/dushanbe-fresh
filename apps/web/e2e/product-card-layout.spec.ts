@@ -1,0 +1,51 @@
+import { expect, test } from "@playwright/test";
+import type { Product } from "../src/lib/api";
+
+const descriptions = [null, "Описание в несколько строк для проверки компактной карточки товара.", "", " ", "Коротко", "Текст без перевода"];
+const products: Product[] = descriptions.map((description, index) => ({
+  id: `layout-${index}`, slug: `layout-${index}`, name: `Товар ${index + 1}`, nameTj: `Маҳсулот ${index + 1}`,
+  description, descriptionTj: [null, "Тавсифи маҳсулоти тару тоза барои санҷиши корти паймон.", "", " ", "Кӯтоҳ", null][index],
+  image: null, unit: "kg", sellingPrice: "9.20", isWeighted: true, minQuantity: "0.5", quantityStep: "0.25",
+  category: { id: "layout", slug: "layout", name: "Овощи", nameTj: "Сабзавот" }, qualityOptions: []
+}));
+
+for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
+  test(`description layout ${locale} ${width}px`, async ({ page, context, baseURL }, info) => {
+    await context.addCookies([{ name: "df-language", value: locale, url: baseURL! }]);
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/catalog");
+    // Use a browser-only response after search; never modify catalog records.
+    await page.route("**/api/v1/products?*", route => route.fulfill({ json: products }));
+    await page.locator(".catalog-search input").fill("layout-fixture");
+    await page.locator(".catalog-search button").click();
+    const cards = page.locator(".product-card");
+    await expect(cards).toHaveCount(products.length);
+    await expect(cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true })).toBeVisible();
+    for (let i = 0; i < products.length; i++) {
+      const card = cards.nth(i);
+      const absent = [0, 2, 3].includes(i) || (locale === "tg" && i === 5);
+      await expect(card.locator(".product-card__description")).toHaveCount(absent ? 0 : 1);
+      const gap = await card.evaluate((el, absent) => {
+        const preceding = el.querySelector(absent ? "h3" : ".product-card__description")!.getBoundingClientRect();
+        return el.querySelector(".product-card__price")!.getBoundingClientRect().top - preceding.bottom;
+      }, absent);
+      expect(gap).toBeGreaterThanOrEqual(7);
+      expect(gap).toBeLessThanOrEqual(9);
+    }
+    const short = cards.nth(4).locator(".product-card__description");
+    expect((await short.boundingBox())!.height).toBe(20);
+    const bounds = await cards.evaluateAll(els => els.map(el => ({
+      top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom,
+      actionBottom: el.querySelector(".product-card__action")!.getBoundingClientRect().bottom
+    })));
+    for (const a of bounds) for (const b of bounds.filter(b => Math.abs(a.top - b.top) < 1)) {
+      expect(Math.abs(a.bottom - b.bottom)).toBeLessThan(1);
+      expect(Math.abs(a.actionBottom - b.actionBottom)).toBeLessThan(1);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath(`cards-${locale}-${width}.png`), fullPage: true });
+    await cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true }).click();
+    await expect(cards.first().locator("output")).toContainText("0,5");
+    await expect(cards.first().locator(".product-card__description")).toHaveCount(0);
+  });
+}

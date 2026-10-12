@@ -18,6 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
   const { t, name, label, description, priceLabel } = useI18n();
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
   const [choosingQuality, setChoosingQuality] = useState(false);
+  const productDescription = description(product)?.trim();
   const items = state.items.filter(item => item.productId === product.id);
   function add(qualityOptionId?: string) {
     addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId });
@@ -36,11 +37,9 @@ export function ProductCard({ product }: { product: Product }) {
             <Link href={`/products/${product.slug}`}>{name(product)}</Link>
           </h3>
         </div>
-        <p className="product-card__description">{description(product)}</p>
+        {productDescription ? <p className="product-card__description">{productDescription}</p> : null}
+        <strong className="product-card__price">{priceLabel(product.sellingPrice, product.unit)}</strong>
         <div className="product-card__footer">
-          <strong>
-            {priceLabel(product.sellingPrice, product.unit)}
-          </strong>
           <div className="product-card__selection">
             {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : <>
               {items.map(item => <div className="product-card__line" key={getCartItemKey(item)}>

@@ -538,7 +538,6 @@ button:disabled {
 
 .product-card__description {
   display: -webkit-box;
-  min-height: 42px;
   overflow: hidden;
   color: var(--color-muted);
   font-size: 14px;
@@ -552,7 +551,7 @@ button:disabled {
   align-self: end;
 }
 
-.product-card__footer strong,
+.product-card__price,
 .price,
 .cart-item__footer strong,
 .cart-summary strong {

@@ -1,0 +1,879 @@
+{
+  "version": 3,
+  "purpose": "Corrected pilot catalog: ONE customer-facing product per canonical item",
+  "source": "Dushanbe_Fresh_prices_first_market_visit(1).xlsx",
+  "canonicalProductCount": 41,
+  "pricingRule": {
+    "markupPercent": 15,
+    "rule": "If the market visit contains several variants/prices of the same product, merge them into one canonical product and use the median of the observed reference prices. Never publish market variants as separate catalog products.",
+    "salePriceFormula": "currentSalePrice = referencePurchasePrice * 1.15",
+    "rounding": "2 decimals, ROUND_HALF_UP"
+  },
+  "categories": [
+    {
+      "slug": "vegetables",
+      "nameRu": "Овощи",
+      "nameTj": "Сабзавот",
+      "sortOrder": 10
+    },
+    {
+      "slug": "fruits",
+      "nameRu": "Фрукты",
+      "nameTj": "Мева",
+      "sortOrder": 20
+    },
+    {
+      "slug": "greens",
+      "nameRu": "Зелень",
+      "nameTj": "Кабудӣ",
+      "sortOrder": 30
+    },
+    {
+      "slug": "nuts-dried-fruits",
+      "nameRu": "Орехи и сухофрукты",
+      "nameTj": "Чормағз ва меваи хушк",
+      "sortOrder": 40
+    },
+    {
+      "slug": "legumes",
+      "nameRu": "Бобовые",
+      "nameTj": "Лӯбиёгиҳо",
+      "sortOrder": 50
+    }
+  ],
+  "products": [
+    {
+      "sourceOrder": 1,
+      "categorySlug": "vegetables",
+      "slug": "potatoes",
+      "nameRu": "Картофель",
+      "nameTj": "Картошка",
+      "unit": "kg",
+      "marketObservations": [
+        6
+      ],
+      "referencePurchasePrice": 6.0,
+      "salePrice15Percent": 6.9,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "6/кг; опт 5"
+    },
+    {
+      "sourceOrder": 2,
+      "categorySlug": "vegetables",
+      "slug": "carrots",
+      "nameRu": "Морковь",
+      "nameTj": "Сабзӣ",
+      "unit": "kg",
+      "marketObservations": [
+        5
+      ],
+      "referencePurchasePrice": 5.0,
+      "salePrice15Percent": 5.75,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "5/кг; опт 4.8"
+    },
+    {
+      "sourceOrder": 3,
+      "categorySlug": "vegetables",
+      "slug": "cucumbers",
+      "nameRu": "Огурцы",
+      "nameTj": "Бодиринг",
+      "unit": "kg",
+      "marketObservations": [
+        8
+      ],
+      "referencePurchasePrice": 8.0,
+      "salePrice15Percent": 9.2,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "строка «Огурцы и помидор»: 8"
+    },
+    {
+      "sourceOrder": 4,
+      "categorySlug": "vegetables",
+      "slug": "tomatoes",
+      "nameRu": "Помидоры",
+      "nameTj": "Помидор",
+      "unit": "kg",
+      "marketObservations": [
+        8
+      ],
+      "referencePurchasePrice": 8.0,
+      "salePrice15Percent": 9.2,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "строка «Огурцы и помидор»: 8"
+    },
+    {
+      "sourceOrder": 5,
+      "categorySlug": "vegetables",
+      "slug": "onions",
+      "nameRu": "Лук",
+      "nameTj": "Пиёз",
+      "unit": "kg",
+      "marketObservations": [
+        3
+      ],
+      "referencePurchasePrice": 3.0,
+      "salePrice15Percent": 3.45,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "3/кг; опт 2.5"
+    },
+    {
+      "sourceOrder": 6,
+      "categorySlug": "vegetables",
+      "slug": "radish-turb",
+      "nameRu": "Редька",
+      "nameTj": "Турб",
+      "unit": "kg",
+      "marketObservations": [
+        3
+      ],
+      "referencePurchasePrice": 3.0,
+      "salePrice15Percent": 3.45,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "3/кг; опт 2"
+    },
+    {
+      "sourceOrder": 7,
+      "categorySlug": "vegetables",
+      "slug": "beetroot",
+      "nameRu": "Свёкла",
+      "nameTj": "Лаблабу",
+      "unit": "kg",
+      "marketObservations": [
+        4,
+        7
+      ],
+      "referencePurchasePrice": 5.5,
+      "salePrice15Percent": 6.33,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "две найденные цены: 4 и 7 → медиана"
+    },
+    {
+      "sourceOrder": 8,
+      "categorySlug": "vegetables",
+      "slug": "pumpkin",
+      "nameRu": "Тыква",
+      "nameTj": "Каду",
+      "unit": "kg",
+      "marketObservations": [
+        6
+      ],
+      "referencePurchasePrice": 6.0,
+      "salePrice15Percent": 6.9,
+      "isWeighted": true,
+      "minQuantity": 1.0,
+      "quantityStep": 0.5,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "6/кг; опт 5"
+    },
+    {
+      "sourceOrder": 9,
+      "categorySlug": "vegetables",
+      "slug": "zucchini",
+      "nameRu": "Кабачок",
+      "nameTj": "Кабачок",
+      "unit": "kg",
+      "marketObservations": [
+        7
+      ],
+      "referencePurchasePrice": 7.0,
+      "salePrice15Percent": 8.05,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "в Excel исправлено: 7/кг, опт 6"
+    },
+    {
+      "sourceOrder": 10,
+      "categorySlug": "vegetables",
+      "slug": "cauliflower",
+      "nameRu": "Цветная капуста",
+      "nameTj": "Гулкарам",
+      "unit": "kg",
+      "marketObservations": [
+        5
+      ],
+      "referencePurchasePrice": 5.0,
+      "salePrice15Percent": 5.75,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "5/кг; опт 4.5"
+    },
+    {
+      "sourceOrder": 11,
+      "categorySlug": "vegetables",
+      "slug": "eggplant",
+      "nameRu": "Баклажан",
+      "nameTj": "Бодинҷон",
+      "unit": "kg",
+      "marketObservations": [
+        6
+      ],
+      "referencePurchasePrice": 6.0,
+      "salePrice15Percent": 6.9,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "6/кг"
+    },
+    {
+      "sourceOrder": 12,
+      "categorySlug": "vegetables",
+      "slug": "bell-pepper",
+      "nameRu": "Болгарский перец",
+      "nameTj": "Қаламфури булғорӣ",
+      "unit": "kg",
+      "marketObservations": [
+        16,
+        10
+      ],
+      "referencePurchasePrice": 13.0,
+      "salePrice15Percent": 14.95,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "обычный 16 + светло-зелёный 10 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 13,
+      "categorySlug": "vegetables",
+      "slug": "garlic",
+      "nameRu": "Чеснок",
+      "nameTj": "Сир",
+      "unit": "kg",
+      "marketObservations": [
+        20
+      ],
+      "referencePurchasePrice": 20.0,
+      "salePrice15Percent": 23.0,
+      "isWeighted": true,
+      "minQuantity": 0.25,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "20/кг; опт 18"
+    },
+    {
+      "sourceOrder": 14,
+      "categorySlug": "vegetables",
+      "slug": "green-beans",
+      "nameRu": "Стручковая фасоль",
+      "nameTj": "Лӯбиёи сабз",
+      "unit": "kg",
+      "marketObservations": [
+        40
+      ],
+      "referencePurchasePrice": 40.0,
+      "salePrice15Percent": 46.0,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "ценник 40"
+    },
+    {
+      "sourceOrder": 15,
+      "categorySlug": "vegetables",
+      "slug": "hot-green-pepper",
+      "nameRu": "Острый зелёный перец",
+      "nameTj": "Қаламфури тези сабз",
+      "unit": "kg",
+      "marketObservations": [
+        20,
+        25
+      ],
+      "referencePurchasePrice": 22.5,
+      "salePrice15Percent": 25.88,
+      "isWeighted": true,
+      "minQuantity": 0.25,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "варианты 20 и 25 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 16,
+      "categorySlug": "fruits",
+      "slug": "pears",
+      "nameRu": "Груша",
+      "nameTj": "Нок",
+      "unit": "kg",
+      "marketObservations": [
+        13,
+        30,
+        10,
+        12
+      ],
+      "referencePurchasePrice": 12.5,
+      "salePrice15Percent": 14.38,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "варианты 13, 30, 10 и 12 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 17,
+      "categorySlug": "fruits",
+      "slug": "grapes",
+      "nameRu": "Виноград",
+      "nameTj": "Ангур",
+      "unit": "kg",
+      "marketObservations": [
+        9.5
+      ],
+      "referencePurchasePrice": 9.5,
+      "salePrice15Percent": 10.93,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "розничный диапазон 9–10 → середина 9.5"
+    },
+    {
+      "sourceOrder": 18,
+      "categorySlug": "fruits",
+      "slug": "bananas",
+      "nameRu": "Бананы",
+      "nameTj": "Банан",
+      "unit": "kg",
+      "marketObservations": [
+        17
+      ],
+      "referencePurchasePrice": 17.0,
+      "salePrice15Percent": 19.55,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "17/кг; до ~20 см"
+    },
+    {
+      "sourceOrder": 19,
+      "categorySlug": "fruits",
+      "slug": "mandarins",
+      "nameRu": "Мандарины",
+      "nameTj": "Мандарин",
+      "unit": "kg",
+      "marketObservations": [
+        25
+      ],
+      "referencePurchasePrice": 25.0,
+      "salePrice15Percent": 28.75,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "25/кг"
+    },
+    {
+      "sourceOrder": 20,
+      "categorySlug": "fruits",
+      "slug": "apples",
+      "nameRu": "Яблоки",
+      "nameTj": "Себ",
+      "unit": "kg",
+      "marketObservations": [
+        10,
+        14,
+        14
+      ],
+      "referencePurchasePrice": 14.0,
+      "salePrice15Percent": 16.1,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "«российские» 10, красные 14, зелёные 14 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 21,
+      "categorySlug": "fruits",
+      "slug": "pomegranates",
+      "nameRu": "Гранат",
+      "nameTj": "Анор",
+      "unit": "kg",
+      "marketObservations": [
+        15,
+        10,
+        18
+      ],
+      "referencePurchasePrice": 15.0,
+      "salePrice15Percent": 17.25,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "15, 10, 18 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 22,
+      "categorySlug": "fruits",
+      "slug": "quince",
+      "nameRu": "Айва",
+      "nameTj": "Биҳӣ",
+      "unit": "kg",
+      "marketObservations": [
+        7
+      ],
+      "referencePurchasePrice": 7.0,
+      "salePrice15Percent": 8.05,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "7/кг"
+    },
+    {
+      "sourceOrder": 23,
+      "categorySlug": "fruits",
+      "slug": "peaches",
+      "nameRu": "Персики",
+      "nameTj": "Шафтолу",
+      "unit": "kg",
+      "marketObservations": [
+        18,
+        8
+      ],
+      "referencePurchasePrice": 13.0,
+      "salePrice15Percent": 14.95,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "варианты 18 и 8 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 24,
+      "categorySlug": "fruits",
+      "slug": "oranges",
+      "nameRu": "Апельсины",
+      "nameTj": "Афлесун",
+      "unit": "kg",
+      "marketObservations": [
+        30
+      ],
+      "referencePurchasePrice": 30.0,
+      "salePrice15Percent": 34.5,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "30/кг; опт 26"
+    },
+    {
+      "sourceOrder": 25,
+      "categorySlug": "fruits",
+      "slug": "kiwi",
+      "nameRu": "Киви",
+      "nameTj": "Киви",
+      "unit": "kg",
+      "marketObservations": [
+        20
+      ],
+      "referencePurchasePrice": 20.0,
+      "salePrice15Percent": 23.0,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "20/кг; опт 17"
+    },
+    {
+      "sourceOrder": 26,
+      "categorySlug": "fruits",
+      "slug": "persimmon",
+      "nameRu": "Хурма",
+      "nameTj": "Хурмо",
+      "unit": "kg",
+      "marketObservations": [
+        8,
+        6
+      ],
+      "referencePurchasePrice": 7.0,
+      "salePrice15Percent": 8.05,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "варианты 8 и 6 → один товар, медиана"
+    },
+    {
+      "sourceOrder": 27,
+      "categorySlug": "fruits",
+      "slug": "lemons",
+      "nameRu": "Лимоны",
+      "nameTj": "Лимӯ",
+      "unit": "kg",
+      "marketObservations": [
+        22
+      ],
+      "referencePurchasePrice": 22.0,
+      "salePrice15Percent": 25.3,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "22/кг; опт 20"
+    },
+    {
+      "sourceOrder": 28,
+      "categorySlug": "greens",
+      "slug": "green-onion",
+      "nameRu": "Зелёный лук",
+      "nameTj": "Пиёзи сабз",
+      "unit": "bunch",
+      "marketObservations": [
+        5
+      ],
+      "referencePurchasePrice": 5.0,
+      "salePrice15Percent": 5.75,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "по записи рынка: пучок ~7 шт. за 5 сомони"
+    },
+    {
+      "sourceOrder": 29,
+      "categorySlug": "greens",
+      "slug": "dill",
+      "nameRu": "Укроп",
+      "nameTj": "Шибит",
+      "unit": "bunch",
+      "marketObservations": [
+        0.5
+      ],
+      "referencePurchasePrice": 0.5,
+      "salePrice15Percent": 0.58,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "50 дирам/пучок"
+    },
+    {
+      "sourceOrder": 30,
+      "categorySlug": "greens",
+      "slug": "cilantro",
+      "nameRu": "Кинза",
+      "nameTj": "Кашнич",
+      "unit": "bunch",
+      "marketObservations": [
+        0.5
+      ],
+      "referencePurchasePrice": 0.5,
+      "salePrice15Percent": 0.58,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "50 дирам/пучок"
+    },
+    {
+      "sourceOrder": 31,
+      "categorySlug": "greens",
+      "slug": "basil",
+      "nameRu": "Базилик",
+      "nameTj": "Райҳон",
+      "unit": "bunch",
+      "marketObservations": [
+        5
+      ],
+      "referencePurchasePrice": 5.0,
+      "salePrice15Percent": 5.75,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "по записи рынка: пучок ~7 шт. за 5 сомони"
+    },
+    {
+      "sourceOrder": 32,
+      "categorySlug": "greens",
+      "slug": "mint",
+      "nameRu": "Мята",
+      "nameTj": "Пудина",
+      "unit": "bunch",
+      "marketObservations": [
+        5
+      ],
+      "referencePurchasePrice": 5.0,
+      "salePrice15Percent": 5.75,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "по записи рынка: пучок ~7 шт. за 5 сомони"
+    },
+    {
+      "sourceOrder": 33,
+      "categorySlug": "greens",
+      "slug": "leaf-lettuce",
+      "nameRu": "Листовой салат",
+      "nameTj": "Барги салат",
+      "unit": "bunch",
+      "marketObservations": [
+        1
+      ],
+      "referencePurchasePrice": 1.0,
+      "salePrice15Percent": 1.15,
+      "isWeighted": false,
+      "minQuantity": 1,
+      "quantityStep": 1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "1 сомони/пучок"
+    },
+    {
+      "sourceOrder": 34,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "walnuts",
+      "nameRu": "Грецкий орех",
+      "nameTj": "Чормағз",
+      "unit": "kg",
+      "marketObservations": [
+        60
+      ],
+      "referencePurchasePrice": 60.0,
+      "salePrice15Percent": 69.0,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "очищенный, 60/кг"
+    },
+    {
+      "sourceOrder": 35,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "dark-raisins",
+      "nameRu": "Тёмный изюм",
+      "nameTj": "Мавизи сиёҳ",
+      "unit": "kg",
+      "marketObservations": [
+        30
+      ],
+      "referencePurchasePrice": 30.0,
+      "salePrice15Percent": 34.5,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "30/кг"
+    },
+    {
+      "sourceOrder": 36,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "dried-plums",
+      "nameRu": "Чернослив",
+      "nameTj": "Олуи хушк",
+      "unit": "kg",
+      "marketObservations": [
+        25
+      ],
+      "referencePurchasePrice": 25.0,
+      "salePrice15Percent": 28.75,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "25/кг"
+    },
+    {
+      "sourceOrder": 37,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "dried-figs",
+      "nameRu": "Сушёный инжир",
+      "nameTj": "Анҷири хушк",
+      "unit": "kg",
+      "marketObservations": [
+        30
+      ],
+      "referencePurchasePrice": 30.0,
+      "salePrice15Percent": 34.5,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "30/кг"
+    },
+    {
+      "sourceOrder": 38,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "almonds",
+      "nameRu": "Миндаль",
+      "nameTj": "Бодом",
+      "unit": "kg",
+      "marketObservations": [
+        100
+      ],
+      "referencePurchasePrice": 100.0,
+      "salePrice15Percent": 115.0,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "100/кг"
+    },
+    {
+      "sourceOrder": 39,
+      "categorySlug": "nuts-dried-fruits",
+      "slug": "dried-apricots",
+      "nameRu": "Курага",
+      "nameTj": "Зардолуи хушк",
+      "unit": "kg",
+      "marketObservations": [
+        10
+      ],
+      "referencePurchasePrice": 10.0,
+      "salePrice15Percent": 11.5,
+      "isWeighted": true,
+      "minQuantity": 0.2,
+      "quantityStep": 0.1,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "сушёный абрикос, 10/кг"
+    },
+    {
+      "sourceOrder": 40,
+      "categorySlug": "legumes",
+      "slug": "chickpeas",
+      "nameRu": "Нут",
+      "nameTj": "Нахӯд",
+      "unit": "kg",
+      "marketObservations": [
+        30
+      ],
+      "referencePurchasePrice": 30.0,
+      "salePrice15Percent": 34.5,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "30/кг"
+    },
+    {
+      "sourceOrder": 41,
+      "categorySlug": "legumes",
+      "slug": "red-beans",
+      "nameRu": "Красная фасоль",
+      "nameTj": "Лӯбиёи сурх",
+      "unit": "kg",
+      "marketObservations": [
+        30
+      ],
+      "referencePurchasePrice": 30.0,
+      "salePrice15Percent": 34.5,
+      "isWeighted": true,
+      "minQuantity": 0.5,
+      "quantityStep": 0.25,
+      "desiredActive": true,
+      "isAvailableToday": true,
+      "sourceNote": "30/кг"
+    }
+  ],
+  "mergeCleanup": {
+    "beetroot": [
+      "beetroot-market-4",
+      "beetroot-market-7"
+    ],
+    "bell-pepper": [
+      "light-green-pepper"
+    ],
+    "hot-green-pepper": [
+      "hot-green-pepper-20",
+      "hot-green-pepper-25"
+    ],
+    "pears": [
+      "pear-nok-13",
+      "pear-premium-30",
+      "pear-budget",
+      "pear-wholesale-12"
+    ],
+    "apples": [
+      "apples-russian",
+      "apples-red",
+      "apples-green"
+    ],
+    "pomegranates": [
+      "pomegranate-15",
+      "pomegranate-regular",
+      "pomegranate-premium"
+    ],
+    "peaches": [
+      "peaches-standard",
+      "peaches-budget"
+    ],
+    "persimmon": [
+      "persimmon-8",
+      "persimmon-6"
+    ]
+  },
+  "safety": {
+    "doNotHardDeleteReferencedProducts": true,
+    "duplicateCleanup": "For mistaken v2 variant slugs, remove from public catalog via soft-delete/deactivate. If unreferenced and project convention safely allows deletion, follow existing repository conventions; never delete order history.",
+    "preserveOrdersUsersHistory": true
+  }
+}

@@ -1140,10 +1140,15 @@ corepack pnpm build
 
 ### Импорт пилотного каталога
 
-Источник: `apps/api/prisma/data/pilot_catalog.json`, 53 позиции из handoff v2.
-Скрипт не является seed: обновляет по slug, ничего не удаляет и не меняет историю.
+Источник по умолчанию: `apps/api/prisma/data/pilot_catalog_canonical.json`, 41 канонический товар из handoff v3.
+Рыночные варианты объединены: один продукт соответствует одной карточке.
+Скрипт не является seed: обновляет по slug и не меняет историю.
+Только 19 slug из `mergeCleanup` выключаются с soft-delete, без физического удаления,
+переноса ссылок заказов или изменения фотографий. Товары вне списка, включая старую петрушку, сохраняются.
+Исходный v2 оставлен для аудита; повторно импортировать его после v3 не нужно.
 Фотографии и ID сохраняются. Включённый товар без фото разрешён и показывает брендовый placeholder.
-Закупочная цена берётся из JSON, продажная вычисляется через Decimal с наценкой 15%.
+Закупочная цена берётся из JSON и проверяется по медиане `marketObservations`;
+продажная вычисляется через Decimal с наценкой 15%, ROUND_HALF_UP до двух знаков.
 Отсутствующие в JSON quality options сохраняются у старых товаров.
 
 ```bash
@@ -1154,8 +1159,8 @@ corepack pnpm db:import:pilot --apply   # Локальный импорт
 ```
 
 Для production сначала сделать и проверить PostgreSQL backup, выполнить
-additive migration, затем запустить из `apps/api` с production env:
-`node --env-file=/etc/dushanbe-fresh/app.env dist/scripts/import-pilot.js prisma/data/pilot_catalog.json --apply --production`.
+нужные миграции, затем запустить из `apps/api` с production env (для v3 новых миграций нет):
+`node --env-file=/etc/dushanbe-fresh/app.env dist/scripts/import-pilot.js prisma/data/pilot_catalog_canonical.json --apply --production`.
 Без `--apply` записей нет; при `NODE_ENV=production` дополнительно обязателен `--production`.
 Изменения каталога выполняются одной Serializable-транзакцией. Конфликт с soft-deleted slug
 останавливает импорт, не восстанавливая записи молча. Повторный запуск не создаёт дубликатов.
