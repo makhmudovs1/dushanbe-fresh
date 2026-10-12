@@ -23,12 +23,13 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
     await expect(cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true })).toBeVisible();
     for (let i = 0; i < products.length; i++) {
       const card = cards.nth(i);
-      const absent = [0, 2, 3].includes(i) || (locale === "tg" && i === 5);
-      await expect(card.locator(".product-card__description")).toHaveCount(absent ? 0 : 1);
-      const gap = await card.evaluate((el, absent) => {
-        const preceding = el.querySelector(absent ? "h3" : ".product-card__description")!.getBoundingClientRect();
+      await expect(card.locator(".product-card__description")).toHaveCount(1);
+      await expect(card.locator(".product-card__description")).not.toBeEmpty();
+      expect((await card.locator(".product-card__description").boundingBox())!.height).toBeLessThanOrEqual(40);
+      const gap = await card.evaluate(el => {
+        const preceding = el.querySelector(".product-card__description")!.getBoundingClientRect();
         return el.querySelector(".product-card__price")!.getBoundingClientRect().top - preceding.bottom;
-      }, absent);
+      });
       expect(gap).toBeGreaterThanOrEqual(7);
       expect(gap).toBeLessThanOrEqual(9);
     }
@@ -46,6 +47,6 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
     await page.screenshot({ path: info.outputPath(`cards-${locale}-${width}.png`), fullPage: true });
     await cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true }).click();
     await expect(cards.first().locator("output")).toContainText("0,5");
-    await expect(cards.first().locator(".product-card__description")).toHaveCount(0);
+    await expect(cards.first().locator(".product-card__description")).not.toBeEmpty();
   });
 }

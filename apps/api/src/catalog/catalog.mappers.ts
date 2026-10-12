@@ -1,4 +1,5 @@
 import { Category, ProductQualityOption } from "@prisma/client";
+import { productDescription } from "@dushanbe-fresh/shared";
 import { catalogImage } from "./catalog.image";
 
 import {
@@ -48,8 +49,8 @@ export function mapPublicProduct(
     name: product.name,
     nameTj: product.nameTj,
     slug: product.slug,
-    description: product.description,
-    descriptionTj: product.descriptionTj,
+    description: productDescription(product, "ru"),
+    descriptionTj: productDescription(product, "tg"),
     image: catalogImage(product.imageUrl),
     unit: product.unit,
     sellingPrice: decimalToString(product.currentSalePrice),
@@ -71,6 +72,8 @@ export function mapAdminProduct(
 ): AdminProductDto {
   return {
     ...mapPublicProduct(product),
+    description: product.description,
+    descriptionTj: product.descriptionTj,
     purchasePrice: decimalToString(product.currentPurchasePrice),
     isActive: product.isActive,
     isAvailableToday: product.isAvailableToday,

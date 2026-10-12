@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
   const { t, name, label, description, priceLabel } = useI18n();
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
   const [choosingQuality, setChoosingQuality] = useState(false);
-  const productDescription = description(product)?.trim();
+  const productDescription = description(product);
   const items = state.items.filter(item => item.productId === product.id);
   function add(qualityOptionId?: string) {
     addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId });
@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
             <Link href={`/products/${product.slug}`}>{name(product)}</Link>
           </h3>
         </div>
-        {productDescription ? <p className="product-card__description">{productDescription}</p> : null}
+        <p className="product-card__description">{productDescription}</p>
         <strong className="product-card__price">{priceLabel(product.sellingPrice, product.unit)}</strong>
         <div className="product-card__footer">
           <div className="product-card__selection">

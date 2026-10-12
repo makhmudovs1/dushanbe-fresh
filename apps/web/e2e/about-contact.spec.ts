@@ -1,0 +1,31 @@
+import { expect, test } from "@playwright/test";
+
+for (const width of [375, 768, 1440]) test(`about contact and description language switch ${width}px`, async ({ page }, info) => {
+  await page.setViewportSize({ width, height: 1000 });
+  await page.goto("/about");
+  const section = page.locator(".about-contact");
+  await expect(section.getByRole("heading")).toHaveText("Связаться с нами");
+  await expect(section).toContainText("Вопросы по заказам и доставке");
+  await expect(section.getByRole("link", { name: "+992 97 501 28 82", exact: true })).toHaveAttribute("href", "tel:+992975012882");
+  const whatsapp = section.getByRole("link", { name: "WhatsApp", exact: true });
+  await expect(whatsapp).toHaveAttribute("href", "https://wa.me/992975012882");
+  await expect(whatsapp).toHaveAttribute("target", "_blank");
+  await expect(whatsapp).toHaveAttribute("rel", /noopener/);
+  await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
+  await expect(section.getByRole("heading")).toHaveText("Тамос бо мо");
+  await expect(section).toContainText("Саволҳо оид ба фармоиш ва расонидан");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await section.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath(`contact-tg-${width}.png`) });
+  await page.getByRole("button", { name: "Русский", exact: true }).click();
+  await expect(section.getByRole("heading")).toHaveText("Связаться с нами");
+  await page.goto("/catalog");
+  const descriptions = page.locator(".product-card__description");
+  await expect(descriptions.first()).not.toBeEmpty();
+  const russian = await descriptions.allTextContents();
+  await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
+  await expect(descriptions.first()).not.toHaveText(russian[0]);
+  await page.reload();
+  await expect(descriptions.first()).not.toHaveText(russian[0]);
+  expect((await descriptions.allTextContents()).every(text => text.trim())).toBe(true);
+});

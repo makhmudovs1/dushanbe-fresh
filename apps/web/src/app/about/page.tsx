@@ -1,5 +1,6 @@
 import { serverI18n } from "@/i18n/server";
 import Link from "next/link";
+import { MessageCircle, Phone } from "lucide-react";
 import { publicMetadata } from "@/lib/seo";
 
 export const metadata = publicMetadata("/about", "О сервисе | Dushanbe Fresh", "Как работает Dushanbe Fresh: выбираем свежие продукты на рынках Душанбе, проверяем качество, упаковываем и доставляем домой.");
@@ -16,5 +17,13 @@ export default function AboutPage() {
       <li>{t("Курьер доставляет заказ в выбранное окно.")}</li>
     </ol></section>
     <Link className="primary-link" href="/catalog">{t("Перейти в каталог")}</Link>
+    <section className="about-contact" aria-labelledby="contact-heading">
+      <h2 id="contact-heading">{t("Связаться с нами")}</h2>
+      <p>{t("Вопросы по заказам и доставке")}</p>
+      <div className="about-contact__links">
+        <a href="tel:+992975012882"><Phone size={18} aria-hidden="true" /><span>+992 97 501 28 82</span></a>
+        <a href="https://wa.me/992975012882" target="_blank" rel="noopener noreferrer"><MessageCircle size={18} aria-hidden="true" /><span>WhatsApp</span></a>
+      </div>
+    </section>
   </div></main>;
 }

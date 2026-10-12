@@ -1140,6 +1140,19 @@ corepack pnpm build
 
 ### Импорт пилотного каталога
 
+У customer-товаров всегда есть RU/TJ-описание. Существующий непустой текст сохраняется;
+для отсутствующего используется короткое нейтральное предложение из общего словаря
+`packages/shared/src/product-descriptions.ts`. В карточке текст ограничен двумя строками.
+Заполнить пустые поля в БД без повторного импорта цен:
+`corepack pnpm db:fill:descriptions` (dry-run), затем `corepack pnpm db:fill:descriptions --apply`.
+Для production после backup из `apps/api`:
+`node --env-file=/etc/dushanbe-fresh/app.env dist/scripts/fill-catalog-descriptions.js --apply --production`.
+Скрипт обновляет только отсутствующие `description`/`descriptionTj` неудалённых товаров,
+не меняя цены, фотографии, доступность, заказы и историю. Повторный запуск безопасен.
+
+Контакты на `/about`: телефон `+992 97 501 28 82`, WhatsApp на тот же номер;
+заголовок и пояснение переключаются RU/TJ.
+
 Источник по умолчанию: `apps/api/prisma/data/pilot_catalog_canonical.json`, 41 канонический товар из handoff v3.
 Рыночные варианты объединены: один продукт соответствует одной карточке.
 Скрипт не является seed: обновляет по slug и не меняет историю.

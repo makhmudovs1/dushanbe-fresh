@@ -11,6 +11,7 @@
     "start": "node dist/main.js",
     "db:generate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma generate",
     "db:import:pilot": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx src/scripts/import-pilot.ts",
+    "db:fill:descriptions": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx src/scripts/fill-catalog-descriptions.ts",
     "db:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma migrate dev",
     "db:deploy": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} prisma migrate deploy",
     "db:seed": "DATABASE_URL=${DATABASE_URL:-postgresql://dushanbe_fresh:dushanbe_fresh@localhost:5432/dushanbe_fresh?schema=public} tsx prisma/seed.ts",

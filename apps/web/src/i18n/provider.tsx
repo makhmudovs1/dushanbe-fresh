@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { productDescription } from "@dushanbe-fresh/shared";
 import { LOCALE_COOKIE, localizedName, translate, type Locale } from "./locale";
 import * as format from "@/lib/format";
 import { slotLabel as formatSlot } from "@/lib/checkout";
@@ -28,18 +29,12 @@ export function useI18n() {
     locale, change, t,
     name: (value: { name: string; nameTj?: string | null }) => localizedName(locale, value),
     label: (value: { label: string; labelTj?: string | null }) => locale === "tg" ? value.labelTj || t(value.label) : value.label,
-    description: (value: { description: string | null; descriptionTj?: string | null }) => locale === "tg" ? value.descriptionTj || (value.description && tajikDescription(value.description, t)) : value.description,
+    description: (value: Parameters<typeof productDescription>[0]) => productDescription(value, locale),
     priceLabel: (price: string, unit: string) => format.priceLabel(price, unit, locale),
     quantityLabel: (quantity: string | null, unit: string) => format.quantityLabel(quantity, unit, locale),
     unitLabel: (unit: string, quantity?: string) => format.unitLabel(unit, quantity, locale),
     slotLabel: (slot: Parameters<typeof formatSlot>[0]) => formatSlot(slot, locale)
   };
-}
-
-function tajikDescription(value: string, t: (value: string) => string) {
-  const translated = t(value);
-  // Do not pretend an untranslated merchant description is Tajik.
-  return translated === value ? null : translated;
 }
 
 export function LanguageSwitcher() {
