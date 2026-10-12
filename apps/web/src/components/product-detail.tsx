@@ -1,17 +1,20 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
+
 
 import { useEffect, useState } from "react";
 
 import { adjustQuantity } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
 import { getProduct, Product } from "@/lib/api";
-import { priceLabel } from "@/lib/format";
+
 import { isMinimumQuantity } from "@/cart/catalog-selection";
 import { QuantityStepper } from "./quantity-stepper";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
+  const { t, name, label, description, priceLabel } = useI18n();
   const { addProduct, hydrated } = useCart();
   const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
   const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
@@ -38,8 +41,8 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
   }, [slug, retry, initialProduct]);
 
   if (error) {
-    return <div className="notice" role="alert"><p>{error}</p>
-      <button className="secondary-link" type="button" onClick={() => setRetry(retry + 1)}>Повторить загрузку товара</button>
+    return <div className="notice" role="alert"><p>{t(error)}</p>
+      <button className="secondary-link" type="button" onClick={() => setRetry(retry + 1)}>{t("Повторить загрузку товара")}</button>
     </div>;
   }
 
@@ -50,19 +53,19 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
   return (
     <article className="product-detail">
       <div className="product-detail__media">
-        <ProductImage src={product.image} name={product.name} eager />
+        <ProductImage src={product.image} name={name(product)} eager />
       </div>
       <div className="product-detail__content">
-        <p className="eyebrow">{product.category.name}</p>
-        <h1>{product.name}</h1>
+        <p className="eyebrow">{name(product.category)}</p>
+        <h1>{name(product)}</h1>
         <strong className="price">
           {priceLabel(product.sellingPrice, product.unit)}
         </strong>
-        <p>{product.description}</p>
+        <p>{description(product)}</p>
 
         {product.qualityOptions.length > 0 ? (
           <fieldset className="quality-options">
-            <legend>Предпочтение по качеству</legend>
+            <legend>{t("Предпочтение по качеству")}</legend>
             <div>
               {product.qualityOptions.map((option) => (
                 <label
@@ -76,7 +79,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
                     type="radio"
                     value={option.id}
                   />
-                  {option.label}
+                  {label(option)}
                 </label>
               ))}
             </div>
@@ -84,14 +87,14 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
         ) : null}
 
         <div className="field">
-          <span>Количество</span>
-          <QuantityStepper name={product.name} quantity={quantity} unit={product.unit}
+          <span>{t("Количество")}</span>
+          <QuantityStepper name={name(product)} quantity={quantity} unit={product.unit}
             decreaseDisabled={isMinimumQuantity({ ...product, quantity })}
             onDecrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "decrement"))}
             onIncrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "increment"))} />
         </div>
 
-        {notice ? <p className="notice">{notice}</p> : null}
+        {notice ? <p className="notice">{t(notice)}</p> : null}
 
         <button
           className="primary-action"
@@ -105,9 +108,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
             setNotice("Добавлено в корзину.");
           }}
           type="button"
-        >
-          Добавить в корзину
-        </button>
+        >{t(" Добавить в корзину ")}</button>
       </div>
     </article>
   );

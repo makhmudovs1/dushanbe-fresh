@@ -113,10 +113,6 @@ export function AdminCatalog() {
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (form.isActive && !form.image && !photo) {
-      setNotice("Добавьте фотографию товара или выключите товар, чтобы сохранить черновик.");
-      return;
-    }
     setPending(true);
     setNotice("");
 

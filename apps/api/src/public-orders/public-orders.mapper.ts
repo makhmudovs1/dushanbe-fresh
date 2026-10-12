@@ -4,7 +4,7 @@ import { balance, D, removedLineValue, sum } from "../delivery-finance/calculato
 
 const baseInclude = {
   deliverySlot: true,
-  items: { include: { replacementProduct: { select: { name: true } } } },
+  items: { include: { replacementProduct: { select: { name: true, nameTj: true } } } },
   adjustments: true,
   cashTransactions: { select: { amount: true } },
   issues: { include: { items: true, replacement: { select: { prepaid: true } } }, orderBy: { createdAt: "asc" as const } }
@@ -56,6 +56,7 @@ function lines(order: Order) {
     }
     const quantity = item.finalQuantity ?? item.requestedQuantity;
     return { name: item.replacementProduct?.name ?? item.productNameSnapshot, unit: item.unit,
+      nameTj: item.replacementProduct ? item.replacementProduct.nameTj : item.productNameTjSnapshot,
       quantity: D.max(0, quantity.minus(excluded)).toFixed(3), total: D.max(0, (item.finalTotal ?? item.estimatedTotal).minus(removed)).toFixed(2) };
   });
 }

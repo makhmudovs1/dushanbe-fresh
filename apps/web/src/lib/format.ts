@@ -8,7 +8,8 @@ export function decimalLabel(value: string | null) {
   return trimmed ? `${whole},${trimmed}` : whole;
 }
 
-export function unitLabel(unit: string, quantity?: string) {
+export function unitLabel(unit: string, quantity?: string, locale: "ru" | "tg" = "ru") {
+  if (locale === "tg") return ({ kg: "кг", g: "г", bunch: "баста", piece: "дона", pack: "баста" } as Record<string, string>)[unit] ?? "воҳид";
   if (unit !== "bunch" || quantity === undefined) return units[unit] ?? "ед.";
   const [whole, fraction = ""] = quantity.replace("-", "").split(".");
   if (/[1-9]/.test(fraction)) return "пучка";
@@ -19,10 +20,10 @@ export function unitLabel(unit: string, quantity?: string) {
   return "пучков";
 }
 
-export function quantityLabel(quantity: string | null, unit: string) {
-  return quantity === null ? "—" : `${decimalLabel(quantity)} ${unitLabel(unit, quantity)}`;
+export function quantityLabel(quantity: string | null, unit: string, locale: "ru" | "tg" = "ru") {
+  return quantity === null ? "—" : `${decimalLabel(quantity)} ${unitLabel(unit, quantity, locale)}`;
 }
 
-export function priceLabel(price: string, unit: string) {
-  return `${decimalLabel(price)} сомони / ${unitLabel(unit)}`;
+export function priceLabel(price: string, unit: string, locale: "ru" | "tg" = "ru") {
+  return `${decimalLabel(price)} ${locale === "tg" ? "сомонӣ" : "сомони"} / ${unitLabel(unit, undefined, locale)}`;
 }

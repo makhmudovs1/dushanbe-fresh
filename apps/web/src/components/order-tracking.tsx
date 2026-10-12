@@ -1,33 +1,37 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
+
 
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { customerStatusLabels, type PublicOrderDto, type PublicOrderLine, type PublicOrderMoney } from "@dushanbe-fresh/shared";
 import { pollTracking, type TrackingUpdate } from "../lib/tracking";
-import { decimalLabel, quantityLabel } from "../lib/format";
-import { slotLabel } from "../lib/checkout";
+import { decimalLabel } from "../lib/format";
+
 import { TrackingSkeleton } from "./tracking-skeleton";
 
 function Items({ items }: { items: PublicOrderLine[] }) {
+  const { t, name, quantityLabel } = useI18n();
   return <ul className="tracking-items">{items.map((item, index) => <li key={index}>
-    <div><strong>{item.name}</strong><span>{quantityLabel(item.quantity, item.unit)}</span></div>
-    <strong>{decimalLabel(item.total)} сомони</strong>
+    <div><strong>{name(item)}</strong><span>{quantityLabel(item.quantity, item.unit)}</span></div>
+    <strong>{decimalLabel(item.total)}{t(" сомони")}</strong>
   </li>)}</ul>;
 }
 function Money({ value, cancelled = false, omitEmptyFees = false }: { value: PublicOrderMoney; cancelled?: boolean; omitEmptyFees?: boolean }) {
+  const { t } = useI18n();
   return <dl className="tracking-money">
-    <div><dt>Товары</dt><dd>{decimalLabel(value.goods)} сомони</dd></div>
-    {(!omitEmptyFees || value.serviceFee !== "0.00") && <div><dt>Сервисный сбор</dt><dd>{decimalLabel(value.serviceFee)} сомони</dd></div>}
-    {(!omitEmptyFees || value.deliveryFee !== "0.00") && <div><dt>Доставка</dt><dd>{decimalLabel(value.deliveryFee)} сомони</dd></div>}
-    {value.discount !== "0.00" && <div><dt>Скидка</dt><dd>−{decimalLabel(value.discount)} сомони</dd></div>}
+    <div><dt>{t("Товары")}</dt><dd>{decimalLabel(value.goods)}{t(" сомони")}</dd></div>
+    {(!omitEmptyFees || value.serviceFee !== "0.00") && <div><dt>{t("Сервисный сбор")}</dt><dd>{decimalLabel(value.serviceFee)}{t(" сомони")}</dd></div>}
+    {(!omitEmptyFees || value.deliveryFee !== "0.00") && <div><dt>{t("Доставка")}</dt><dd>{decimalLabel(value.deliveryFee)}{t(" сомони")}</dd></div>}
+    {value.discount !== "0.00" && <div><dt>{t("Скидка")}</dt><dd>−{decimalLabel(value.discount)}{t(" сомони")}</dd></div>}
     {value.adjustments.length > 0 && <>
-      <div className="tracking-subtotal"><dt>Было к оплате</dt><dd>{decimalLabel(value.original)} сомони</dd></div>
-      {value.adjustments.map((item, index) => <div key={index}><dt>{item.label}</dt><dd>{decimalLabel(item.amount)} сомони</dd></div>)}
+      <div className="tracking-subtotal"><dt>{t("Было к оплате")}</dt><dd>{decimalLabel(value.original)}{t(" сомони")}</dd></div>
+      {value.adjustments.map((item, index) => <div key={index}><dt>{t(item.label)}</dt><dd>{decimalLabel(item.amount)}{t(" сомони")}</dd></div>)}
     </>}
-    <div className="tracking-total"><dt>{cancelled ? "Сумма отменённого заказа" : "Текущая сумма"}</dt><dd>{decimalLabel(value.payable)} сомони</dd></div>
-    {value.collected !== "0.00" && <div><dt>Оплачено с учётом возвратов</dt><dd>{decimalLabel(value.collected)} сомони</dd></div>}
-    {!cancelled && <div><dt>Осталось к оплате</dt><dd>{decimalLabel(value.amountToCollect)} сомони</dd></div>}
-    {value.refundDue !== "0.00" && <div><dt>К возврату</dt><dd>{decimalLabel(value.refundDue)} сомони</dd></div>}
+    <div className="tracking-total"><dt>{t(cancelled ? "Сумма отменённого заказа" : "Текущая сумма")}</dt><dd>{decimalLabel(value.payable)}{t(" сомони")}</dd></div>
+    {value.collected !== "0.00" && <div><dt>{t("Оплачено с учётом возвратов")}</dt><dd>{decimalLabel(value.collected)}{t(" сомони")}</dd></div>}
+    {!cancelled && <div><dt>{t("Осталось к оплате")}</dt><dd>{decimalLabel(value.amountToCollect)}{t(" сомони")}</dd></div>}
+    {value.refundDue !== "0.00" && <div><dt>{t("К возврату")}</dt><dd>{decimalLabel(value.refundDue)}{t(" сомони")}</dd></div>}
   </dl>;
 }
 const steps = ["order_received", "preparing", "packed", "out_for_delivery", "delivered"] as const;
@@ -49,34 +53,35 @@ export function OrderTracking({ token }: { token: string }) {
 }
 
 export function OrderTrackingView({ data, error, retry }: { data: PublicOrderDto | null; error?: TrackingUpdate["error"]; retry: () => void }) {
-  if (error === "missing") return <section className="empty-cart"><h1>Заказ не найден</h1><p>Проверьте ссылку из подтверждения заказа.</p><Link href="/catalog" className="primary-link">В каталог</Link></section>;
+  const { t, slotLabel } = useI18n();
+  if (error === "missing") return <section className="empty-cart"><h1>{t("Заказ не найден")}</h1><p>{t("Проверьте ссылку из подтверждения заказа.")}</p><Link href="/catalog" className="primary-link">{t("В каталог")}</Link></section>;
   if (!data && error) return <section className="tracking-error" role="alert">
-    <h1>Не удалось загрузить заказ</h1>
-    <button type="button" className="secondary-button" onClick={retry}>Попробовать снова</button>
+    <h1>{t("Не удалось загрузить заказ")}</h1>
+    <button type="button" className="secondary-button" onClick={retry}>{t("Попробовать снова")}</button>
   </section>;
   return <>
-    {error === "network" && <div className="tracking-error" role="alert"><p>Не удалось обновить статус.</p><button type="button" className="secondary-button" onClick={retry}>Попробовать снова</button></div>}
+    {error === "network" && <div className="tracking-error" role="alert"><p>{t("Не удалось обновить статус.")}</p><button type="button" className="secondary-button" onClick={retry}>{t("Попробовать снова")}</button></div>}
     {!data ? <TrackingSkeleton /> : <>
-      <header className="tracking-heading"><p className="eyebrow">Ваш заказ</p><h1>Заказ №{data.orderNumber}</h1></header>
-      <section className="tracking-status" aria-label="Состояние заказа">
-        <h2 aria-live="polite">{customerStatusLabels[data.status]}</h2>
-        {data.message && <p>{data.message}</p>}
+      <header className="tracking-heading"><p className="eyebrow">{t("Ваш заказ")}</p><h1>{t("Заказ №")}{data.orderNumber}</h1></header>
+      <section className="tracking-status" aria-label={t("Состояние заказа")}>
+        <h2 aria-live="polite">{t(customerStatusLabels[data.status])}</h2>
+        {data.message && <p>{t(data.message)}</p>}
         {data.status !== "cancelled" && <ol className="tracking-timeline">{steps.map((step, index) => <li key={step} className={index <= data.progress ? "is-reached" : ""} aria-current={index === data.progress ? "step" : undefined}>
-          <span className="tracking-dot" aria-hidden="true">{index < data.progress ? "✓" : index + 1}</span><span>{customerStatusLabels[step]}</span>
+          <span className="tracking-dot" aria-hidden="true">{index < data.progress ? "✓" : index + 1}</span><span>{t(customerStatusLabels[step])}</span>
         </li>)}</ol>}
       </section>
       <div className="tracking-layout">
         <div>
-          <section className="tracking-section"><h2>Доставка</h2><p className="tracking-slot">{slotLabel(data.deliverySlot)}</p>
-            <p className="tracking-address">{data.address.city}, {data.address.street}, {data.address.building}{data.address.apartment && `, кв. ${data.address.apartment}`}{data.address.entrance && `, подъезд ${data.address.entrance}`}{data.address.floor && `, этаж ${data.address.floor}`}</p>
+          <section className="tracking-section"><h2>{t("Доставка")}</h2><p className="tracking-slot">{slotLabel(data.deliverySlot)}</p>
+            <p className="tracking-address">{data.address.city}, {data.address.street}, {data.address.building}{data.address.apartment && `, ${t("кв.")} ${data.address.apartment}`}{data.address.entrance && `, ${t("подъезд")} ${data.address.entrance}`}{data.address.floor && `, ${t("этаж")} ${data.address.floor}`}</p>
           </section>
-          <section className="tracking-section"><h2>Состав заказа</h2><Items items={data.items} /></section>
+          <section className="tracking-section"><h2>{t("Состав заказа")}</h2><Items items={data.items} /></section>
         </div>
-        <section className="tracking-section"><h2>Стоимость заказа</h2><Money value={data.money} cancelled={data.status === "cancelled"} /></section>
+        <section className="tracking-section"><h2>{t("Стоимость заказа")}</h2><Money value={data.money} cancelled={data.status === "cancelled"} /></section>
       </div>
       {data.replacements.map(replacement => <section className="tracking-replacement" key={replacement.orderNumber}>
-        <h2>Повторная доставка</h2><p className="tracking-slot">{customerStatusLabels[replacement.status]}</p><p>{slotLabel(replacement.deliverySlot)}</p>
-        <p>{replacement.prepaid ? "Замена уже оплачена. Дополнительная плата за повторную доставку не взимается." : "К оплате только товары замены, без повторной платы за сборку и доставку."}</p>
+        <h2>{t("Повторная доставка")}</h2><p className="tracking-slot">{t(customerStatusLabels[replacement.status])}</p><p>{slotLabel(replacement.deliverySlot)}</p>
+        <p>{t(replacement.prepaid ? "Замена уже оплачена. Дополнительная плата за повторную доставку не взимается." : "К оплате только товары замены, без повторной платы за сборку и доставку.")}</p>
         <div className="tracking-layout"><Items items={replacement.items} /><Money value={replacement.money} cancelled={replacement.status === "cancelled"} omitEmptyFees /></div>
       </section>)}
     </>}

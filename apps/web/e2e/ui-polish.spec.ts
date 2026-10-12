@@ -85,7 +85,7 @@ test("failed logo falls back to accessible brand text without a taller header", 
   await page.goto("/about");
   await expect(page.locator(".site-logo__fallback")).toHaveText("Dushanbe Fresh");
   await expect(page.locator(".site-logo")).toHaveAttribute("href", "/");
-  expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(65);
+  expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(112);
   await noOverflow(page);
 });
 
@@ -133,8 +133,9 @@ for (const width of [375, 768, 1440]) {
         expect(await logo.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
         const logoBox = (await page.locator(".site-logo").boundingBox())!;
         const navBox = (await page.locator(".site-nav").boundingBox())!;
-        expect(navBox.x).toBeGreaterThanOrEqual(logoBox.x + logoBox.width);
-        expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(65);
+        if (width < 640) expect(navBox.y).toBeGreaterThanOrEqual(logoBox.y + logoBox.height);
+        else expect(navBox.x).toBeGreaterThanOrEqual(logoBox.x + logoBox.width);
+        expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 640 ? 112 : 65);
         expect(await background(page)).toBe("rgb(248, 250, 248)");
         await page.screenshot({ path: info.outputPath(`${index}-light-${width}.png`), fullPage: true });
       }

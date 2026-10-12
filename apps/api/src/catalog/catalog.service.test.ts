@@ -107,26 +107,25 @@ describe("CatalogService", () => {
     expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { deletedAt: null } }));
   });
 
-  it("requires a photo for new enabled products but permits drafts", async () => {
+  it("permits enabled products and drafts without photos", async () => {
     const { prisma, service } = createService();
     const input = { categoryId: category.id, name: "Зелень", slug: "greens", unit: "bunch", sellingPrice: "2.50", purchasePrice: "1.50", minQuantity: "1", quantityStep: "1", image: null };
-    await expect(service.createAdminProduct(input)).rejects.toThrow("Добавьте фотографию");
-    expect(prisma.product.create).not.toHaveBeenCalled();
+    await service.createAdminProduct(input);
     await service.createAdminProduct({ ...input, isActive: false });
-    expect(prisma.product.create).toHaveBeenCalledOnce();
+    expect(prisma.product.create).toHaveBeenCalledTimes(2);
   });
 
-  it("requires a photo when editing a legacy enabled product, including price-only updates", async () => {
+  it("allows price and availability updates without photos", async () => {
     const { prisma, service } = createService();
     prisma.product.findUnique.mockResolvedValue({ ...product, imageUrl: null } as never);
-    await expect(service.updateAdminProduct(product.id, { sellingPrice: "12" })).rejects.toThrow("Добавьте фотографию");
-    await expect(service.updateAdminProduct(product.id, { isAvailableToday: true })).rejects.toThrow("Добавьте фотографию");
+    await service.updateAdminProduct(product.id, { sellingPrice: "12" });
+    await service.updateAdminProduct(product.id, { isAvailableToday: true });
     await service.updateAdminProduct(product.id, { isActive: false });
   });
 
-  it("rejects clearing an enabled photo and does not allow base64 in drafts", async () => {
+  it("permits clearing photos but still rejects base64", async () => {
     const { service } = createService();
-    await expect(service.updateAdminProduct(product.id, { image: null })).rejects.toThrow("Добавьте фотографию");
+    await service.updateAdminProduct(product.id, { image: null });
     await expect(service.updateAdminProduct(product.id, { isActive: false, image: "data:image/png;base64,AAAA" })).rejects.toThrow("HTTPS");
   });
 
@@ -136,7 +135,7 @@ describe("CatalogService", () => {
     prisma.product.findUnique.mockResolvedValue(legacy);
     prisma.product.findMany.mockResolvedValue([legacy]);
     expect((await service.listPublicProducts())[0].image).toBeNull();
-    await expect(service.updateAdminProduct(product.id, { sellingPrice: "12" })).rejects.toThrow("Добавьте фотографию");
+    await service.updateAdminProduct(product.id, { sellingPrice: "12" });
   });
 
   it("replaces the persisted image without changing the public image contract", async () => {
@@ -202,7 +201,8 @@ describe("CatalogService", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           OR: [
-            { name: { contains: "пом", mode: "insensitive" } },
+              { name: { contains: "пом", mode: "insensitive" } },
+              { nameTj: { contains: "пом", mode: "insensitive" } },
             { description: { contains: "пом", mode: "insensitive" } }
           ]
         })

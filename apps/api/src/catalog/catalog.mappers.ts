@@ -16,6 +16,7 @@ export function mapCategory(category: Category, includeAdminFields = false): Cat
   const dto: CategoryDto = {
     id: category.id,
     name: category.name,
+    nameTj: category.nameTj,
     slug: category.slug,
     sortOrder: category.sortOrder
   };
@@ -34,6 +35,7 @@ function mapQualityOptions(options: ProductQualityOption[]) {
     .map((option) => ({
       id: option.id,
       label: option.label,
+      labelTj: option.labelTj,
       sortOrder: option.sortOrder
     }));
 }
@@ -44,8 +46,10 @@ export function mapPublicProduct(
   return {
     id: product.id,
     name: product.name,
+    nameTj: product.nameTj,
     slug: product.slug,
     description: product.description,
+    descriptionTj: product.descriptionTj,
     image: catalogImage(product.imageUrl),
     unit: product.unit,
     sellingPrice: decimalToString(product.currentSalePrice),
@@ -55,6 +59,7 @@ export function mapPublicProduct(
     category: {
       id: product.category.id,
       name: product.category.name,
+      nameTj: product.category.nameTj,
       slug: product.category.slug
     },
     qualityOptions: mapQualityOptions(product.qualityOptions)

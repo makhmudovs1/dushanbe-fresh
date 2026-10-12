@@ -1,6 +1,8 @@
 import "./styles.css";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
+import { serverI18n } from "@/i18n/server";
+import { LanguageProvider } from "@/i18n/provider";
 
 import { CartProvider } from "@/cart/cart-context";
 import { SiteHeader } from "@/components/site-header";
@@ -19,14 +21,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const { locale } = serverI18n();
   return (
-    <html lang="ru">
+    <html lang={locale}>
       <body>
+        <LanguageProvider initialLocale={locale}>
         <CartProvider>
           <SiteHeader />
           {children}
           <SiteFooter />
         </CartProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

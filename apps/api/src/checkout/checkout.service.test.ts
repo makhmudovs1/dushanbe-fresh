@@ -12,7 +12,7 @@ const input: CheckoutInput = { deliverySlotId: "slot", items: [{ productId: "pro
 const address = { street: "Рудаки", building: "10", apartment: "2", entrance: "1", floor: "3", instructions: "Позвонить" };
 
 function fixture() {
-  const product = { id: "product", name: "Помидоры", unit: "kg", isWeighted: true,
+  const product = { id: "product", name: "Помидоры", nameTj: "Помидор", unit: "kg", isWeighted: true,
     isActive: true, isAvailableToday: true, category: { isActive: true },
     currentSalePrice: new D("10.50"), minQuantity: new D("0.5"), quantityStep: new D("0.25"),
     qualityOptions: [{ id: "quality", label: "спелые" }] };
@@ -134,6 +134,7 @@ describe("order creation", () => {
     const data = tx.order.create.mock.calls[0][0].data;
     expect(data.deliveryAddressSnapshot).toEqual({ ...address, city: "Душанбе", recipientName: "Фарид", phone: "+992900000000" });
     expect(data.items.create[0]).toMatchObject({ productId: "product", productNameSnapshot: "Помидоры", unit: "kg", qualityOptionLabelSnapshot: "спелые", finalQuantity: null, finalTotal: null });
+    expect(data.items.create[0].productNameTjSnapshot).toBe("Помидор");
     expect(data.items.create[0].saleUnitPriceSnapshot.toString()).toBe("10.5");
     expect(data.items.create[0].requestedQuantity).toBeInstanceOf(D);
     expect(data.itemsSubtotal).toBeInstanceOf(D);

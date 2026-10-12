@@ -10,6 +10,7 @@ export type ProductWithCategoryAndOptions = Prisma.ProductGetPayload<{
 export type CategoryDto = {
   id: string;
   name: string;
+  nameTj?: string | null;
   slug: string;
   sortOrder: number;
   isActive?: boolean;
@@ -18,8 +19,10 @@ export type CategoryDto = {
 export type PublicProductDto = {
   id: string;
   name: string;
+  nameTj?: string | null;
   slug: string;
   description: string | null;
+  descriptionTj?: string | null;
   image: string | null;
   unit: string;
   sellingPrice: string;
@@ -29,11 +32,13 @@ export type PublicProductDto = {
   category: {
     id: string;
     name: string;
+    nameTj?: string | null;
     slug: string;
   };
   qualityOptions: Array<{
     id: string;
     label: string;
+    labelTj?: string | null;
     sortOrder: number;
   }>;
 };

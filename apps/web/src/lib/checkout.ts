@@ -46,6 +46,11 @@ export async function finishCheckout(input: CreateOrderInput, clearCart: () => v
   return receipt;
 }
 
-export function slotLabel(slot: Pick<DeliverySlotDto, "date" | "startsAt" | "endsAt">) {
+export function slotLabel(slot: Pick<DeliverySlotDto, "date" | "startsAt" | "endsAt">, locale: "ru" | "tg" = "ru") {
+  if (locale === "tg") {
+    const months = ["январ", "феврал", "март", "апрел", "май", "июн", "июл", "август", "сентябр", "октябр", "ноябр", "декабр"];
+    const [, month, day] = slot.date.split("-");
+    return `${Number(day)} ${months[Number(month) - 1]}, ${slot.startsAt}–${slot.endsAt}`;
+  }
   return `${new Date(`${slot.date}T00:00:00Z`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" })}, ${slot.startsAt}–${slot.endsAt}`;
 }

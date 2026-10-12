@@ -10,7 +10,7 @@ export const customerStatusLabels = {
 } as const;
 export type CustomerOrderStatus = keyof typeof customerStatusLabels;
 export type PublicOrderSlot = { date: string; startsAt: string; endsAt: string };
-export type PublicOrderLine = { name: string; quantity: string; unit: string; total: string };
+export type PublicOrderLine = { name: string; nameTj?: string | null; quantity: string; unit: string; total: string };
 export type PublicOrderMoney = {
   goods: string; serviceFee: string; deliveryFee: string; discount: string;
   original: string; payable: string; collected: string; amountToCollect: string; refundDue: string;

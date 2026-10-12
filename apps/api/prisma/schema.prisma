@@ -136,6 +136,7 @@ model CustomerAddress {
 model Category {
   id        String    @id @default(uuid())
   name      String
+  nameTj    String?   @map("name_tj")
   slug      String    @unique
   sortOrder Int       @default(0) @map("sort_order")
   isActive  Boolean   @default(true) @map("is_active")
@@ -149,8 +150,10 @@ model Product {
   id                   String                 @id @default(uuid())
   categoryId           String                 @map("category_id")
   name                 String
+  nameTj               String?                @map("name_tj")
   slug                 String                 @unique
   description          String?
+  descriptionTj        String?                @map("description_tj")
   imageUrl             String?                @map("image_url")
   unit                 String
   currentPurchasePrice Decimal                @map("current_purchase_price") @db.Decimal(12, 2)
@@ -177,6 +180,7 @@ model ProductQualityOption {
   id        String  @id @default(uuid())
   productId String  @map("product_id")
   label     String
+  labelTj   String? @map("label_tj")
   sortOrder Int     @default(0) @map("sort_order")
   isActive  Boolean @default(true) @map("is_active")
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -294,6 +298,7 @@ model OrderItem {
   orderId                    String              @map("order_id")
   productId                  String              @map("product_id")
   productNameSnapshot        String              @map("product_name_snapshot")
+  productNameTjSnapshot      String?             @map("product_name_tj_snapshot")
   unit                       String
   requestedQuantity          Decimal             @map("requested_quantity") @db.Decimal(12, 3)
   saleUnitPriceSnapshot      Decimal             @map("sale_unit_price_snapshot") @db.Decimal(12, 2)

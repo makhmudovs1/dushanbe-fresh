@@ -74,8 +74,6 @@ test("admin category, product, image replacement and availability controls", asy
   await dialog.getByLabel("Цена для клиента").fill("12.50");
   await dialog.getByLabel("Ориентир закупки").fill("8.00");
   await dialog.getByLabel("Предпочтения по качеству, по одному на строку").fill("спелые\nтвёрдые");
-  await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
-  await expect(dialog.getByRole("status")).toContainText("Добавьте фотографию");
   const file = dialog.getByLabel("Фотография товара", { exact: true });
   await file.setInputFiles({ name: "bad.txt", mimeType: "text/plain", buffer: Buffer.from("test") });
   await expect(dialog.getByRole("alert")).toContainText("JPEG, PNG или WebP");

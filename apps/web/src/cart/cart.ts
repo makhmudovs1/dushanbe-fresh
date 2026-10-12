@@ -6,6 +6,7 @@ export type CartItem = {
   productId: string;
   slug: string;
   name: string;
+  nameTj?: string | null;
   imageUrl: string | null;
   unit: string;
   sellingPrice: string;
@@ -15,6 +16,7 @@ export type CartItem = {
   quantityStep: string;
   qualityOptionId: string | null;
   qualityOptionLabel: string | null;
+  qualityOptionLabelTj?: string | null;
 };
 
 export type CartState = {
@@ -84,6 +86,7 @@ export function createCartItem(input: AddToCartInput): CartItem {
     productId: input.product.id,
     slug: input.product.slug,
     name: input.product.name,
+    nameTj: input.product.nameTj,
     imageUrl: input.product.image,
     unit: input.product.unit,
     sellingPrice: input.product.sellingPrice,
@@ -92,7 +95,8 @@ export function createCartItem(input: AddToCartInput): CartItem {
     minQuantity: input.product.minQuantity,
     quantityStep: input.product.quantityStep,
     qualityOptionId: qualityOption?.id ?? null,
-    qualityOptionLabel: qualityOption?.label ?? null
+    qualityOptionLabel: qualityOption?.label ?? null,
+    qualityOptionLabelTj: qualityOption?.labelTj ?? null
   };
 }
 

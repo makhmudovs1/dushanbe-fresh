@@ -1,3 +1,4 @@
+import { serverI18n } from "@/i18n/server";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -16,12 +17,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
+  const { t } = serverI18n();
   return (
     <main className="page">
       <section className="shell content-section">
-        <Link className="back-link" href="/catalog">
-          Назад в каталог
-        </Link>
+        <Link className="back-link" href="/catalog">{t(" Назад в каталог ")}</Link>
         <Suspense key={params.slug} fallback={<ProductDetailSkeleton />}>
           <ProductData slug={params.slug} />
         </Suspense>

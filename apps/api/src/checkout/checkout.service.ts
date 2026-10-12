@@ -69,9 +69,10 @@ export class CheckoutService {
       if (!errors.length) subtotal = subtotal.plus(lineTotal);
       return {
         productId: item.productId, name: product?.name ?? "Недоступный товар", unit: product?.unit ?? "",
+        nameTj: product?.nameTj ?? null,
         isWeighted: product?.isWeighted ?? false, sellingPrice: product?.currentSalePrice.toFixed(2) ?? null,
         requestedQuantity: quantity.toString(), estimatedTotal: errors.length ? "0.00" : lineTotal.toFixed(2),
-        qualityOption: quality ? { id: quality.id, label: quality.label } : null, errors, warnings
+        qualityOption: quality ? { id: quality.id, label: quality.label, labelTj: quality.labelTj } : null, errors, warnings
       };
     });
     const deliverySlot = await readSlot(tx, input.deliverySlotId);
@@ -136,6 +137,7 @@ export class CheckoutService {
               serviceFee: new D(quote.serviceFee), serviceFeePercentSnapshot: quote.serviceFeePercentSnapshot, totalEstimated: new D(quote.totalEstimated), totalFinal: null,
               items: { create: quote.items.map(item => ({
                 productId: item.productId, productNameSnapshot: item.name, unit: item.unit,
+                productNameTjSnapshot: item.nameTj,
                 requestedQuantity: new D(item.requestedQuantity), saleUnitPriceSnapshot: new D(item.sellingPrice!),
                 estimatedTotal: new D(item.estimatedTotal), qualityOptionId: item.qualityOption?.id ?? null,
                 qualityOptionLabelSnapshot: item.qualityOption?.label ?? null,

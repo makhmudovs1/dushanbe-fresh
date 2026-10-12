@@ -37,12 +37,13 @@ export type AddressInput = {
 export type CheckoutLine = {
   productId: string;
   name: string;
+  nameTj?: string | null;
   unit: string;
   isWeighted: boolean;
   sellingPrice: string | null;
   requestedQuantity: string;
   estimatedTotal: string;
-  qualityOption: { id: string; label: string } | null;
+  qualityOption: { id: string; label: string; labelTj?: string | null } | null;
   errors: string[];
   warnings: string[];
 };

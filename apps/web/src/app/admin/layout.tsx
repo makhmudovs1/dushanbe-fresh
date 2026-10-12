@@ -4,5 +4,5 @@ import { privateMetadata } from "@/lib/seo";
 export const metadata = privateMetadata("Команда");
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <StaffLayout>{children}</StaffLayout>;
+  return <div lang="ru"><StaffLayout>{children}</StaffLayout></div>;
 }

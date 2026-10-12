@@ -1,9 +1,9 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
 import { mapAdminProduct, mapCategory, mapPublicProduct } from "./catalog.mappers";
-import { catalogImage } from "./catalog.image";
+import { assertCatalogImage } from "./catalog.image";
 import {
   CategoryInput,
   ProductFilters,
@@ -112,7 +112,7 @@ export class CatalogService {
   }
 
   async createAdminProduct(input: ProductInput) {
-    this.assertProductImage(input.isActive ?? true, input.image);
+    assertCatalogImage(input.image);
     const product = await this.prisma.$transaction(async tx => {
       await this.lockCategory(tx, input.categoryId);
       return tx.product.create({
@@ -130,7 +130,7 @@ export class CatalogService {
       if (input.categoryId !== undefined) await this.lockCategory(tx, input.categoryId);
       const existing = await tx.product.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException("Товар не найден.");
-      this.assertProductImage(input.isActive ?? existing.isActive, input.image === undefined ? existing.imageUrl : input.image);
+      assertCatalogImage(input.image === undefined ? existing.imageUrl : input.image);
       return tx.product.update({
         where: { id },
         data: this.toUpdateProductData(input),
@@ -170,13 +170,6 @@ export class CatalogService {
     if (!rows.length || rows[0].deleted_at) throw new NotFoundException("Товар не найден или удалён.");
   }
 
-  private assertProductImage(active: boolean, image: string | null | undefined) {
-    if (active && !catalogImage(image)) throw new BadRequestException("Добавьте фотографию товара или выключите товар, чтобы сохранить черновик.");
-    if (image && !/^(\/(?!\/)[^\s]+|https:\/\/[^\s]+)$/.test(image)) {
-      throw new BadRequestException("Фотография должна быть загруженным файлом или HTTPS-ссылкой.");
-    }
-  }
-
   private publicProductWhere(filters: ProductFilters): Prisma.ProductWhereInput {
     return {
       isActive: true,
@@ -191,6 +184,7 @@ export class CatalogService {
         ? {
             OR: [
               { name: { contains: filters.search, mode: "insensitive" } },
+              { nameTj: { contains: filters.search, mode: "insensitive" } },
               { description: { contains: filters.search, mode: "insensitive" } }
             ]
           }

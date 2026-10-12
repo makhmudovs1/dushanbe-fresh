@@ -1,3 +1,4 @@
+import { serverI18n } from "@/i18n/server";
 import { Suspense } from "react";
 import { CatalogData } from "@/components/catalog-data";
 import { ProductGridSkeleton } from "@/components/loading-state";
@@ -12,12 +13,13 @@ export default function CatalogPage({
 }: {
   searchParams?: { category?: string };
 }) {
+  const { t } = serverI18n();
   return (
     <main className="page">
       <section className="shell">
         <header className="page-heading">
-          <h1>Каталог</h1>
-          <p>Свежие продукты, доступные сегодня</p>
+          <h1>{t("Каталог")}</h1>
+          <p>{t("Свежие продукты, доступные сегодня")}</p>
         </header>
         <Suspense key={searchParams?.category ?? ""} fallback={<ProductGridSkeleton />}>
           <CatalogData category={searchParams?.category ?? ""} />

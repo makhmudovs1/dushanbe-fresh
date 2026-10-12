@@ -160,6 +160,7 @@ export class DeliveryFinanceService {
       deliveryAddressSnapshot: order.deliveryAddressSnapshot!, deliverySlotId: slotId, substitutionPolicy: order.substitutionPolicy,
       status: "confirmed", itemsSubtotal: goods, serviceFee: "0", deliveryFee: "0", totalEstimated: goods,
       items: { create: plan.items.map(({ item, quantityAffected }) => ({ productId: item.replacementProductId ?? item.productId, productNameSnapshot: item.productNameSnapshot,
+        productNameTjSnapshot: item.productNameTjSnapshot,
         unit: item.unit, requestedQuantity: quantityAffected, saleUnitPriceSnapshot: plan.prepaid ? "0" : item.finalUnitPrice ?? item.saleUnitPriceSnapshot,
         estimatedTotal: plan.prepaid ? "0" : money(quantityAffected.mul(item.finalUnitPrice ?? item.saleUnitPriceSnapshot)), qualityOptionLabelSnapshot: item.qualityOptionLabelSnapshot })) }
     } });
