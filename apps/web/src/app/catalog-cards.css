@@ -40,6 +40,13 @@
 .product-gallery--detail .product-gallery__dots { height: 32px; padding-top: 5px; }
 .product-gallery--detail .product-gallery__dots span { width: 6px; height: 6px; }
 .product-gallery--detail .product-gallery__arrows button { opacity: 1; width: 40px; height: 44px; }
+.product-gallery__credit { position: absolute; top: 6px; left: 6px; z-index: 3; max-width: calc(100% - 12px); }
+.product-gallery__credit summary { display: grid; place-items: center; width: 40px; height: 40px; list-style: none; border-radius: 6px; background: rgb(255 255 255 / 95%); color: var(--color-primary); cursor: pointer; }
+.product-gallery__credit summary::-webkit-details-marker { display: none; }
+.product-gallery__credit summary:focus-visible { outline: 2px solid var(--color-primary); }
+.product-gallery__credit > div { display: grid; gap: 4px; padding: 8px; margin-top: 4px; max-width: 260px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
+.product-gallery__credit a { color: var(--color-primary); text-decoration: underline; }
+.product-gallery__credit small { color: var(--color-muted); }
 .skeleton-product-media { border-radius: 16px; }
 .skeleton-detail-media { aspect-ratio: 1; }
 .skeleton-product-media { margin-bottom: 10px; }

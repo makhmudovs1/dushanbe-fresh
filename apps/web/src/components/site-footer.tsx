@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { LastOrderLink } from "./last-order-link";
 
 export function SiteFooter() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const pathname = usePathname();
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
   return <footer className="site-footer"><div className="shell site-footer__inner">
@@ -16,7 +16,6 @@ export function SiteFooter() {
     </div>
     <nav aria-label={t("Навигация в подвале")}>
       <Link href="/catalog">{t("Каталог")}</Link><Link href="/about">{t("О сервисе")}</Link><LastOrderLink />
-      <Link href="/photo-credits">{locale === "tg" ? "Манбаъҳои аксҳо" : "Источники фотографий"}</Link>
     </nav>
     <small>© 2026 Dushanbe Fresh</small>
   </div></footer>;

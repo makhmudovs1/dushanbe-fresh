@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { productPhotos, swipeDirection } from "@/lib/product-gallery";
+import { photoAttribution } from "@/lib/photo-attribution";
 import { useI18n } from "@/i18n/provider";
 import { ProductImage } from "./product-image";
 
 export function ProductGallery({ product, href, eager = false, children }: {
   product: Product; href?: string; eager?: boolean; children?: ReactNode;
 }) {
-  const { name, t } = useI18n();
+  const { name, t, locale } = useI18n();
   const photos = productPhotos(product);
   const [index, setIndex] = useState(0);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -21,6 +22,8 @@ export function ProductGallery({ product, href, eager = false, children }: {
   const active = Math.min(index, Math.max(0, photos.length - 1));
   function move(direction: number) { setIndex(current => (current + direction + photos.length) % photos.length); }
   const image = <ProductImage src={photos[active]?.url ?? null} name={name(product)} eager={eager} />;
+  const credit = photoAttribution(photos[active]?.url);
+  const creditLabel = locale === "tg" ? "Муаллиф ва иҷозатномаи акс" : "Автор и лицензия фото";
 
   return <div className={href ? "product-gallery" : "product-gallery product-gallery--detail"}>
     <div className="product-gallery__media" onTouchStart={event => {
@@ -36,6 +39,14 @@ export function ProductGallery({ product, href, eager = false, children }: {
         if (event.detail > 0 && Date.now() < suppressClickUntil.current) event.preventDefault();
       }}>{image}</Link> : image}
       {children}
+      {credit ? <details className="product-gallery__credit" key={credit.imageUrl}>
+        <summary aria-label={creditLabel} title={creditLabel}><Info size={18} aria-hidden="true" /></summary>
+        <div>
+          <a href={credit.sourceUrl} target="_blank" rel="noopener noreferrer">{credit.author}</a>
+          <a href={credit.licenseUrl} target="_blank" rel="license noopener noreferrer">{credit.license}</a>
+          <small>{locale === "tg" ? "Акс барои каталог коркард шудааст." : "Фото обработано для каталога."}</small>
+        </div>
+      </details> : null}
       {photos.length > 1 ? <div className="product-gallery__arrows">
         <button type="button" aria-label={t("Предыдущее фото")} title={t("Предыдущее фото")} onClick={() => move(-1)}><ChevronLeft size={18} /></button>
         <button type="button" aria-label={t("Следующее фото")} title={t("Следующее фото")} onClick={() => move(1)}><ChevronRight size={18} /></button>
