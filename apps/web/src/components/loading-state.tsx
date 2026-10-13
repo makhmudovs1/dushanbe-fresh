@@ -27,8 +27,8 @@ export function ProductGridSkeleton() {
     <div className="product-grid">{[0, 1, 2, 3].map(id => <div className="product-card" key={id}>
       <Skeleton className="skeleton-product-media" />
       <div className="product-card__body">
-        <Skeleton className="skeleton-short" /><Skeleton className="skeleton-title" />
-        <Skeleton /><Skeleton className="skeleton-short" /><Skeleton className="skeleton-control" />
+        <Skeleton className="skeleton-product-title" /><Skeleton className="skeleton-product-description" />
+        <Skeleton className="skeleton-product-price" /><Skeleton className="skeleton-control" />
       </div>
     </div>)}</div>
   </LoadingState>;

@@ -18,11 +18,20 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/catalog");
     // Use a browser-only response after search; never modify catalog records.
-    await page.route("**/api/v1/products?*", route => route.fulfill({ json: products }));
+    let release!: () => void;
+    const responseReady = new Promise<void>(resolve => { release = resolve; });
+    await page.route("**/api/v1/products?*", async route => {
+      await responseReady;
+      await route.fulfill({ json: products });
+    });
     await page.locator(".catalog-search input").fill("layout-fixture");
     await page.locator(".catalog-search button").click();
+    await expect(page.locator(".skeleton-product-media").first()).toBeVisible();
+    const pendingCard = await page.locator(".product-card").first().boundingBox();
+    release();
     const cards = page.locator(".product-card");
     await expect(cards).toHaveCount(products.length);
+    expect(Math.abs((await cards.first().boundingBox())!.height - pendingCard!.height)).toBeLessThan(2);
     await expect(cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true })).toBeVisible();
     for (let i = 0; i < products.length; i++) {
       const card = cards.nth(i);

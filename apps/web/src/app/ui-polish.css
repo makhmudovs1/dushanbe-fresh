@@ -58,7 +58,6 @@ input, select, textarea { color: var(--color-text); accent-color: var(--color-pr
 .quantity-stepper output { display: block; min-width: 0; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .product-card .quantity-stepper output { font-size: 12px; line-height: 16px; }
 .product-card .quantity-stepper output span { display: block; overflow: hidden; text-overflow: ellipsis; }
-.catalog-cart-pending, .product-grid .skeleton-control { height: 46px; }
 .cart-item { grid-template-columns: 64px 112px minmax(0, 1fr) 44px; grid-template-areas: "photo info info info" "quantity quantity total delete"; gap: 10px 8px; align-items: center; overflow: visible; }
 .cart-item__media { grid-area: photo; min-height: 0; width: 64px; }
 .cart-item__info { grid-area: info; min-width: 0; display: grid; gap: 4px; }

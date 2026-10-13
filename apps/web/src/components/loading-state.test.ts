@@ -23,6 +23,13 @@ describe("initial loading markup", () => {
     expect(html).not.toContain('Корзина пока пустая');
   });
 
+  it("reserves the same catalog title, description and price blocks before data arrives", () => {
+    const html = renderToStaticMarkup(createElement(ProductGridSkeleton));
+    for (const block of ["media", "title", "description", "price"]) {
+      expect(html.match(new RegExp(`skeleton-product-${block}`, "g"))).toHaveLength(4);
+    }
+  });
+
   it("renders catalog images lazily with asynchronous decoding and reserved dimensions", () => {
     const html = renderToStaticMarkup(createElement(ProductImage, { src: '/test.jpg', name: 'Помидоры' }));
     expect(html).toContain('loading="lazy"');
