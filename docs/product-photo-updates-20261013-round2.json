@@ -1,0 +1,12 @@
+[
+  { "file": "Болгарский перец.png", "slug": "bell-pepper" },
+  { "file": "изюм.png", "slug": "dark-raisins", "name": "Изюм", "nameTj": "Мавиз" },
+  { "file": "курага.png", "slug": "dried-apricots" },
+  { "file": "листовой салат.png", "slug": "leaf-lettuce" },
+  { "file": "миндаль.png", "slug": "almonds" },
+  { "file": "нут.png", "slug": "chickpeas" },
+  { "file": "редька.png", "slug": "radish-turb" },
+  { "file": "сушенный инжир.png", "slug": "dried-figs" },
+  { "file": "фасоль.png", "slug": "red-beans", "name": "Фасоль", "nameTj": "Лӯбиё" },
+  { "file": "чернослив.png", "slug": "dried-plums" }
+]
