@@ -29,8 +29,10 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
     await expect(cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true })).toBeVisible();
     expect(Math.abs((await cards.first().boundingBox())!.height - pending.height)).toBeLessThanOrEqual(24);
     await expect(page.locator(".product-card__description")).toHaveCount(0);
-    for (const i of [2, 3]) await expect(cards.nth(i).locator(".product-price__current"))
-      .toHaveText(locale === "ru" ? "5,75 сомони / пучок (~7 веточек)" : "5,75 сомонӣ / баста (~7 шохча)");
+    for (const i of [2, 3]) {
+      await expect(cards.nth(i).locator(".product-price__current")).toHaveText(locale === "ru" ? "5,75 сомони" : "5,75 сомонӣ");
+      await expect(cards.nth(i).locator(".product-price__unit")).toHaveText(locale === "ru" ? "1 пучок (~7 веточек)" : "1 баста (~7 шохча)");
+    }
     const bounds = await cards.evaluateAll(els => els.map(el => {
       const media = el.querySelector(".product-gallery__media")!.getBoundingClientRect();
       const price = el.querySelector(".product-price")!.getBoundingClientRect();
@@ -41,10 +43,13 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
     }));
     for (const a of bounds) {
       expect(a.border).toBe("0px"); expect(Math.abs(a.media.width - a.media.height)).toBeLessThan(1);
-      expect(a.price.top - a.media.bottom).toBeLessThanOrEqual(8); expect(a.title.top).toBeGreaterThan(a.price.top);
-      expect(a.bottom - a.media.bottom).toBeLessThan(150);
+      expect(a.price.top - a.media.bottom).toBeLessThanOrEqual(16); expect(a.title.top).toBeGreaterThan(a.price.top);
+      expect(a.bottom - a.media.bottom).toBeLessThan(160);
+      expect(a.action.width).toBeGreaterThanOrEqual(a.media.width - 5);
       for (const b of bounds.filter(b => Math.abs(a.top - b.top) < 1)) {
         expect(Math.abs(a.bottom - b.bottom)).toBeLessThan(1); expect(Math.abs(a.action.bottom - b.action.bottom)).toBeLessThan(1);
+        expect(Math.abs(a.title.top - b.title.top)).toBeLessThan(1);
+        expect(Math.abs(a.price.top - b.price.top)).toBeLessThan(1);
       }
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

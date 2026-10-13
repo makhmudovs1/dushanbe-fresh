@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { decimalLabel, priceLabel, quantityLabel, unitLabel } from "./format";
+import { decimalLabel, priceLabel, priceUnitLabel, quantityLabel, unitLabel } from "./format";
 
 describe("Russian units and decimal presentation", () => {
+  it("labels the actual price unit, without inventing a pack size or changing the price", () => {
+    expect(priceUnitLabel("kg")).toBe("1 кг");
+    expect(priceUnitLabel("piece")).toBe("1 шт.");
+    expect(priceUnitLabel("bunch", "ru", "basil")).toBe("1 пучок (~7 веточек)");
+    expect(priceUnitLabel("bunch", "tg", "mint")).toBe("1 баста (~7 шохча)");
+  });
   it.each(["basil", "mint"])("explains the bunch for %s in both languages without recalculating prices", slug => {
     expect(priceLabel("5.75", "bunch", "ru", slug)).toBe("5,75 сомони / пучок (~7 веточек)");
     expect(priceLabel("5.75", "bunch", "tg", slug)).toBe("5,75 сомонӣ / баста (~7 шохча)");

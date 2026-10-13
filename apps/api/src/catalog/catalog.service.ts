@@ -132,11 +132,16 @@ export class CatalogService {
     const product = await this.prisma.$transaction(async tx => {
       await this.lockProduct(tx, id);
       if (input.categoryId !== undefined) await this.lockCategory(tx, input.categoryId);
-      const existing = await tx.product.findUnique({ where: { id }, include: { priceHistory: productInclude.priceHistory } });
+      const existing = await tx.product.findUnique({ where: { id }, include: { priceHistory: productInclude.priceHistory, images: productInclude.images } });
       if (!existing) throw new NotFoundException("Товар не найден.");
       assertCatalogImage(input.image === undefined ? existing.imageUrl : input.image);
+      // Legacy editors send image even on price-only saves. Do not erase their newer gallery.
       const images = input.images !== undefined ? parseGallery(input.images)
-        : input.image !== undefined ? parseGallery(input.image ? [{ url: input.image }] : []) : undefined;
+        : input.image !== undefined && input.image !== existing.imageUrl ? parseGallery([
+          ...(input.image ? [{ url: input.image, isPrimary: true, sortOrder: 0 }] : []),
+          ...(existing.images ?? []).filter(image => image.url !== existing.imageUrl && image.url !== input.image)
+            .map((image, index) => ({ url: image.url, isPrimary: false, sortOrder: index + 1 }))
+        ]) : undefined;
       if (images !== undefined) await this.saveGallery(tx, id, images);
       if (input.sellingPrice !== undefined) {
         const newPrice = new Prisma.Decimal(input.sellingPrice);

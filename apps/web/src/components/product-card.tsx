@@ -4,7 +4,7 @@ import { useI18n } from "@/i18n/provider";
 
 import Link from "next/link";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { ShoppingBasket, X } from "lucide-react";
 import { useCart } from "@/cart/cart-context";
 import { getCartItemKey } from "@/cart/cart";
 import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-selection";
@@ -47,7 +47,7 @@ export function ProductCard({ product }: { product: Product }) {
                   onDecrease={() => isMinimumQuantity(item) ? removeItem(item) : decrementItem(item)} />
               </div>)}
               {!items.length && !choosingQuality ? <button className="product-card__action" type="button"
-                onClick={() => product.qualityOptions.length ? setChoosingQuality(true) : add()}>{t("Выбрать")}</button> : null}
+                onClick={() => product.qualityOptions.length ? setChoosingQuality(true) : add()}><ShoppingBasket size={20} aria-hidden="true" />{t("Выбрать")}</button> : null}
               {items.length > 0 && product.qualityOptions.length > 0 && !choosingQuality ?
                 <button className="catalog-text-action" type="button" onClick={() => setChoosingQuality(true)}>{t("Другое качество")}</button> : null}
               {choosingQuality ? <div className="catalog-quality">

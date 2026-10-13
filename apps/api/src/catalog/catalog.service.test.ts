@@ -274,6 +274,12 @@ describe("CatalogService", () => {
     await service.updateAdminProduct(product.id, { sellingPrice: "10.50", purchasePrice: "4" });
     expect(prisma.productPriceHistory.create).not.toHaveBeenCalled();
   });
+  it("preserves a newer gallery on price-only saves from a legacy editor", async () => {
+    const { service, prisma } = createService();
+    await service.updateAdminProduct(product.id, { image: product.imageUrl, sellingPrice: "9" });
+    expect(prisma.productImage.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.productImage.updateMany).not.toHaveBeenCalled();
+  });
   it("rolls back product saving when history persistence fails", async () => {
     const { service, prisma } = createService();
     prisma.productPriceHistory.create.mockRejectedValue(new Error("history failed"));

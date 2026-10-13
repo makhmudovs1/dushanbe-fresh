@@ -26,7 +26,9 @@ describe("catalog card", () => {
   });
   it("renders selection as a button, with separate photo and title links", () => {
     const html = renderToStaticMarkup(<ProductCard product={product} />);
-    expect(html).toMatch(/<button[^>]*>Выбрать<\/button>/);
+    expect(html).toMatch(/<button[^>]*>[\s\S]*Выбрать<\/button>/);
+    expect(html).toContain("lucide-shopping-basket");
+    expect(html).toContain("1 кг");
     expect(html.match(/href="\/products\/bananas"/g)).toHaveLength(2);
   });
   it("renders media, price, title, and action without grid descriptions or fake discounts", () => {
@@ -41,6 +43,8 @@ describe("catalog card", () => {
       priceDrop: { oldPrice: "12", discountPercent: 17 } }} />);
     expect(html).toContain("product-gallery__dots"); expect(html).toContain("Стало дешевле");
     expect(html).toContain("−17%"); expect(html).toContain("<del");
+    expect(html.indexOf("product-price__current")).toBeLessThan(html.indexOf("product-price__meta"));
+    expect(html.indexOf("product-price__meta")).toBeLessThan(html.indexOf("<h3"));
   });
   it("renders the saved quantity and quality instead of selection", () => {
     cart.state.items = [createCartItem({ product, quantity: "2.5", qualityOptionId: "ripe" })];

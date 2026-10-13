@@ -28,6 +28,11 @@ describe.skipIf(!url)("catalog gallery and sale history transactions", () => {
   });
   it("creates three photos, switches cover, reorders and removes primary without losing IDs", async () => {
     const original = await prisma.productImage.findMany({ where: { productId } });
+    const saved = await service.updateAdminProduct(productId, { image: photos[0], sellingPrice: "10.50" });
+    expect(saved.images).toHaveLength(3);
+    const replaced = await service.updateAdminProduct(productId, { image: "/api/v1/media/00000000-0000-4000-8000-000000000004.webp" });
+    expect(replaced.images).toHaveLength(3);
+    expect(replaced.images.slice(1).map(image => image.url)).toEqual([photos[1], photos[2]]);
     let product = await service.updateAdminProduct(productId, { images: parseGallery([
       { url: photos[2], sortOrder: 0 }, { url: photos[1], sortOrder: 1, isPrimary: true }, { url: photos[0], sortOrder: 2 }
     ]) });

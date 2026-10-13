@@ -24,9 +24,16 @@ export function quantityLabel(quantity: string | null, unit: string, locale: "ru
   return quantity === null ? "—" : `${decimalLabel(quantity)} ${unitLabel(unit, quantity, locale)}`;
 }
 
-export function priceLabel(price: string, unit: string, locale: "ru" | "tg" = "ru", slug?: string) {
-  const note = unit === "bunch" && (slug === "basil" || slug === "mint")
+function productUnitNote(unit: string, locale: "ru" | "tg", slug?: string) {
+  return unit === "bunch" && (slug === "basil" || slug === "mint")
     ? locale === "tg" ? " (~7 шохча)" : " (~7 веточек)"
     : "";
-  return `${decimalLabel(price)} ${locale === "tg" ? "сомонӣ" : "сомони"} / ${unitLabel(unit, undefined, locale)}${note}`;
+}
+
+export function priceUnitLabel(unit: string, locale: "ru" | "tg" = "ru", slug?: string) {
+  return `${quantityLabel("1", unit, locale)}${productUnitNote(unit, locale, slug)}`;
+}
+
+export function priceLabel(price: string, unit: string, locale: "ru" | "tg" = "ru", slug?: string) {
+  return `${decimalLabel(price)} ${locale === "tg" ? "сомонӣ" : "сомони"} / ${unitLabel(unit, undefined, locale)}${productUnitNote(unit, locale, slug)}`;
 }

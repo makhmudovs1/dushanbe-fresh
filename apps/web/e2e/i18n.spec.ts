@@ -68,7 +68,7 @@ test("Tajik bunch units, branded placeholder and error/empty states", async ({ p
   await page.goto("/cart");
   await expect(page.getByRole("heading", { name: "Сабад ҳоло холӣ аст" })).toBeVisible();
   const products = await (await page.request.get("/api/v1/products")).json();
-  const product = products.find((p: { slug: string }) => p.slug === "dill");
+  const product = { ...products.find((p: { slug: string }) => p.slug === "dill"), image: null };
   await page.evaluate(({ key, item }) => localStorage.setItem(key, JSON.stringify({ items: [item] })), { key: CART_STORAGE_KEY, item: createCartItem({ product, quantity: "2" }) });
   await page.reload();
   await expect(page.locator("output")).toHaveText("2 баста");
