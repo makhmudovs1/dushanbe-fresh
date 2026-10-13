@@ -71,6 +71,8 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     await db.order.deleteMany({ where: { id: { in: orders } } });
     await db.customer.deleteMany({ where: { phoneNormalized: phone } });
     await db.deliverySlot.deleteMany({ where: { id: { in: slots } } });
+    await db.productImage.deleteMany({ where: { productId: marker } });
+    await db.productPriceHistory.deleteMany({ where: { productId: marker } });
     await db.product.deleteMany({ where: { id: marker } }); await db.category.deleteMany({ where: { id: marker } });
     await db.appSetting.deleteMany({ where: { key: { in: ["default_picker_id", "default_courier_id"] } } });
     for (const [key, value] of savedDefaults) await db.appSetting.create({ data: { key, value } });
@@ -188,7 +190,7 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     expect((await upload("courier")).status).toBe(403);
     expect((await upload("admin", Buffer.from("no image"), "text/plain")).status).toBe(400);
     expect((await upload("admin", Buffer.alloc(5 * 1024 * 1024 + 1))).status).toBe(413);
-    expect((await request(`/admin/products/${marker}`, "admin", "PATCH", { image: null })).status).toBe(400);
+    expect((await request(`/admin/products/${marker}`, "admin", "PATCH", { image: null })).status).toBe(200);
     let previousImage = "";
     for (let i = 0; i < 2; i++) {
       const response = await upload("admin");
@@ -198,6 +200,8 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
       expect((await request(`/admin/products/${marker}`, "admin", "PATCH", { image })).status).toBe(200);
       const publicProduct = await (await request(`/products/${marker}`)).json();
       expect(publicProduct.image).toBe(image);
+      expect(publicProduct.images).toHaveLength(1);
+      expect(publicProduct.images[0]).toMatchObject({ url: image, isPrimary: true });
       expect(publicProduct).not.toHaveProperty("purchasePrice");
       const photo = await fetch(`${await app.getUrl()}${image}`);
       expect(photo.status).toBe(200);

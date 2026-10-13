@@ -13,10 +13,11 @@ import {
   getAdminProducts,
   Product,
   updateAdminProduct,
-  uploadProductImage
+  ProductPhoto
 } from "@/lib/api";
 import { priceLabel, unitLabel } from "@/lib/format";
-import { ProductPhotoField } from "./product-photo-field";
+import { ProductGalleryField } from "./product-gallery-field";
+import { productPhotos } from "@/lib/product-gallery";
 import { ProductImage } from "./product-image";
 import { CatalogDialog } from "./catalog-dialog";
 
@@ -46,7 +47,8 @@ export function AdminCatalog() {
   const [categoryForm, setCategoryForm] = useState({ name: "", slug: "", sortOrder: 0 });
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<ProductPhoto[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [panel, setPanel] = useState<"product" | "category" | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -80,7 +82,7 @@ export function AdminCatalog() {
 
   function selectProduct(product: Product) {
     setPanel("product");
-    setPhoto(null);
+    setPhotos(productPhotos(product));
     setNotice("");
     setSelectedProductId(product.id);
     setForm({
@@ -103,7 +105,7 @@ export function AdminCatalog() {
   }
 
   function resetForm() {
-    setPhoto(null);
+    setPhotos([]);
     setSelectedProductId("");
     setForm({
       ...emptyProduct,
@@ -118,18 +120,14 @@ export function AdminCatalog() {
 
     const payload = {
       ...form,
-      qualityOptions: form.qualityOptionsText
+      images: photos,
+      qualityOptions: selectedProduct && form.qualityOptionsText === selectedProduct.qualityOptions.map(option => option.label).join("\n") ? undefined : form.qualityOptionsText
         .split("\n")
         .map((label, index) => ({ label: label.trim(), sortOrder: index * 10 }))
         .filter((option) => option.label.length > 0)
     };
 
     try {
-      if (photo) {
-        payload.image = await uploadProductImage(photo);
-        setForm(current => ({ ...current, image: payload.image }));
-        setPhoto(null);
-      }
       if (selectedProductId) {
         await updateAdminProduct(selectedProductId, payload);
         setNotice("Товар обновлен.");
@@ -266,10 +264,10 @@ export function AdminCatalog() {
           </fieldset>
         </form>
       </CatalogDialog> : null}
-      {panel === "product" ? <CatalogDialog title={selectedProduct ? selectedProduct.name : "Новый товар"} busy={pending}
-        onClose={() => { setPanel(null); setPhoto(null); }}>
+      {panel === "product" ? <CatalogDialog title={selectedProduct ? selectedProduct.name : "Новый товар"} busy={pending || uploadingPhotos}
+        onClose={() => { setPanel(null); setPhotos([]); }}>
         <form className="admin-form" onSubmit={saveProduct}>
-          <fieldset className="product-form-fields" disabled={pending}>
+          <fieldset className="product-form-fields" disabled={pending || uploadingPhotos}>
           <section className="catalog-form-section"><h3>Основное</h3>
           <div className="form-grid">
           <label>
@@ -312,10 +310,14 @@ export function AdminCatalog() {
           </label>
           </section>
           <section className="catalog-form-section"><h3>Фото</h3>
-          <ProductPhotoField key={selectedProductId || "new"} image={form.image} file={photo} disabled={pending}
-            onChange={(file, image) => { setPhoto(file); setForm({ ...form, image }); setNotice(""); }} />
+          <ProductGalleryField key={selectedProductId || "new"} images={photos} disabled={pending}
+            onChange={setPhotos} onUploading={setUploadingPhotos} />
           </section>
           <section className="catalog-form-section"><h3>Цена и количество</h3>
+          {selectedProduct?.lastPriceChange ? <small className="catalog-price-history">
+            Последнее изменение: {priceLabel(selectedProduct.lastPriceChange.oldPrice, form.unit)} → {priceLabel(selectedProduct.lastPriceChange.newPrice, form.unit)}
+            {selectedProduct.priceDrop ? ` · Стало дешевле на ${selectedProduct.priceDrop.discountPercent}%` : ""}
+          </small> : null}
           <div className="form-grid">
             <label>
               Единица
@@ -406,10 +408,10 @@ export function AdminCatalog() {
           </div>
           </section>
           <div className="catalog-form-actions">
-          <button className="primary-action" disabled={pending} type="submit">
+          <button className="primary-action" disabled={pending || uploadingPhotos} type="submit">
             {pending ? "Сохраняем..." : "Сохранить"}
           </button>
-          <button className="secondary-link" disabled={pending} type="button" onClick={() => { setPanel(null); setPhoto(null); }}>Отмена</button>
+          <button className="secondary-link" disabled={pending || uploadingPhotos} type="button" onClick={() => { setPanel(null); setPhotos([]); }}>Отмена</button>
           </div>
           {notice ? <p className="notice" role="status">{notice}</p> : null}
           </fieldset>

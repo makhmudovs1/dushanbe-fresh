@@ -23,9 +23,9 @@ describe("initial loading markup", () => {
     expect(html).not.toContain('Корзина пока пустая');
   });
 
-  it("reserves the same catalog title, description and price blocks before data arrives", () => {
+  it("reserves the compact catalog media, price and title blocks before data arrives", () => {
     const html = renderToStaticMarkup(createElement(ProductGridSkeleton));
-    for (const block of ["media", "title", "description", "price"]) {
+    for (const block of ["media", "title", "price"]) {
       expect(html.match(new RegExp(`skeleton-product-${block}`, "g"))).toHaveLength(4);
     }
   });

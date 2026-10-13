@@ -41,7 +41,7 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   await item.getByRole("heading").getByRole("link").click();
   await expect(page).toHaveURL(`/products/${product.slug}`);
   await page.goBack();
-  await item.locator(".product-card__media").click();
+  await item.locator(".product-gallery__link").click();
   await expect(page).toHaveURL(`/products/${product.slug}`);
 });
 
@@ -86,7 +86,7 @@ for (const width of [375, 768, 1440]) {
       }
     }
     const columns = await page.locator(".product-grid").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-    expect(columns).toBe(width === 1440 ? 4 : 2);
+    expect(columns).toBe(width === 1440 ? 5 : width === 768 ? 3 : 2);
     await page.screenshot({ path: testInfo.outputPath(`catalog-${width}.png`), fullPage: true });
     await page.screenshot({ path: testInfo.outputPath(`catalog-viewport-${width}.png`) });
     await page.getByRole("link", { name: /^Корзина/ }).click();

@@ -13,6 +13,7 @@
     "build:web": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm --filter @dushanbe-fresh/web build",
     "build:api": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm --filter @dushanbe-fresh/api build",
     "db:generate": "corepack pnpm --filter @dushanbe-fresh/api db:generate",
+    "db:backfill:images": "corepack pnpm --filter @dushanbe-fresh/api db:backfill:images",
     "db:import:pilot": "corepack pnpm --filter @dushanbe-fresh/api db:import:pilot",
     "db:fill:descriptions": "corepack pnpm --filter @dushanbe-fresh/api db:fill:descriptions",
     "db:migrate": "corepack pnpm --filter @dushanbe-fresh/api db:migrate",

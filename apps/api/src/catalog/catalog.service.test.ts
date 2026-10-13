@@ -56,7 +56,9 @@ function createService() {
       findUnique: vi.fn().mockResolvedValue(product),
       create: vi.fn().mockResolvedValue(product),
       update: vi.fn().mockResolvedValue(product)
-    }
+    },
+    productPriceHistory: { create: vi.fn() },
+    productImage: { updateMany: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() }
   };
 
   Object.assign(prisma, { $transaction: vi.fn(async (run: (tx: typeof prisma) => Promise<unknown>) => run(prisma)) });
@@ -258,5 +260,24 @@ describe("CatalogService", () => {
       })
     );
     expect(dto.purchasePrice).toBe("8");
+  });
+
+  it.each(["9.20", "12.00"])("records a real sale-price change to %s with the authenticated actor", async price => {
+    const { service, prisma } = createService();
+    await service.updateAdminProduct(product.id, { sellingPrice: price }, "admin-id");
+    expect(prisma.productPriceHistory.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      productId: product.id, oldSalePrice: product.currentSalePrice, newSalePrice: new Prisma.Decimal(price), changedByUserId: "admin-id"
+    }) });
+  });
+  it("does not record an unchanged sale price or a purchase-price change", async () => {
+    const { service, prisma } = createService();
+    await service.updateAdminProduct(product.id, { sellingPrice: "10.50", purchasePrice: "4" });
+    expect(prisma.productPriceHistory.create).not.toHaveBeenCalled();
+  });
+  it("rolls back product saving when history persistence fails", async () => {
+    const { service, prisma } = createService();
+    prisma.productPriceHistory.create.mockRejectedValue(new Error("history failed"));
+    await expect(service.updateAdminProduct(product.id, { sellingPrice: "9" })).rejects.toThrow("history failed");
+    expect(prisma.product.update).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { mapAdminProduct, mapCategory, mapPublicProduct } from "./catalog.mappers";
 import { assertCatalogImage } from "./catalog.image";
+import { parseGallery, type GalleryInput } from "./catalog.gallery";
 import {
   CategoryInput,
   ProductFilters,
@@ -13,6 +14,8 @@ import {
 
 const productInclude = {
   category: true,
+  images: { orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }, { id: "asc" as const }] },
+  priceHistory: { orderBy: [{ changedAt: "desc" as const }, { id: "desc" as const }], take: 1 },
   qualityOptions: {
     orderBy: {
       sortOrder: "asc" as const
@@ -113,10 +116,11 @@ export class CatalogService {
 
   async createAdminProduct(input: ProductInput) {
     assertCatalogImage(input.image);
+    const images = input.images !== undefined ? parseGallery(input.images) : input.image ? parseGallery([{ url: input.image }]) : [];
     const product = await this.prisma.$transaction(async tx => {
       await this.lockCategory(tx, input.categoryId);
       return tx.product.create({
-        data: this.toCreateProductData(input),
+        data: { ...this.toCreateProductData(input), imageUrl: images.find(image => image.isPrimary)?.url ?? null, images: { create: images } },
         include: productInclude
       });
     });
@@ -124,21 +128,43 @@ export class CatalogService {
     return mapAdminProduct(product);
   }
 
-  async updateAdminProduct(id: string, input: ProductUpdateInput) {
+  async updateAdminProduct(id: string, input: ProductUpdateInput, changedByUserId?: string) {
     const product = await this.prisma.$transaction(async tx => {
       await this.lockProduct(tx, id);
       if (input.categoryId !== undefined) await this.lockCategory(tx, input.categoryId);
-      const existing = await tx.product.findUnique({ where: { id } });
+      const existing = await tx.product.findUnique({ where: { id }, include: { priceHistory: productInclude.priceHistory } });
       if (!existing) throw new NotFoundException("Товар не найден.");
       assertCatalogImage(input.image === undefined ? existing.imageUrl : input.image);
+      const images = input.images !== undefined ? parseGallery(input.images)
+        : input.image !== undefined ? parseGallery(input.image ? [{ url: input.image }] : []) : undefined;
+      if (images !== undefined) await this.saveGallery(tx, id, images);
+      if (input.sellingPrice !== undefined) {
+        const newPrice = new Prisma.Decimal(input.sellingPrice);
+        if (!newPrice.equals(existing.currentSalePrice)) {
+          await tx.productPriceHistory.create({ data: {
+            productId: id, oldSalePrice: existing.currentSalePrice, newSalePrice: newPrice, changedByUserId,
+            changedAt: new Date(Math.max(Date.now(), (existing.priceHistory?.[0]?.changedAt.getTime() ?? 0) + 1))
+          } });
+        }
+      }
       return tx.product.update({
         where: { id },
-        data: this.toUpdateProductData(input),
+        data: { ...this.toUpdateProductData(input), ...(images !== undefined ? { imageUrl: images.find(image => image.isPrimary)?.url ?? null } : {}) },
         include: productInclude
       });
     });
 
     return mapAdminProduct(product);
+  }
+
+  private async saveGallery(tx: Prisma.TransactionClient, productId: string, images: GalleryInput[]) {
+    // Serialize under the product lock; preserve IDs/createdAt and never delete stored files.
+    await tx.productImage.updateMany({ where: { productId, isPrimary: true }, data: { isPrimary: false } });
+    await tx.productImage.deleteMany({ where: { productId, url: { notIn: images.map(image => image.url) } } });
+    for (const image of images) {
+      await tx.productImage.upsert({ where: { productId_url: { productId, url: image.url } },
+        create: { productId, ...image }, update: { sortOrder: image.sortOrder, isPrimary: image.isPrimary } });
+    }
   }
 
   async deleteAdminProduct(id: string) {

@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 
 import { CategoryInput, ProductInput, ProductUpdateInput } from "./catalog.types";
+import { parseGallery } from "./catalog.gallery";
 
 const decimalPattern = /^\d+(\.\d{1,3})?$/;
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
@@ -101,6 +102,7 @@ export function parseProductInput(body: Record<string, unknown>): ProductInput {
     slug: assertString(body.slug, "slug"),
     description: optionalString(body.description, "description"),
     image: optionalString(body.image, "image"),
+    images: body.images === undefined ? undefined : parseGallery(body.images),
     unit: assertString(body.unit, "unit"),
     sellingPrice: money(body.sellingPrice, "sellingPrice"),
     purchasePrice: money(body.purchasePrice, "purchasePrice"),
@@ -124,6 +126,7 @@ export function parseProductUpdateInput(
   if (body.slug !== undefined) parsed.slug = assertString(body.slug, "slug");
   if (body.description !== undefined) parsed.description = optionalString(body.description, "description");
   if (body.image !== undefined) parsed.image = optionalString(body.image, "image");
+  if (body.images !== undefined) parsed.images = parseGallery(body.images);
   if (body.unit !== undefined) parsed.unit = assertString(body.unit, "unit");
   if (body.sellingPrice !== undefined) parsed.sellingPrice = money(body.sellingPrice, "sellingPrice");
   if (body.purchasePrice !== undefined) parsed.purchasePrice = money(body.purchasePrice, "purchasePrice");

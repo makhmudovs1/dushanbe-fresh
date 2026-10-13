@@ -1,11 +1,12 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, ProductImage, ProductPriceHistory } from "@prisma/client";
+import type { GalleryInput } from "./catalog.gallery";
 
 export type ProductWithCategoryAndOptions = Prisma.ProductGetPayload<{
   include: {
     category: true;
     qualityOptions: true;
   };
-}>;
+}> & { images?: ProductImage[]; priceHistory?: ProductPriceHistory[] };
 
 export type CategoryDto = {
   id: string;
@@ -24,6 +25,8 @@ export type PublicProductDto = {
   description: string | null;
   descriptionTj?: string | null;
   image: string | null;
+  images: Array<{ id: string; url: string; sortOrder: number; isPrimary: boolean }>;
+  priceDrop: { oldPrice: string; discountPercent: number } | null;
   unit: string;
   sellingPrice: string;
   isWeighted: boolean;
@@ -48,6 +51,7 @@ export type AdminProductDto = PublicProductDto & {
   isActive: boolean;
   isAvailableToday: boolean;
   sortOrder: number;
+  lastPriceChange: { oldPrice: string; newPrice: string; changedAt: string } | null;
 };
 
 export type ProductFilters = {
@@ -68,6 +72,7 @@ export type ProductInput = {
   slug: string;
   description?: string | null;
   image?: string | null;
+  images?: GalleryInput[];
   unit: string;
   sellingPrice: string;
   purchasePrice: string;

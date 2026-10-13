@@ -64,7 +64,7 @@ describe.skipIf(!url)("read-only public tracking HTTP and migration", () => {
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow"); expect(response.headers.get("set-cookie")).toBeNull();
     const body = await response.json();
     expect(Object.keys(body).sort()).toEqual(["address", "deliverySlot", "items", "message", "money", "orderNumber", "progress", "replacements", "status"]);
-    expect(body.items).toEqual([{ name: "Помидоры", unit: "kg", quantity: "2.000", total: "20.00" }]);
+    expect(body.items).toEqual([{ name: "Помидоры", nameTj: null, unit: "kg", quantity: "2.000", total: "20.00" }]);
     expect(body.money.payable).toBe("25.00");
     expect(body.address).toEqual({ city: "Душанбе", street: "Рудаки", building: "1", apartment: "", entrance: "", floor: "" });
     expect(JSON.stringify(body)).not.toMatch(/PRIVATE|purchase|margin|riskStatus|adminNote|variance|shift|email|responsibility|customerId|pickerNote|publicTrackingToken/);

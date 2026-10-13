@@ -11,7 +11,7 @@ import { getProduct, Product } from "@/lib/api";
 import { isMinimumQuantity } from "@/cart/catalog-selection";
 import { QuantityStepper } from "./quantity-stepper";
 import { ProductDetailSkeleton } from "./loading-state";
-import { ProductImage } from "./product-image";
+import { ProductGallery } from "./product-gallery";
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
   const { t, name, label, description, priceLabel } = useI18n();
@@ -52,9 +52,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
 
   return (
     <article className="product-detail">
-      <div className="product-detail__media">
-        <ProductImage src={product.image} name={name(product)} eager />
-      </div>
+      <ProductGallery product={product} eager />
       <div className="product-detail__content">
         <p className="eyebrow">{name(product.category)}</p>
         <h1>{name(product)}</h1>

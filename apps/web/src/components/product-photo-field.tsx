@@ -33,7 +33,7 @@ export function ProductPhotoField({ image, file, onChange, disabled }: {
         if (!problem) onChange(selected, image);
       }} />
     </label>
-    <small>JPEG, PNG или WebP, до 5 МБ. Для включённого товара фото обязательно.</small>
+    <small>JPEG, PNG или WebP, до 5 МБ.</small>
     {file ? <small className="photo-filename">Выбрано: {file.name}</small> : null}
     <div className="photo-preview"><ProductImage src={preview || image || null} name="Фотография товара" /></div>
     {error ? <p role="alert" className="notice">{error}</p> : null}

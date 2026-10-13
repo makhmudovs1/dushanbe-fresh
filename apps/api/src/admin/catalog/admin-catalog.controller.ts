@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req } from "@nestjs/common";
 
 import { CatalogService } from "../../catalog/catalog.service";
 import {
@@ -8,7 +8,7 @@ import {
   parseProductUpdateInput
 } from "../../catalog/catalog.validation";
 
-import { Roles } from "../../auth/staff.guard";
+import { Roles, StaffRequest } from "../../auth/staff.guard";
 
 @Roles("admin")
 @Controller("admin")
@@ -51,7 +51,7 @@ export class AdminCatalogController {
   }
 
   @Patch("products/:id")
-  updateProduct(@Param("id") id: string, @Body() body: Record<string, unknown>) {
-    return this.catalogService.updateAdminProduct(id, parseProductUpdateInput(body));
+  updateProduct(@Param("id") id: string, @Body() body: Record<string, unknown>, @Req() request: StaffRequest) {
+    return this.catalogService.updateAdminProduct(id, parseProductUpdateInput(body), request.staff.id);
   }
 }

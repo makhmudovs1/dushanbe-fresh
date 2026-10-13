@@ -39,8 +39,9 @@ async function photo(page: Page, color: string) {
   return { name: "ui-test.png", mimeType: "image/png", buffer: Buffer.from(data, "base64") };
 }
 
-test("admin category, product, image replacement and availability controls", async ({ page }, testInfo) => {
+test("admin category, product, gallery, sale history and availability controls", async ({ page, baseURL }, testInfo) => {
   test.setTimeout(120_000);
+  expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL!).hostname);
   const email = process.env.UI_ADMIN_EMAIL;
   const password = process.env.UI_ADMIN_PASSWORD;
   expect(email, "Set UI_ADMIN_EMAIL").toBeTruthy();
@@ -74,15 +75,18 @@ test("admin category, product, image replacement and availability controls", asy
   await dialog.getByLabel("Цена для клиента").fill("12.50");
   await dialog.getByLabel("Ориентир закупки").fill("8.00");
   await dialog.getByLabel("Предпочтения по качеству, по одному на строку").fill("спелые\nтвёрдые");
-  const file = dialog.getByLabel("Фотография товара", { exact: true });
+  const file = dialog.getByLabel("Фотографии товара", { exact: true });
   await file.setInputFiles({ name: "bad.txt", mimeType: "text/plain", buffer: Buffer.from("test") });
   await expect(dialog.getByRole("alert")).toContainText("JPEG, PNG или WebP");
   await file.setInputFiles({ name: "large.png", mimeType: "image/png", buffer: Buffer.alloc(5 * 1024 * 1024 + 1) });
   await expect(dialog.getByRole("alert")).toContainText("не больше 5 МБ");
   await file.setInputFiles(await photo(page, "#216342"));
-  await expect(dialog.locator(".photo-preview img")).toHaveAttribute("src", /^blob:/);
-  await dialog.getByRole("button", { name: "Убрать фотографию" }).click();
-  await file.setInputFiles(await photo(page, "#216342"));
+  await expect(dialog.locator(".gallery-field__preview img")).toHaveAttribute("src", /\/api\/v1\/media\//);
+  await expect(dialog.getByRole("button", { name: "Убрать фото 1", exact: true })).toBeEnabled();
+  await dialog.getByRole("button", { name: "Убрать фото 1", exact: true }).click();
+  await file.setInputFiles([await photo(page, "#216342"), await photo(page, "#476ab0"), await photo(page, "#6e8548")]);
+  await expect(dialog.locator(".gallery-field__preview img")).toHaveCount(3);
+  await expect(dialog.getByRole("button", { name: "Сохранить", exact: true })).toBeEnabled();
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
@@ -100,13 +104,22 @@ test("admin category, product, image replacement and availability controls", asy
   await row.getByRole("button", { name: `Редактировать: ${name}` }).click();
   await expect(dialog.getByLabel("Ориентир закупки")).toHaveValue(/^8(?:\.0+)?$/);
   await expect(dialog.getByLabel("Предпочтения по качеству, по одному на строку")).toHaveValue("спелые\nтвёрдые");
-  await dialog.getByLabel("Цена для клиента").fill("13.50");
-  await dialog.getByLabel("Фотография товара", { exact: true }).setInputFiles(await photo(page, "#476ab0"));
+  await dialog.getByLabel("Цена для клиента").fill("11.50");
+  await expect(dialog.locator(".gallery-field__preview img")).toHaveCount(3);
+  await dialog.getByRole("button", { name: "Сделать фото 2 главным", exact: true }).click();
+  await dialog.getByRole("button", { name: "Переместить фото 3 раньше", exact: true }).click();
   await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(row).toContainText("13,5 сомони");
+  await expect(row).toContainText("11,5 сомони");
   await expect.poll(() => row.locator("img").evaluate(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)).toBe(true);
   expect(await row.locator("img").getAttribute("src")).not.toBe(firstImage);
+  await row.getByRole("button", { name: `Редактировать: ${name}` }).click();
+  await expect(dialog.locator(".catalog-price-history")).toContainText("Стало дешевле на 8%");
+  await dialog.getByRole("button", { name: "Убрать фото 1", exact: true }).click();
+  await expect(dialog.locator(".gallery-field__preview img")).toHaveCount(2);
+  await expect(dialog.locator(".gallery-field__caption").first()).toHaveText("Обложка");
+  await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
   for (const label of [`Доступен сегодня: ${name}`, `Включён: ${name}`]) {
     await row.getByLabel(label, { exact: true }).click();
     await expect(row.getByLabel(label, { exact: true })).toBeEnabled();

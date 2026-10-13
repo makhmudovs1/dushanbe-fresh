@@ -3,8 +3,9 @@ import type { Product } from "../src/lib/api";
 
 test.skip(process.env.RUN_MUTATING_UI_TESTS !== "1", "Creates and cancels a real local test order.");
 
-test("mobile catalog selection reaches checkout and order confirmation", async ({ page }, testInfo) => {
+test("mobile catalog selection reaches checkout and order confirmation", async ({ page, baseURL }, testInfo) => {
   test.setTimeout(120_000);
+  expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL!).hostname);
   expect(process.env.UI_ADMIN_EMAIL).toBeTruthy();
   expect(process.env.UI_ADMIN_PASSWORD).toBeTruthy();
   await page.setViewportSize({ width: 375, height: 1000 });

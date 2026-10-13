@@ -1,4 +1,4 @@
-import { Category, ProductQualityOption } from "@prisma/client";
+import { Category, ProductQualityOption, Prisma } from "@prisma/client";
 import { productDescription } from "@dushanbe-fresh/shared";
 import { catalogImage } from "./catalog.image";
 
@@ -44,6 +44,15 @@ function mapQualityOptions(options: ProductQualityOption[]) {
 export function mapPublicProduct(
   product: ProductWithCategoryAndOptions
 ): PublicProductDto {
+  const images = (product.images ?? [])
+    .filter(image => catalogImage(image.url))
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder || a.id.localeCompare(b.id))
+    .map(({ id, url, sortOrder, isPrimary }) => ({ id, url, sortOrder, isPrimary }));
+  const lastChange = product.priceHistory?.[0];
+  // Only the latest actual sale-price change qualifies. Never compare purchase prices.
+  const priceDrop = lastChange && lastChange.newSalePrice.equals(product.currentSalePrice) && lastChange.oldSalePrice.greaterThan(0) && lastChange.newSalePrice.lessThan(lastChange.oldSalePrice)
+    ? { oldPrice: lastChange.oldSalePrice.toString(), discountPercent: lastChange.oldSalePrice.minus(lastChange.newSalePrice).div(lastChange.oldSalePrice).times(100).toDecimalPlaces(0, Prisma.Decimal.ROUND_HALF_UP).toNumber() }
+    : null;
   return {
     id: product.id,
     name: product.name,
@@ -51,7 +60,9 @@ export function mapPublicProduct(
     slug: product.slug,
     description: productDescription(product, "ru"),
     descriptionTj: productDescription(product, "tg"),
-    image: catalogImage(product.imageUrl),
+    image: images[0]?.url ?? catalogImage(product.imageUrl),
+    images,
+    priceDrop,
     unit: product.unit,
     sellingPrice: decimalToString(product.currentSalePrice),
     isWeighted: product.isWeighted,
@@ -77,6 +88,11 @@ export function mapAdminProduct(
     purchasePrice: decimalToString(product.currentPurchasePrice),
     isActive: product.isActive,
     isAvailableToday: product.isAvailableToday,
-    sortOrder: product.sortOrder
+    sortOrder: product.sortOrder,
+    lastPriceChange: product.priceHistory?.[0] ? {
+      oldPrice: product.priceHistory[0].oldSalePrice.toString(),
+      newPrice: product.priceHistory[0].newSalePrice.toString(),
+      changedAt: product.priceHistory[0].changedAt.toISOString()
+    } : null
   };
 }

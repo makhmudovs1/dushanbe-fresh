@@ -17,6 +17,9 @@ export type Product = {
   description: string | null;
   descriptionTj?: string | null;
   image: string | null;
+  images?: ProductPhoto[];
+  priceDrop?: { oldPrice: string; discountPercent: number } | null;
+  lastPriceChange?: { oldPrice: string; newPrice: string; changedAt: string } | null;
   unit: string;
   sellingPrice: string;
   purchasePrice?: string;
@@ -39,6 +42,8 @@ export type Product = {
     sortOrder: number;
   }>;
 };
+
+export type ProductPhoto = { id?: string; url: string; sortOrder: number; isPrimary: boolean };
 
 const apiBaseUrl = "/api/v1";
 

@@ -29,6 +29,19 @@ describe("catalog card", () => {
     expect(html).toMatch(/<button[^>]*>Выбрать<\/button>/);
     expect(html.match(/href="\/products\/bananas"/g)).toHaveLength(2);
   });
+  it("renders media, price, title, and action without grid descriptions or fake discounts", () => {
+    const html = renderToStaticMarkup(<ProductCard product={product} />);
+    expect(html).not.toContain("Свежие бананы");
+    expect(html).not.toContain("Стало дешевле");
+    expect(html.indexOf("product-price")).toBeLessThan(html.indexOf("<h3"));
+    expect(html).not.toContain("product-gallery__dots");
+  });
+  it("renders three-photo controls and only a backend-confirmed price drop", () => {
+    const html = renderToStaticMarkup(<ProductCard product={{ ...product, images: [1, 2, 3].map(i => ({ url: `/photo-${i}`, sortOrder: i, isPrimary: i === 1 })),
+      priceDrop: { oldPrice: "12", discountPercent: 17 } }} />);
+    expect(html).toContain("product-gallery__dots"); expect(html).toContain("Стало дешевле");
+    expect(html).toContain("−17%"); expect(html).toContain("<del");
+  });
   it("renders the saved quantity and quality instead of selection", () => {
     cart.state.items = [createCartItem({ product, quantity: "2.5", qualityOptionId: "ripe" })];
     const html = renderToStaticMarkup(<ProductCard product={product} />);

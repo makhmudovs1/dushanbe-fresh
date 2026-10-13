@@ -11,14 +11,14 @@ import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-select
 
 import { Product } from "@/lib/api";
 
-import { ProductImage } from "./product-image";
+import { ProductGallery } from "./product-gallery";
+import { ProductPrice } from "./product-price";
 import { QuantityStepper } from "./quantity-stepper";
 
 export function ProductCard({ product }: { product: Product }) {
-  const { t, name, label, description, priceLabel } = useI18n();
+  const { t, name, label } = useI18n();
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
   const [choosingQuality, setChoosingQuality] = useState(false);
-  const productDescription = description(product);
   const items = state.items.filter(item => item.productId === product.id);
   function add(qualityOptionId?: string) {
     addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId });
@@ -26,19 +26,17 @@ export function ProductCard({ product }: { product: Product }) {
   }
   return (
     <article className="product-card">
-      <Link className="product-card__media" href={`/products/${product.slug}`} aria-label={name(product)}>
-        <ProductImage src={product.image} name={name(product)} />
+      <ProductGallery product={product} href={`/products/${product.slug}`}>
         {product.isAvailableToday !== false && product.isActive !== false ?
           <span className="availability-badge">{t("Сегодня в наличии")}</span> : null}
-      </Link>
+      </ProductGallery>
       <div className="product-card__body">
+        <ProductPrice product={product} />
         <div>
           <h3>
             <Link href={`/products/${product.slug}`}>{name(product)}</Link>
           </h3>
         </div>
-        <p className="product-card__description">{productDescription}</p>
-        <strong className="product-card__price">{priceLabel(product.sellingPrice, product.unit, product.slug)}</strong>
         <div className="product-card__footer">
           <div className="product-card__selection">
             {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : <>
