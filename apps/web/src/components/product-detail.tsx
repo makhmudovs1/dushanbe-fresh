@@ -59,7 +59,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
         <p className="eyebrow">{name(product.category)}</p>
         <h1>{name(product)}</h1>
         <strong className="price">
-          {priceLabel(product.sellingPrice, product.unit)}
+          {priceLabel(product.sellingPrice, product.unit, product.slug)}
         </strong>
         <p>{description(product)}</p>
 

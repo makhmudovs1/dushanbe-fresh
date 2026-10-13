@@ -60,7 +60,7 @@ export function CartPageContent() {
               <div className="cart-item__info">
                 <h3><Link href={`/products/${item.slug}`}>{name(item)}</Link></h3>
                 {item.qualityOptionLabel ? <p>{t("Качество: ")}{label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}</p> : null}
-                <p>{priceLabel(item.sellingPrice, item.unit)}</p>
+                <p>{priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
               </div>
               <QuantityStepper name={`${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`}
                 quantity={item.quantity} unit={item.unit} decreaseDisabled={isMinimumQuantity(item)}

@@ -30,7 +30,7 @@ export function useI18n() {
     name: (value: { name: string; nameTj?: string | null }) => localizedName(locale, value),
     label: (value: { label: string; labelTj?: string | null }) => locale === "tg" ? value.labelTj || t(value.label) : value.label,
     description: (value: Parameters<typeof productDescription>[0]) => productDescription(value, locale),
-    priceLabel: (price: string, unit: string) => format.priceLabel(price, unit, locale),
+    priceLabel: (price: string, unit: string, slug?: string) => format.priceLabel(price, unit, locale, slug),
     quantityLabel: (quantity: string | null, unit: string) => format.quantityLabel(quantity, unit, locale),
     unitLabel: (unit: string, quantity?: string) => format.unitLabel(unit, quantity, locale),
     slotLabel: (slot: Parameters<typeof formatSlot>[0]) => formatSlot(slot, locale)

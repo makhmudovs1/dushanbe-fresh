@@ -8,6 +8,9 @@ const products: Product[] = descriptions.map((description, index) => ({
   image: null, unit: "kg", sellingPrice: "9.20", isWeighted: true, minQuantity: "0.5", quantityStep: "0.25",
   category: { id: "layout", slug: "layout", name: "Овощи", nameTj: "Сабзавот" }, qualityOptions: []
 }));
+products[1] = { ...products[1], name: "Перец сладкий болгарский", nameTj: "Қаламфури ширини булғорӣ" };
+products[2] = { ...products[2], slug: "basil", name: "Базилик", nameTj: "Райҳон", unit: "bunch", sellingPrice: "5.75" };
+products[3] = { ...products[3], slug: "mint", name: "Мята", nameTj: "Пудина", unit: "bunch", sellingPrice: "5.75" };
 
 for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
   test(`description layout ${locale} ${width}px`, async ({ page, context, baseURL }, info) => {
@@ -34,14 +37,25 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1440]) {
       expect(gap).toBeLessThanOrEqual(9);
     }
     const short = cards.nth(4).locator(".product-card__description");
-    expect((await short.boundingBox())!.height).toBe(20);
+    expect((await short.boundingBox())!.height).toBe(40);
+    for (const index of [2, 3]) await expect(cards.nth(index).locator(".product-card__price"))
+      .toHaveText(locale === "ru" ? "5,75 сомони / пучок (~7 веточек)" : "5,75 сомонӣ / баста (~7 шохча)");
     const bounds = await cards.evaluateAll(els => els.map(el => ({
       top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom,
-      actionBottom: el.querySelector(".product-card__action")!.getBoundingClientRect().bottom
+      actionBottom: el.querySelector(".product-card__action")!.getBoundingClientRect().bottom,
+      titleTop: el.querySelector("h3")!.getBoundingClientRect().top,
+      descriptionTop: el.querySelector(".product-card__description")!.getBoundingClientRect().top,
+      priceTop: el.querySelector(".product-card__price")!.getBoundingClientRect().top,
+      imageWidth: el.querySelector(".product-card__media")!.getBoundingClientRect().width,
+      imageHeight: el.querySelector(".product-card__media")!.getBoundingClientRect().height
     })));
     for (const a of bounds) for (const b of bounds.filter(b => Math.abs(a.top - b.top) < 1)) {
       expect(Math.abs(a.bottom - b.bottom)).toBeLessThan(1);
       expect(Math.abs(a.actionBottom - b.actionBottom)).toBeLessThan(1);
+      expect(Math.abs(a.titleTop - b.titleTop)).toBeLessThan(1);
+      expect(Math.abs(a.descriptionTop - b.descriptionTop)).toBeLessThan(1);
+      expect(Math.abs(a.priceTop - b.priceTop)).toBeLessThan(1);
+      expect(Math.abs(a.imageWidth - a.imageHeight)).toBeLessThan(1);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath(`cards-${locale}-${width}.png`), fullPage: true });

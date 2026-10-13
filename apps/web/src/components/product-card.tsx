@@ -38,7 +38,7 @@ export function ProductCard({ product }: { product: Product }) {
           </h3>
         </div>
         <p className="product-card__description">{productDescription}</p>
-        <strong className="product-card__price">{priceLabel(product.sellingPrice, product.unit)}</strong>
+        <strong className="product-card__price">{priceLabel(product.sellingPrice, product.unit, product.slug)}</strong>
         <div className="product-card__footer">
           <div className="product-card__selection">
             {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : <>
