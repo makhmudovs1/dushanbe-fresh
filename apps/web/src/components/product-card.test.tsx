@@ -27,7 +27,8 @@ describe("catalog card", () => {
   it("renders selection as a button, with separate photo and title links", () => {
     const html = renderToStaticMarkup(<ProductCard product={product} />);
     expect(html).toMatch(/<button[^>]*>[\s\S]*Выбрать<\/button>/);
-    expect(html).toContain("lucide-shopping-basket");
+    expect(html).toContain("lucide-plus");
+    expect(html).toContain("favorite-button");
     expect(html).toContain("1 кг");
     expect(html.match(/href="\/products\/bananas"/g)).toHaveLength(2);
   });
@@ -37,6 +38,11 @@ describe("catalog card", () => {
     expect(html).not.toContain("Стало дешевле");
     expect(html.indexOf("product-price")).toBeLessThan(html.indexOf("<h3"));
     expect(html).not.toContain("product-gallery__dots");
+  });
+  it("uses an accessible plus action for an ordinary product", () => {
+    const html = renderToStaticMarkup(<ProductCard product={{ ...product, qualityOptions: [] }} />);
+    expect(html).toContain('aria-label="Добавить в корзину: Бананы"');
+    expect(html).not.toContain('product-card__action--options');
   });
   it("renders three-photo controls and only a backend-confirmed price drop", () => {
     const html = renderToStaticMarkup(<ProductCard product={{ ...product, images: [1, 2, 3].map(i => ({ url: `/photo-${i}`, sortOrder: i, isPrimary: i === 1 })),

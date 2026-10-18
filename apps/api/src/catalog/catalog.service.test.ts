@@ -43,8 +43,10 @@ const product = {
 
 function createService() {
   const prisma = {
+    $executeRaw: vi.fn(),
     $queryRaw: vi.fn().mockResolvedValue([{ deleted_at: null }]),
     category: {
+      count: vi.fn().mockResolvedValue(0),
       findMany: vi.fn().mockResolvedValue([category]),
       create: vi.fn().mockResolvedValue(category),
       update: vi.fn().mockResolvedValue(category)

@@ -6,7 +6,7 @@ export const SITE_DESCRIPTION = "Свежие овощи, фрукты, зеле
 
 export function publicMetadata(path: string, title: string, description: string): Metadata {
   const url = new URL(path, SITE_URL).href;
-  const image = { url: `${SITE_URL}/brand/dushanbe-fresh-icon.png`, width: 512, height: 512, alt: "Dushanbe Fresh" };
+  const image = { url: `${SITE_URL}/brand/icon-v2.png`, width: 512, height: 512, alt: "Dushanbe Fresh" };
   return {
     title,
     description,

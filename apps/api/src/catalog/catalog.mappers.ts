@@ -19,11 +19,15 @@ export function mapCategory(category: Category, includeAdminFields = false): Cat
     name: category.name,
     nameTj: category.nameTj,
     slug: category.slug,
-    sortOrder: category.sortOrder
+    sortOrder: category.sortOrder,
+    imageUrl: catalogImage(category.imageUrl),
+    iconUrl: catalogImage(category.iconUrl),
+    parentId: category.parentId
   };
 
   if (includeAdminFields) {
     dto.isActive = category.isActive;
+    dto.isVisible = category.isVisible;
   }
 
   return dto;

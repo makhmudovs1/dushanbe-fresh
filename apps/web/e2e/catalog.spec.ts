@@ -23,7 +23,7 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   const increased = incrementQuantity(createCartItem({ product, quantity: minimum }));
   await page.goto("/catalog");
   const item = card(page, product);
-  await item.getByRole("button", { name: "Выбрать", exact: true }).click();
+  await item.locator(".product-card__action").click();
   await expect(page).toHaveURL(/\/catalog$/);
   await expect(item.locator("output")).toHaveText(quantityLabel(minimum, product.unit));
   await item.getByRole("button", { name: /^Увеличить количество/ }).click();
@@ -34,10 +34,11 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   const row = page.locator(".cart-item").filter({ hasText: product.name });
   await expect(row.locator("output")).toHaveText(quantityLabel(increased, product.unit));
   await row.getByRole("button", { name: /^Уменьшить количество/ }).click();
-  await page.getByRole("navigation", { name: "Основная навигация" }).getByRole("link", { name: "Каталог", exact: true }).click();
+  await page.getByRole("button", { name: "Открыть каталог", exact: true }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Все продукты", exact: true }).click();
   await expect(item.locator("output")).toHaveText(quantityLabel(minimum, product.unit));
   await item.getByRole("button", { name: /^Уменьшить количество/ }).click();
-  await expect(item.getByRole("button", { name: "Выбрать", exact: true })).toBeVisible();
+  await expect(item.locator(".product-card__action")).toBeVisible();
   await item.getByRole("heading").getByRole("link").click();
   await expect(page).toHaveURL(`/products/${product.slug}`);
   await page.goBack();
@@ -51,7 +52,7 @@ test("quality is explicit and existing preferences remain separate", async ({ pa
   expect(product).toBeTruthy();
   await page.goto("/catalog");
   const item = card(page, product);
-  await item.getByRole("button", { name: "Выбрать", exact: true }).click();
+  await item.locator(".product-card__action").click();
   await expect(item.locator("output")).toHaveCount(0);
   await item.getByRole("combobox").selectOption(product.qualityOptions[1].id);
   await item.getByRole("button", { name: "Другое качество" }).click();
@@ -86,7 +87,7 @@ for (const width of [375, 768, 1440]) {
       }
     }
     const columns = await page.locator(".product-grid").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-    expect(columns).toBe(width === 1440 ? 5 : width === 768 ? 3 : 2);
+    expect(columns).toBe(width === 1440 ? 4 : width === 768 ? 3 : 2);
     await page.screenshot({ path: testInfo.outputPath(`catalog-${width}.png`), fullPage: true });
     await page.screenshot({ path: testInfo.outputPath(`catalog-viewport-${width}.png`) });
     await page.getByRole("link", { name: /^Корзина/ }).click();
@@ -101,7 +102,7 @@ test("several products can be added without leaving the catalog", async ({ page 
   expect(selected).toHaveLength(3);
   await page.goto("/catalog");
   for (const product of selected) {
-    await card(page, product).getByRole("button", { name: "Выбрать", exact: true }).click();
+    await card(page, product).locator(".product-card__action").click();
     await expect(page).toHaveURL(/\/catalog$/);
   }
   await page.getByRole("link", { name: "Корзина, позиций: 3" }).click();

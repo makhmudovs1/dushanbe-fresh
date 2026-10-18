@@ -21,6 +21,13 @@ export function CategorySkeleton() {
   </LoadingState>;
 }
 
+export function CategoryCardsSkeleton() {
+  return <LoadingState label="Загружаем категории">
+    <div className="storefront-categories">{[0, 1, 2, 3].map(id =>
+      <Skeleton className="storefront-category" key={id} />)}</div>
+  </LoadingState>;
+}
+
 export function ProductGridSkeleton() {
   const { t } = useI18n();
   return <LoadingState label={t("Загружаем товары")}>

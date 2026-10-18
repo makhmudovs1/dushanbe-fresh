@@ -18,7 +18,7 @@ test("public pages emit Russian metadata, canonical and social previews", async 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", title);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", origin + canonical);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", origin + "/brand/dushanbe-fresh-icon.png");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", origin + "/brand/icon-v2.png");
     expect(await page.locator('meta[name="description"]').getAttribute("content")).toMatch(/[А-Яа-я]/);
   }
   const products = await (await page.request.get("/api/v1/products")).json();
@@ -26,7 +26,7 @@ test("public pages emit Russian metadata, canonical and social previews", async 
   await page.goto(`/products/${encodeURIComponent(products[0].slug)}`);
   await expect(page).toHaveTitle(`${products[0].name} с доставкой в Душанбе | Dushanbe Fresh`);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${origin}/products/${encodeURIComponent(products[0].slug)}`);
-  expect((await page.request.get("/brand/dushanbe-fresh-icon.png")).status()).toBe(200);
+  expect((await page.request.get("/brand/icon-v2.png")).status()).toBe(200);
   expect(errors).toEqual([]);
 });
 

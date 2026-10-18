@@ -4,7 +4,8 @@ import { useI18n } from "@/i18n/provider";
 
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingBasket, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { FavoriteButton } from "./favorite-button";
 import { useCart } from "@/cart/cart-context";
 import { getCartItemKey } from "@/cart/cart";
 import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-selection";
@@ -27,6 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <ProductGallery product={product} href={`/products/${product.slug}`}>
+        <FavoriteButton product={product} />
         {product.isAvailableToday !== false && product.isActive !== false ?
           <span className="availability-badge">{t("Сегодня в наличии")}</span> : null}
       </ProductGallery>
@@ -46,8 +48,9 @@ export function ProductCard({ product }: { product: Product }) {
                   quantity={item.quantity} unit={item.unit} onIncrease={() => incrementItem(item)}
                   onDecrease={() => isMinimumQuantity(item) ? removeItem(item) : decrementItem(item)} />
               </div>)}
-              {!items.length && !choosingQuality ? <button className="product-card__action" type="button"
-                onClick={() => product.qualityOptions.length ? setChoosingQuality(true) : add()}><ShoppingBasket size={20} aria-hidden="true" />{t("Выбрать")}</button> : null}
+              {!items.length && !choosingQuality ? <button className={`product-card__action${product.qualityOptions.length ? " product-card__action--options" : ""}`} type="button"
+                aria-label={`${t(product.qualityOptions.length ? "Выбрать" : "Добавить в корзину")}: ${name(product)}`}
+                onClick={() => product.qualityOptions.length ? setChoosingQuality(true) : add()}><Plus size={21} aria-hidden="true" />{product.qualityOptions.length ? t("Выбрать") : null}</button> : null}
               {items.length > 0 && product.qualityOptions.length > 0 && !choosingQuality ?
                 <button className="catalog-text-action" type="button" onClick={() => setChoosingQuality(true)}>{t("Другое качество")}</button> : null}
               {choosingQuality ? <div className="catalog-quality">

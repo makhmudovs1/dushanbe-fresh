@@ -1,149 +1,79 @@
 "use client";
-import { useI18n } from "@/i18n/provider";
 
-
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Category, getCategories, getProducts, Product } from "@/lib/api";
+import { useI18n } from "@/i18n/provider";
 import { ProductCard } from "./product-card";
 import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
+import { CategorySidebar } from "./category-navigation";
 
 export function CatalogBrowser({
-  initialCategory = "",
-  initialSearch = "",
-  initialCategories,
-  initialProducts,
-  hideSearch = false
+  initialCategory = "", initialSearch = "", initialCategories, initialProducts, withSidebar = false
 }: {
-  initialCategory?: string;
-  initialSearch?: string;
-  initialCategories?: Category[] | null;
-  initialProducts?: Product[] | null;
-  hideSearch?: boolean;
+  initialCategory?: string; initialSearch?: string; initialCategories?: Category[] | null;
+  initialProducts?: Product[] | null; withSidebar?: boolean; hideSearch?: boolean; hideCategories?: boolean;
 }) {
   const { t, name } = useI18n();
+  const params = useSearchParams();
+  const currentCategory = withSidebar ? params?.get("category") ?? "" : initialCategory;
+  const currentSearch = withSidebar ? params?.get("search") ?? "" : initialSearch;
   const [categories, setCategories] = useState<Category[]>(initialCategories ?? []);
   const [products, setProducts] = useState<Product[]>(initialProducts ?? []);
-  const [category, setCategory] = useState(initialCategory);
-  const [search, setSearch] = useState(initialSearch);
   const [pending, setPending] = useState(initialProducts === undefined);
-  const [error, setError] = useState<string | null>(initialProducts === null ? "Не удалось загрузить товары. Попробуйте ещё раз." : null);
-  const [categoriesError, setCategoriesError] = useState<string | null>(initialCategories === null ? "Не удалось загрузить категории. Попробуйте ещё раз." : null);
+  const [error, setError] = useState(initialProducts === null);
+  const [categoriesError, setCategoriesError] = useState(initialCategories === null);
   const [categoriesPending, setCategoriesPending] = useState(initialCategories === undefined);
-  const productRequest = useRef(0);
+  const request = useRef<AbortController | null>(null);
+  const usedSnapshot = useRef<Product[] | null | undefined>(undefined);
 
   const loadCategories = useCallback(async () => {
-    setCategoriesPending(true);
-    setCategoriesError(null);
-    try {
-      setCategories(await getCategories());
-    } catch {
-      setCategoriesError("Не удалось загрузить категории. Попробуйте ещё раз.");
-    } finally {
-      setCategoriesPending(false);
-    }
+    setCategoriesPending(true); setCategoriesError(false);
+    try { setCategories(await getCategories()); }
+    catch { setCategoriesError(true); }
+    finally { setCategoriesPending(false); }
   }, []);
-
-  const loadProducts = useCallback(async (nextCategory: string, nextSearch: string) => {
-    const request = ++productRequest.current;
-    setPending(true);
-    setError(null);
-
+  const loadProducts = useCallback(async (category: string, search: string) => {
+    request.current?.abort();
+    const controller = new AbortController(); request.current = controller;
+    setPending(true); setError(false);
     try {
-      const nextProducts = await getProducts({
-        category: nextCategory || undefined,
-        search: nextSearch || undefined
-      });
-      if (request === productRequest.current) setProducts(nextProducts);
-    } catch {
-      if (request === productRequest.current) setError("Не удалось загрузить товары. Попробуйте ещё раз.");
-    } finally {
-      if (request === productRequest.current) setPending(false);
-    }
+      const data = await getProducts({ category: category || undefined, search: search || undefined }, controller.signal);
+      if (!controller.signal.aborted) setProducts(data);
+    } catch { if (!controller.signal.aborted) setError(true); }
+    finally { if (!controller.signal.aborted) setPending(false); }
   }, []);
-
   useEffect(() => {
-    if (initialProducts === undefined) void loadProducts(initialCategory, initialSearch);
-    else {
-      setProducts(initialProducts ?? []);
-      setPending(false);
-      setError(initialProducts === null ? "Не удалось загрузить товары. Попробуйте ещё раз." : null);
-    }
-    setCategory(initialCategory);
-    setSearch(initialSearch);
-  }, [initialCategory, initialSearch, initialProducts, loadProducts]);
-
+    if (initialProducts !== undefined && currentCategory === initialCategory && currentSearch === initialSearch && (!withSidebar || usedSnapshot.current !== initialProducts)) {
+      usedSnapshot.current = initialProducts;
+      request.current?.abort(); setProducts(initialProducts ?? []); setError(initialProducts === null); setPending(false);
+    } else void loadProducts(currentCategory, currentSearch);
+    return () => request.current?.abort();
+  }, [currentCategory, currentSearch, initialCategory, initialSearch, initialProducts, withSidebar, loadProducts]);
   useEffect(() => {
     if (initialCategories === undefined) void loadCategories();
-    else {
-      setCategories(initialCategories ?? []);
-      setCategoriesPending(false);
-      setCategoriesError(initialCategories === null ? "Не удалось загрузить категории. Попробуйте ещё раз." : null);
-    }
+    else { setCategories(initialCategories ?? []); setCategoriesPending(false); setCategoriesError(initialCategories === null); }
   }, [initialCategories, loadCategories]);
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void loadProducts(category, search);
-  }
-
-  const categoryTabs = useMemo(
-    () => [{ id: "", slug: "", name: "Все", sortOrder: 0 }, ...categories],
-    [categories]
-  );
-
-  return (
-    <section className="catalog-browser">
-      {!hideSearch ? (
-        <form className="catalog-search" onSubmit={submitSearch}>
-          <input
-            aria-label={t("Поиск товаров")}
-            placeholder={t("Найти помидоры, зелень, орехи...")}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <button type="submit">{t("Искать")}</button>
-        </form>
-      ) : null}
-
-      <div className={hideSearch ? "category-tabs category-tabs--compact" : "category-tabs"} aria-label={t("Категории")}>
-        {categoryTabs.map((item) => (
-          <button
-            className={item.slug === category ? "is-active" : ""}
-            aria-pressed={item.slug === category}
-            key={item.slug || "all"}
-            onClick={() => {
-              setCategory(item.slug);
-              void loadProducts(item.slug, search);
-            }}
-            type="button"
-          >
-            {name(item)}
-          </button>
-        ))}
-        {categoriesPending && !categories.length ? <CategorySkeleton /> : null}
-      </div>
-
-      {categoriesError ? (
-        <div className="notice" role="alert">
-          <p>{t(categoriesError)}</p>
-          <button className="secondary-link" type="button" onClick={() => void loadCategories()}>{t(" Повторить загрузку категорий ")}</button>
-        </div>
-      ) : null}
-      {error ? (
-        <div className="notice" role="alert">
-          <p>{t(error)}</p>
-          <button className="secondary-link" type="button" onClick={() => void loadProducts(category, search)}>{t(" Повторить загрузку товаров ")}</button>
-        </div>
-      ) : null}
-      {pending ? <ProductGridSkeleton /> : null}
-      {!pending && !error && products.length === 0 ? <p>{t("По вашему запросу ничего не найдено.")}</p> : null}
-
-      {!pending && !error ? <div className="product-grid">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+  const category = categories.find(item => item.slug === currentCategory);
+  const title = currentSearch ? t("Результаты поиска") : category ? name(category) : t("Каталог");
+  return <div className={withSidebar ? "storefront-layout" : undefined}>
+    {withSidebar ? <div className="storefront-sidebar-slot">{categoriesPending ? <CategorySkeleton /> :
+      <CategorySidebar categories={categoriesError ? null : categories} active={currentCategory} onRetry={() => void loadCategories()} />}</div> : null}
+    <section className="catalog-browser" aria-busy={pending}>
+      {withSidebar ? <header className="page-heading"><h1>{title}</h1>
+        {currentSearch ? <p>«{currentSearch}»</p> : <p>{t("Свежие продукты, доступные сегодня")}</p>}</header> : null}
+      {categoriesError && !withSidebar ? <div className="notice" role="alert">
+        <p>{t("Не удалось загрузить категории. Попробуйте ещё раз.")}</p>
+        <button className="secondary-link" type="button" onClick={() => void loadCategories()}>{t("Повторить")}</button>
       </div> : null}
+      {error ? <div className="notice" role="alert"><p>{t("Не удалось загрузить товары. Попробуйте ещё раз.")}</p>
+        <button className="secondary-link" type="button" onClick={() => void loadProducts(currentCategory, currentSearch)}>{t("Повторить загрузку товаров")}</button>
+      </div> : null}
+      {pending ? <ProductGridSkeleton /> : null}
+      {!pending && !error && !products.length ? <p className="catalog-empty" role="status">
+        {t(currentSearch ? "По вашему запросу ничего не найдено." : "В этом разделе пока нет товаров.")}</p> : null}
+      {!pending && !error ? <div className="product-grid">{products.map(product => <ProductCard key={product.id} product={product} />)}</div> : null}
     </section>
-  );
+  </div>;
 }

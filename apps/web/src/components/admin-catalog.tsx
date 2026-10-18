@@ -13,6 +13,8 @@ import {
   getAdminProducts,
   Product,
   updateAdminProduct,
+  updateAdminCategory,
+  uploadProductImage,
   ProductPhoto
 } from "@/lib/api";
 import { priceLabel, unitLabel } from "@/lib/format";
@@ -20,6 +22,10 @@ import { ProductGalleryField } from "./product-gallery-field";
 import { productPhotos } from "@/lib/product-gallery";
 import { ProductImage } from "./product-image";
 import { CatalogDialog } from "./catalog-dialog";
+import { ProductPhotoField } from "./product-photo-field";
+import { categoryDescendantIds } from "@dushanbe-fresh/shared";
+
+const emptyCategory = { name: "", nameTj: "", slug: "", sortOrder: 0, imageUrl: "", iconUrl: "", parentId: "", isVisible: true };
 
 const emptyProduct = {
   categoryId: "",
@@ -44,7 +50,10 @@ export function AdminCatalog() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [form, setForm] = useState(emptyProduct);
-  const [categoryForm, setCategoryForm] = useState({ name: "", slug: "", sortOrder: 0 });
+  const [categoryForm, setCategoryForm] = useState(emptyCategory);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [categoryFile, setCategoryFile] = useState<File | null>(null);
+  const [categoryIconFile, setCategoryIconFile] = useState<File | null>(null);
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
@@ -151,13 +160,20 @@ export function AdminCatalog() {
     setPending(true);
     setNotice("");
     try {
-      await createAdminCategory(categoryForm);
-      setCategoryForm({ name: "", slug: "", sortOrder: 0 });
+      const [imageUrl, iconUrl] = await Promise.all([
+        categoryFile ? uploadProductImage(categoryFile, "category") : categoryForm.imageUrl,
+        categoryIconFile ? uploadProductImage(categoryIconFile, "category-icon") : categoryForm.iconUrl
+      ]);
+      const payload = { ...categoryForm, imageUrl: imageUrl || null, iconUrl: iconUrl || null,
+        parentId: categoryForm.parentId || null, nameTj: categoryForm.nameTj || null };
+      if (selectedCategoryId) await updateAdminCategory(selectedCategoryId, payload);
+      else await createAdminCategory(payload);
+      setCategoryForm(emptyCategory); setCategoryFile(null); setCategoryIconFile(null);
       await load();
-      setNotice("Категория создана.");
+      setNotice(selectedCategoryId ? "Категория обновлена." : "Категория создана.");
       setPanel(null);
-    } catch {
-      setNotice("Не удалось создать категорию. Проверьте название и уникальность адреса.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Не удалось сохранить категорию. Проверьте поля формы.");
     } finally {
       setPending(false);
     }
@@ -198,7 +214,7 @@ export function AdminCatalog() {
         <h2>Товары <small>{products.length}</small></h2>
         <div className="catalog-admin__actions">
           <button className="secondary-link" type="button" disabled={pending}
-            onClick={() => { setNotice(""); setPanel("category"); }}><Plus size={18} aria-hidden="true" />Категория</button>
+            onClick={() => { setSelectedCategoryId(""); setCategoryForm(emptyCategory); setCategoryFile(null); setCategoryIconFile(null); setNotice(""); setPanel("category"); }}><Plus size={18} aria-hidden="true" />Категория</button>
           <button className="primary-action" type="button" disabled={pending || loading}
             onClick={() => { resetForm(); setNotice(""); setPanel("product"); }}><Plus size={18} aria-hidden="true" />Новый товар</button>
         </div>
@@ -207,10 +223,18 @@ export function AdminCatalog() {
         <button type="button" className={!categoryFilter ? "is-active" : ""} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter("")}>Все</button>
         {categories.map(category => <button key={category.id} type="button" aria-pressed={categoryFilter === category.id}
           className={categoryFilter === category.id ? "is-active" : ""} onClick={() => setCategoryFilter(category.id)}>
-          {category.name}{category.isActive === false ? " (выключена)" : ""}
+          {category.name}{category.isActive === false ? " (выключена)" : category.isVisible === false ? " (скрыта)" : ""}
         </button>)}
       </div>
       {categoryFilter ? <div className="catalog-admin__category-actions">
+        <button className="secondary-link" type="button" disabled={pending} onClick={() => {
+          const category = categories.find(item => item.id === categoryFilter);
+          if (!category) return;
+          setSelectedCategoryId(category.id); setCategoryFile(null); setCategoryIconFile(null); setNotice("");
+          setCategoryForm({ name: category.name, nameTj: category.nameTj || "", slug: category.slug, sortOrder: category.sortOrder,
+            imageUrl: category.imageUrl || "", iconUrl: category.iconUrl || "", parentId: category.parentId || "", isVisible: category.isVisible ?? true });
+          setPanel("category");
+        }}><Pencil size={18} aria-hidden="true" />Редактировать категорию</button>
         <button type="button" className="catalog-delete-category" disabled={pending}
           onClick={() => {
             const category = categories.find(category => category.id === categoryFilter);
@@ -251,15 +275,30 @@ export function AdminCatalog() {
           <button type="button" className="catalog-danger-action" disabled={pending} onClick={() => void confirmDelete()}>{pending ? "Удаляем..." : "Удалить"}</button>
         </div>
       </CatalogDialog> : null}
-      {panel === "category" ? <CatalogDialog title="Новая категория" busy={pending} onClose={() => setPanel(null)}>
+      {panel === "category" ? <CatalogDialog title={selectedCategoryId ? "Редактирование категории" : "Новая категория"} busy={pending} onClose={() => { setPanel(null); setCategoryFile(null); setCategoryIconFile(null); }}>
         <form className="admin-form" onSubmit={saveCategory}>
           <fieldset className="product-form-fields" disabled={pending}>
           <div className="form-grid">
             <label>Название<input required value={categoryForm.name} onChange={(event) => setCategoryForm({ ...categoryForm, name: event.target.value })} /></label>
+            <label>Название на таджикском<input value={categoryForm.nameTj} onChange={event => setCategoryForm({ ...categoryForm, nameTj: event.target.value })} /></label>
             <label>Адрес в каталоге<input required value={categoryForm.slug} onChange={(event) => setCategoryForm({ ...categoryForm, slug: event.target.value })} /></label>
             <label>Порядок<input required type="number" value={categoryForm.sortOrder} onChange={(event) => setCategoryForm({ ...categoryForm, sortOrder: Number(event.target.value) })} /></label>
+            <label>Родительская категория<select value={categoryForm.parentId} onChange={event => setCategoryForm({ ...categoryForm, parentId: event.target.value })}>
+              <option value="">Без родителя</option>
+              {categories.filter(category => !selectedCategoryId || !categoryDescendantIds(categories, selectedCategoryId).includes(category.id))
+                .map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select></label>
           </div>
-          <button className="secondary-link" disabled={pending} type="submit">Создать категорию</button>
+          <div className="category-media-fields"><ProductPhotoField label="Фото категории" image={categoryForm.imageUrl} file={categoryFile} disabled={pending}
+            onChange={(file, imageUrl) => { setCategoryFile(file); setCategoryForm(current => ({ ...current, imageUrl })); }} />
+          <ProductPhotoField label="Иконка категории" removeLabel="Убрать иконку" image={categoryForm.iconUrl} file={categoryIconFile} disabled={pending}
+            onChange={(file, iconUrl) => { setCategoryIconFile(file); setCategoryForm(current => ({ ...current, iconUrl })); }} /></div>
+          <small>Без загруженного фото используется стандартное изображение категории, если оно предусмотрено.</small>
+          <small>Иконка независима от фото. Желательно квадратное изображение с прозрачным фоном; отображается размером 36 пикселей.</small>
+          <label className="checkbox-field"><input type="checkbox" checked={categoryForm.isVisible}
+            onChange={event => setCategoryForm({ ...categoryForm, isVisible: event.target.checked })} />Показывать на сайте</label>
+          <small>Скрывает категорию и её подразделы из меню и карточек. Товары и их доступность не изменяются.</small>
+          <button className="secondary-link" disabled={pending} type="submit">{selectedCategoryId ? "Сохранить категорию" : "Создать категорию"}</button>
           {notice ? <p className="notice" role="status">{notice}</p> : null}
           </fieldset>
         </form>

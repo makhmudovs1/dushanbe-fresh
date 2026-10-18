@@ -1,4 +1,3 @@
-import { serverI18n } from "@/i18n/server";
 import { Suspense } from "react";
 import { CatalogData } from "@/components/catalog-data";
 import { ProductGridSkeleton } from "@/components/loading-state";
@@ -11,18 +10,13 @@ export const dynamic = "force-dynamic";
 export default function CatalogPage({
   searchParams
 }: {
-  searchParams?: { category?: string };
+  searchParams?: { category?: string; search?: string };
 }) {
-  const { t } = serverI18n();
   return (
-    <main className="page">
-      <section className="shell">
-        <header className="page-heading">
-          <h1>{t("Каталог")}</h1>
-          <p>{t("Свежие продукты, доступные сегодня")}</p>
-        </header>
-        <Suspense key={searchParams?.category ?? ""} fallback={<ProductGridSkeleton />}>
-          <CatalogData category={searchParams?.category ?? ""} />
+    <main className="page storefront-page">
+      <section className="shell shop-shell">
+        <Suspense key={`${searchParams?.category}:${searchParams?.search}`} fallback={<ProductGridSkeleton />}>
+          <CatalogData category={searchParams?.category ?? ""} search={searchParams?.search ?? ""} withSidebar />
         </Suspense>
       </section>
     </main>

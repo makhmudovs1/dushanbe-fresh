@@ -141,9 +141,16 @@ model Category {
   slug      String    @unique
   sortOrder Int       @default(0) @map("sort_order")
   isActive  Boolean   @default(true) @map("is_active")
+  isVisible Boolean   @default(true) @map("is_visible")
+  imageUrl  String?   @map("image_url")
+  iconUrl   String?   @map("icon_url")
+  parentId  String?   @map("parent_id")
+  parent    Category? @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children  Category[] @relation("CategoryTree")
   deletedAt DateTime? @map("deleted_at")
   products  Product[]
 
+  @@index([parentId])
   @@map("categories")
 }
 

@@ -5,6 +5,7 @@ import { serverI18n } from "@/i18n/server";
 import { LanguageProvider } from "@/i18n/provider";
 
 import { CartProvider } from "@/cart/cart-context";
+import { FavoritesProvider } from "@/favorites/favorites-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -14,9 +15,9 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   icons: {
-    icon: { url: "/brand/favicon.ico", type: "image/x-icon" },
-    shortcut: "/brand/favicon.ico",
-    apple: { url: "/brand/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+    icon: { url: "/brand/favicon-v2.ico", type: "image/x-icon" },
+    shortcut: "/brand/favicon-v2.ico",
+    apple: { url: "/brand/apple-touch-icon-v2.png", sizes: "180x180", type: "image/png" }
   }
 };
 
@@ -26,11 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang={locale}>
       <body>
         <LanguageProvider initialLocale={locale}>
-        <CartProvider>
+        <FavoritesProvider><CartProvider>
           <SiteHeader />
           {children}
           <SiteFooter />
-        </CartProvider>
+        </CartProvider></FavoritesProvider>
         </LanguageProvider>
       </body>
     </html>

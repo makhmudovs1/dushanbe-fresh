@@ -14,7 +14,7 @@ test("mobile catalog selection reaches checkout and order confirmation", async (
   expect(product).toBeTruthy();
   await page.goto("/catalog");
   const card = page.locator(".product-card").filter({ has: page.getByRole("heading", { name: product.name, exact: true }) });
-  await card.getByRole("button", { name: "Выбрать", exact: true }).click();
+  await card.locator(".product-card__action").click();
   // Exercise the same buttons customers use; the backend still validates prices/minimum.
   for (let quantity = Number(product.minQuantity); quantity < 3; quantity += Number(product.quantityStep)) {
     await card.getByRole("button", { name: /^Увеличить количество/ }).click();

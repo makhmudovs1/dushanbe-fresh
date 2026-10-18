@@ -12,6 +12,7 @@ import { isMinimumQuantity } from "@/cart/catalog-selection";
 import { QuantityStepper } from "./quantity-stepper";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductGallery } from "./product-gallery";
+import { FavoriteButton } from "./favorite-button";
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
   const { t, name, label, description, priceLabel } = useI18n();
@@ -52,7 +53,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
 
   return (
     <article className="product-detail">
-      <ProductGallery product={product} eager />
+      <ProductGallery product={product} eager><FavoriteButton product={product} /></ProductGallery>
       <div className="product-detail__content">
         <p className="eyebrow">{name(product.category)}</p>
         <h1>{name(product)}</h1>

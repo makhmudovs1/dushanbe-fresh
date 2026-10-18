@@ -17,11 +17,14 @@ async function readPublicCatalog<T>(path: string): Promise<T | null> {
   }
 }
 
-export async function getInitialCatalog(category = "") {
+export const getPublicCategories = cache(async () => readPublicCatalog<Category[]>("/categories"));
+
+export async function getInitialCatalog(category = "", search = "") {
   const query = new URLSearchParams();
   if (category) query.set("category", category);
+  if (search) query.set("search", search);
   const [categories, products] = await Promise.all([
-    readPublicCatalog<Category[]>("/categories"),
+    getPublicCategories(),
     readPublicCatalog<Product[]>(`/products${query.size ? `?${query}` : ""}`)
   ]);
   return { categories, products };
@@ -32,6 +35,6 @@ export const getInitialProduct = cache(async (slug: string) => {
   return readPublicCatalog<Product>(`/products/${encodeURIComponent(slug)}`);
 });
 
-export function getPublicProducts() {
+export const getPublicProducts = cache(async () => {
   return readPublicCatalog<Product[]>("/products");
-}
+});

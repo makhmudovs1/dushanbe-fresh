@@ -7,6 +7,10 @@ export type Category = {
   slug: string;
   sortOrder: number;
   isActive?: boolean;
+  isVisible?: boolean;
+  imageUrl?: string | null;
+  iconUrl?: string | null;
+  parentId?: string | null;
 };
 
 export type Product = {
@@ -69,7 +73,7 @@ export function getCategories() {
   return request<Category[]>("/categories");
 }
 
-export function getProducts(params?: { category?: string; search?: string }) {
+export function getProducts(params?: { category?: string; search?: string }, signal?: AbortSignal) {
   const query = new URLSearchParams();
 
   if (params?.category) query.set("category", params.category);
@@ -77,7 +81,7 @@ export function getProducts(params?: { category?: string; search?: string }) {
 
   const suffix = query.toString() ? `?${query.toString()}` : "";
 
-  return request<Product[]>(`/products${suffix}`);
+  return request<Product[]>(`/products${suffix}`, signal ? { signal } : undefined);
 }
 
 export function getProduct(slug: string) {
@@ -97,6 +101,10 @@ export function createAdminCategory(payload: Record<string, unknown>) {
 
 export function getAdminProducts() {
   return request<Product[]>("/admin/products");
+}
+
+export function updateAdminCategory(id: string, payload: Record<string, unknown>) {
+  return request<Category>(`/admin/categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
 export function deleteAdminProduct(id: string) {
@@ -121,10 +129,10 @@ export function updateAdminProduct(id: string, payload: Record<string, unknown>)
   });
 }
 
-export async function uploadProductImage(file: File): Promise<string> {
+export async function uploadProductImage(file: File, kind: "product" | "category" | "category-icon" = "product"): Promise<string> {
   const body = new FormData();
   body.append("file", file);
-  const response = await staffFetch(`${apiBaseUrl}/admin/product-images`, { method: "POST", body });
+  const response = await staffFetch(`${apiBaseUrl}/admin/${kind === "category-icon" ? "category-icons" : `${kind}-images`}`, { method: "POST", body });
   if (response.status === 413) throw new Error("Фотография должна быть не больше 5 МБ.");
   const data = await response.json().catch(() => null);
   if (!response.ok || typeof data?.image !== "string") throw new Error(errorMessage(data?.message, "Не удалось загрузить фотографию. Повторите попытку."));

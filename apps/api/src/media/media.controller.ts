@@ -8,7 +8,7 @@ export class MediaController {
   constructor(@Inject(MediaService) private readonly media: MediaService) {}
 
   @Roles("admin")
-  @Post("admin/product-images")
+  @Post(["admin/product-images", "admin/category-images", "admin/category-icons"])
   @UseInterceptors(FileInterceptor("file", {
     limits: { fileSize: IMAGE_MAX_BYTES, files: 1, fields: 0 },
     fileFilter: (_request, file, callback) => callback(

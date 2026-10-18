@@ -1,4 +1,5 @@
 import type { PublicOrderDto } from "@dushanbe-fresh/shared";
+import { isActiveOrder, rememberOrderActivity } from "./active-order";
 
 export const lastOrderKey = "dushanbe-fresh.last-order";
 export const lastOrderEvent = "dushanbe-fresh:last-order";
@@ -41,6 +42,7 @@ export function pollTracking(token: string, update: (value: TrackingUpdate) => v
       }
       if (!response.ok) throw new Error("Request failed");
       const data = await response.json() as PublicOrderDto;
+      rememberOrderActivity(token, isActiveOrder(data));
       if (!stopped) update({ data });
     } catch { if (!stopped) update({ error: "network" }); }
     finally {

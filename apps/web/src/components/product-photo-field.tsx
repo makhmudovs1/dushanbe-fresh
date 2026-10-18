@@ -9,8 +9,10 @@ export function photoFileError(file: Pick<File, "type" | "size">) {
   return null;
 }
 
-export function ProductPhotoField({ image, file, onChange, disabled }: {
+export function ProductPhotoField({ image, file, onChange, disabled, label = "Фотография товара", removeLabel = "Убрать фотографию" }: {
   image: string; file: File | null; disabled: boolean;
+  label?: string;
+  removeLabel?: string;
   onChange: (file: File | null, image: string) => void;
 }) {
   const [preview, setPreview] = useState("");
@@ -23,7 +25,7 @@ export function ProductPhotoField({ image, file, onChange, disabled }: {
     return () => URL.revokeObjectURL(url);
   }, [file]);
   return <div className="photo-field">
-    <label>Фотография товара
+    <label>{label}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled} onChange={event => {
         const selected = event.target.files?.[0];
         if (!selected) return;
@@ -35,8 +37,8 @@ export function ProductPhotoField({ image, file, onChange, disabled }: {
     </label>
     <small>JPEG, PNG или WebP, до 5 МБ.</small>
     {file ? <small className="photo-filename">Выбрано: {file.name}</small> : null}
-    <div className="photo-preview"><ProductImage src={preview || image || null} name="Фотография товара" /></div>
+    <div className="photo-preview"><ProductImage src={preview || image || null} name={label} /></div>
     {error ? <p role="alert" className="notice">{error}</p> : null}
-    {file || image ? <button type="button" className="secondary-link" disabled={disabled} onClick={() => { onChange(null, ""); setError(""); }}>Убрать фотографию</button> : null}
+    {file || image ? <button type="button" className="secondary-link" disabled={disabled} onClick={() => { onChange(null, ""); setError(""); }}>{removeLabel}</button> : null}
   </div>;
 }

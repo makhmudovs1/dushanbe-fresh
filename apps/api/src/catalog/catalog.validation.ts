@@ -2,6 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 
 import { CategoryInput, ProductInput, ProductUpdateInput } from "./catalog.types";
 import { parseGallery } from "./catalog.gallery";
+import { assertCatalogImage } from "./catalog.image";
 
 const decimalPattern = /^\d+(\.\d{1,3})?$/;
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
@@ -9,7 +10,9 @@ const fieldLabels: Record<string, string> = {
   categoryId: "Категория", name: "Название", slug: "Адрес в каталоге", description: "Описание",
   image: "Фотография", unit: "Единица измерения", sellingPrice: "Цена для клиента",
   purchasePrice: "Ориентир закупки", minQuantity: "Минимальное количество", quantityStep: "Шаг количества",
-  sortOrder: "Порядок", isActive: "Включён", isAvailableToday: "Доступен сегодня", isWeighted: "Весовой товар"
+  sortOrder: "Порядок", isActive: "Включён", isAvailableToday: "Доступен сегодня", isWeighted: "Весовой товар",
+  nameTj: "Название на таджикском", imageUrl: "Фото категории", isVisible: "Показывать на сайте",
+  iconUrl: "Иконка категории", parentId: "Родительская категория"
 };
 const fieldLabel = (field: string) => fieldLabels[field] ?? "Предпочтения по качеству";
 
@@ -73,9 +76,20 @@ function quantity(value: unknown, field: string) {
   return parsed;
 }
 
+function categoryImage(value: unknown) {
+  const image = optionalString(value, "imageUrl");
+  assertCatalogImage(image);
+  return image;
+}
+
 export function parseCategoryInput(body: Record<string, unknown>): CategoryInput {
   return {
     name: assertString(body.name, "name"),
+    nameTj: body.nameTj === undefined ? undefined : optionalString(body.nameTj, "nameTj"),
+    imageUrl: body.imageUrl === undefined ? undefined : categoryImage(body.imageUrl),
+    iconUrl: body.iconUrl === undefined ? undefined : categoryImage(body.iconUrl),
+    parentId: body.parentId === undefined ? undefined : optionalString(body.parentId, "parentId"),
+    isVisible: optionalBoolean(body.isVisible, "isVisible"),
     slug: assertString(body.slug, "slug"),
     sortOrder: optionalNumber(body.sortOrder, "sortOrder"),
     isActive: optionalBoolean(body.isActive, "isActive")
@@ -88,6 +102,11 @@ export function parseCategoryUpdateInput(
   const parsed: Partial<CategoryInput> = {};
 
   if (body.name !== undefined) parsed.name = assertString(body.name, "name");
+  if (body.nameTj !== undefined) parsed.nameTj = optionalString(body.nameTj, "nameTj");
+  if (body.imageUrl !== undefined) parsed.imageUrl = categoryImage(body.imageUrl);
+  if (body.iconUrl !== undefined) parsed.iconUrl = categoryImage(body.iconUrl);
+  if (body.parentId !== undefined) parsed.parentId = optionalString(body.parentId, "parentId");
+  if (body.isVisible !== undefined) parsed.isVisible = optionalBoolean(body.isVisible, "isVisible");
   if (body.slug !== undefined) parsed.slug = assertString(body.slug, "slug");
   if (body.sortOrder !== undefined) parsed.sortOrder = optionalNumber(body.sortOrder, "sortOrder");
   if (body.isActive !== undefined) parsed.isActive = optionalBoolean(body.isActive, "isActive");

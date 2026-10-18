@@ -15,6 +15,10 @@ export type CategoryDto = {
   slug: string;
   sortOrder: number;
   isActive?: boolean;
+  isVisible?: boolean;
+  imageUrl?: string | null;
+  iconUrl?: string | null;
+  parentId?: string | null;
 };
 
 export type PublicProductDto = {
@@ -61,7 +65,12 @@ export type ProductFilters = {
 
 export type CategoryInput = {
   name: string;
+  nameTj?: string | null;
   slug: string;
+  imageUrl?: string | null;
+  iconUrl?: string | null;
+  parentId?: string | null;
+  isVisible?: boolean;
   sortOrder?: number;
   isActive?: boolean;
 };

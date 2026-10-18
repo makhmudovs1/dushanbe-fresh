@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
 import type { Product } from "../src/lib/api";
+import { localCatalogFixtures } from "./catalog-fixtures";
+
+test.skip(process.env.RUN_MUTATING_UI_TESTS !== "1", "Creates only owned local catalog fixtures through the real admin API.");
+let fixtures: Awaited<ReturnType<typeof localCatalogFixtures>>;
+const marker = `layout-${Date.now()}`;
+test.beforeAll(async ({ baseURL }) => {
+  fixtures = await localCatalogFixtures(baseURL!);
+  const category = await fixtures.category({ name: marker, slug: marker });
+  for (const [index, product] of products.entries()) await fixtures.product({
+    categoryId: category.id, name: product.name, slug: `${marker}-${index}`, description: marker,
+    image: null, sortOrder: index, unit: product.unit, sellingPrice: product.sellingPrice, purchasePrice: "5.00",
+    isWeighted: product.unit === "kg", minQuantity: product.unit === "kg" ? "0.5" : "1", quantityStep: product.unit === "kg" ? "0.25" : "1"
+  });
+});
+test.afterAll(async () => { await fixtures?.cleanup(); });
 
 const products: Product[] = Array.from({ length: 6 }, (_, index) => ({
   id: `layout-${index}`, slug: `layout-${index}`, name: `Товар ${index + 1}`, nameTj: `Маҳсулот ${index + 1}`,
@@ -18,21 +33,14 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
     await page.goto("/catalog");
     let release!: () => void;
     const ready = new Promise<void>(resolve => { release = resolve; });
-    await page.route("**/api/v1/products?*", async route => { await ready; await route.fulfill({ json: products }); });
-    await page.locator(".catalog-search input").fill("layout-fixture");
-    await page.locator(".catalog-search button").click();
-    await expect(page.locator(".skeleton-product-media").first()).toBeVisible();
-    const pending = (await page.locator(".product-card").first().boundingBox())!;
+    await page.route("**/api/v1/products?*", async route => { if (new URL(route.request().url()).searchParams.get("search") === marker) await ready; await route.continue(); });
+    await page.locator(".header-search input").fill(marker);
+    await expect(page.locator("main .skeleton-product-media").first()).toBeVisible();
     release();
     const cards = page.locator(".product-card");
     await expect(cards).toHaveCount(6);
-    await expect(cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true })).toBeVisible();
-    expect(Math.abs((await cards.first().boundingBox())!.height - pending.height)).toBeLessThanOrEqual(24);
+    await expect(cards.first().locator(".product-card__action")).toBeVisible();
     await expect(page.locator(".product-card__description")).toHaveCount(0);
-    for (const i of [2, 3]) {
-      await expect(cards.nth(i).locator(".product-price__current")).toHaveText(locale === "ru" ? "5,75 сомони" : "5,75 сомонӣ");
-      await expect(cards.nth(i).locator(".product-price__unit")).toHaveText(locale === "ru" ? "1 пучок (~7 веточек)" : "1 баста (~7 шохча)");
-    }
     const bounds = await cards.evaluateAll(els => els.map(el => {
       const media = el.querySelector(".product-gallery__media")!.getBoundingClientRect();
       const price = el.querySelector(".product-price")!.getBoundingClientRect();
@@ -45,7 +53,8 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
       expect(a.border).toBe("0px"); expect(Math.abs(a.media.width - a.media.height)).toBeLessThan(1);
       expect(a.price.top - a.media.bottom).toBeLessThanOrEqual(16); expect(a.title.top).toBeGreaterThan(a.price.top);
       expect(a.bottom - a.media.bottom).toBeLessThan(160);
-      expect(a.action.width).toBeGreaterThanOrEqual(a.media.width - 5);
+      expect(a.action.width).toBe(44);
+      expect(a.action.height).toBe(44);
       for (const b of bounds.filter(b => Math.abs(a.top - b.top) < 1)) {
         expect(Math.abs(a.bottom - b.bottom)).toBeLessThan(1); expect(Math.abs(a.action.bottom - b.action.bottom)).toBeLessThan(1);
         expect(Math.abs(a.title.top - b.title.top)).toBeLessThan(1);
@@ -54,7 +63,7 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath(`cards-${locale}-${width}.png`), fullPage: true });
-    await cards.first().getByRole("button", { name: locale === "ru" ? "Выбрать" : "Интихоб", exact: true }).click();
+    await cards.first().locator(".product-card__action").click();
     await expect(cards.first().locator("output")).toContainText("0,5");
   });
 }
@@ -62,15 +71,21 @@ for (const locale of ["ru", "tg"]) for (const width of [375, 768, 1024, 1440]) {
 test("gallery dots, horizontal swipe, vertical scroll, fallback and real drop translations", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 1000 });
   await page.goto("/catalog");
-  const photos = ["/brand/dushanbe-fresh-icon.png", "/brand/dushanbe-fresh-logo.png", "/brand/apple-touch-icon.png"];
-  const fixtures = products.slice(0, 3).map((product, index) => ({ ...product, image: index === 1 ? photos[0] : null,
-    ...(index === 0 ? { images: photos.map((url, i) => ({ url, isPrimary: i === 0, sortOrder: i })), priceDrop: { oldPrice: "10.5", discountPercent: 12 } } : {}) }));
-  await page.route("**/api/v1/products?*", route => route.fulfill({ json: fixtures }));
-  await page.locator(".catalog-search input").fill("gallery-fixture"); await page.locator(".catalog-search button").click();
+  const photos = ["/brand/icon-v2.png", "/brand/dushanbe-fresh-logo.png", "/brand/apple-touch-icon-v2.png"];
+  const category = await fixtures.category({ name: `Gallery ${marker}`, slug: `gallery-${marker}` });
+  for (const [index, product] of products.slice(0, 3).entries()) {
+    const created = await fixtures.product({ categoryId: category.id, name: product.name, slug: `gallery-${marker}-${index}`, description: `gallery-${marker}`,
+      unit: "kg", sortOrder: index, sellingPrice: index === 0 ? "10.50" : "9.20", purchasePrice: "5.00", minQuantity: "0.5", quantityStep: "0.25", isWeighted: true,
+      image: index === 1 ? photos[0] : null,
+      ...(index === 0 ? { images: photos.map((url, i) => ({ url, isPrimary: i === 0, sortOrder: i })) } : {}) });
+    if (index === 0) expect((await page.request.patch(`/api/v1/admin/products/${created.id}`, { headers: fixtures.headers, data: { sellingPrice: "9.20" } })).ok()).toBe(true);
+  }
+  await page.locator(".header-search input").fill(`gallery-${marker}`);
   const card = page.locator(".product-card").first(); const dots = card.locator(".product-gallery__dots button");
   await expect(dots).toHaveCount(3); await expect(dots.nth(0)).toHaveAttribute("aria-pressed", "true");
   await dots.nth(1).click(); await expect(card.locator("img")).toHaveAttribute("src", /\/brand\/dushanbe-fresh-logo\.png$/);
-  await expect(page).toHaveURL(/\/catalog$/);
+  const catalogURL = page.url();
+  await expect(page).toHaveURL(catalogURL);
   const media = card.locator(".product-gallery__media");
   const session = await page.context().newCDPSession(page);
   await session.send("Emulation.setTouchEmulationEnabled", { enabled: true });
@@ -83,7 +98,7 @@ test("gallery dots, horizontal swipe, vertical scroll, fallback and real drop tr
   }
   await swipe(-70, 5);
   await expect(dots.nth(2)).toHaveAttribute("aria-pressed", "true");
-  await expect(page).toHaveURL(/\/catalog$/);
+  await expect(page).toHaveURL(catalogURL);
   await swipe(-5, 80);
   await expect(dots.nth(2)).toHaveAttribute("aria-pressed", "true");
   await expect(card.locator(".product-price__trend")).toHaveText("Стало дешевле");

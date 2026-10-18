@@ -1,4 +1,5 @@
 export const SERVICE_NAME = "Dushanbe Fresh";
+export * from "./category-tree";
 export { productDescription, missingProductDescriptions } from "./product-descriptions";
 export type * from "./checkout";
 export { slotUnavailableLabels } from "./checkout";

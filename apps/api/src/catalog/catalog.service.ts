@@ -1,4 +1,5 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { categoryDescendantIds, visibleCategoryTree } from "@dushanbe-fresh/shared";
 import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -29,16 +30,25 @@ export class CatalogService {
 
   async listPublicCategories() {
     const categories = await this.prisma.category.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { isActive: true, isVisible: true, deletedAt: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     });
 
-    return categories.map((category) => mapCategory(category));
+    return visibleCategoryTree(categories).map((category) => mapCategory(category));
   }
 
   async listPublicProducts(filters: ProductFilters = {}) {
+    let categoryIds: string[] | undefined;
+    if (filters.category) {
+      const tree = await this.prisma.category.findMany({ where: { deletedAt: null }, select: { id: true, slug: true, parentId: true } });
+      const root = tree.find(category => category.slug === filters.category);
+      if (root) {
+        const ids = categoryDescendantIds(tree, root.id);
+        if (ids.length > 1) categoryIds = ids;
+      }
+    }
     const products = await this.prisma.product.findMany({
-      where: this.publicProductWhere(filters),
+      where: this.publicProductWhere(filters, categoryIds),
       include: productInclude,
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     });
@@ -75,25 +85,45 @@ export class CatalogService {
   }
 
   async createAdminCategory(input: CategoryInput) {
-    const category = await this.prisma.category.create({
+    assertCatalogImage(input.imageUrl);
+    assertCatalogImage(input.iconUrl);
+    const category = await this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
+      await this.validateCategoryParent(tx, input.parentId);
+      return tx.category.create({
       data: {
         name: input.name,
+        nameTj: input.nameTj,
+        imageUrl: input.imageUrl,
+        iconUrl: input.iconUrl,
+        parentId: input.parentId,
+        isVisible: input.isVisible ?? true,
         slug: input.slug,
         sortOrder: input.sortOrder ?? 0,
         isActive: input.isActive ?? true
       }
+      });
     });
 
     return mapCategory(category, true);
   }
 
   async updateAdminCategory(id: string, input: Partial<CategoryInput>) {
+    assertCatalogImage(input.imageUrl);
+    assertCatalogImage(input.iconUrl);
     const category = await this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
       await this.lockCategory(tx, id);
+      await this.validateCategoryParent(tx, input.parentId, id);
       return tx.category.update({
         where: { id },
         data: {
           name: input.name,
+          nameTj: input.nameTj,
+          imageUrl: input.imageUrl,
+          iconUrl: input.iconUrl,
+          parentId: input.parentId,
+          isVisible: input.isVisible,
           slug: input.slug,
           sortOrder: input.sortOrder,
           isActive: input.isActive
@@ -182,15 +212,25 @@ export class CatalogService {
 
   async deleteAdminCategory(id: string) {
     return this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
       await this.lockCategory(tx, id);
       const count = await tx.product.count({ where: { categoryId: id, deletedAt: null } });
       if (count) throw new ConflictException(`В категории осталось товаров: ${count}. Сначала перенесите или удалите их, включая выключенные товары.`);
+      if (await tx.category.count({ where: { parentId: id, deletedAt: null } })) throw new ConflictException("Сначала измените родительскую категорию дочерних разделов.");
       await tx.category.update({ where: { id }, data: { deletedAt: new Date(), isActive: false } });
       return { deleted: true };
     });
   }
 
   // Serialize category deletion with creation/moving of products into it.
+  private async validateCategoryParent(tx: Prisma.TransactionClient, parentId: string | null | undefined, id?: string) {
+    if (!parentId) return;
+    // The tree-edit advisory lock prevents concurrent edits from creating a cycle.
+    const tree = await tx.category.findMany({ where: { deletedAt: null }, select: { id: true, parentId: true } });
+    if (!tree.some(category => category.id === parentId)) throw new NotFoundException("Родительская категория не найдена.");
+    if (id && categoryDescendantIds(tree, id).includes(parentId)) throw new BadRequestException("Категория не может быть дочерней для самой себя или своих подразделов.");
+  }
+
   private async lockCategory(tx: Prisma.TransactionClient, id: string) {
     const rows = await tx.$queryRaw<Array<{ deleted_at: Date | null }>>`SELECT deleted_at FROM categories WHERE id = ${id} FOR UPDATE`;
     if (!rows.length || rows[0].deleted_at) throw new NotFoundException("Категория не найдена или удалена.");
@@ -201,7 +241,7 @@ export class CatalogService {
     if (!rows.length || rows[0].deleted_at) throw new NotFoundException("Товар не найден или удалён.");
   }
 
-  private publicProductWhere(filters: ProductFilters): Prisma.ProductWhereInput {
+  private publicProductWhere(filters: ProductFilters, categoryIds?: string[]): Prisma.ProductWhereInput {
     return {
       isActive: true,
       isAvailableToday: true,
@@ -209,7 +249,7 @@ export class CatalogService {
       category: {
         isActive: true,
         deletedAt: null,
-        ...(filters.category ? { slug: filters.category } : {})
+        ...(categoryIds ? { id: { in: categoryIds } } : filters.category ? { slug: filters.category } : {})
       },
       ...(filters.search
         ? {
