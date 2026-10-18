@@ -151,5 +151,5 @@ production env и постоянное хранилище product-images не и
 `minimum_order_amount`, `delivery_fee`, `service_fee`; checkout validate возвращает
 503 с понятным сообщением. Контрольный снимок подтверждает, что настройки не
 изменились при deploy. Тарифы не подставлялись без решения владельца.
-По дополнительному запросу добавляется редактирование в `/admin/settings`,
+По дополнительному запросу добавлено редактирование в `/admin/settings`,
 см. `ORDER_PRICING_SETTINGS.md`.
