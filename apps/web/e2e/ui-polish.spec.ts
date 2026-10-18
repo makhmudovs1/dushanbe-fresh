@@ -123,7 +123,7 @@ for (const width of [375, 768, 1440]) {
         await expect(page.locator("main h1").first()).toBeVisible();
         await expect(page.locator(".site-footer")).toBeVisible();
         if (route === "/cart") await expect(page.locator(".cart-item")).toHaveCount(2);
-        if (route === "/catalog") await expect(page.locator(".availability-badge").first()).toBeVisible();
+        if (route === "/catalog") await expect(page.locator(".availability-badge")).toHaveCount(0);
         if (route === "/checkout") await expect(page.getByLabel("Имя", { exact: true })).toBeVisible();
         if (route.startsWith("/order/")) await expect(page.getByText("DF-UI-PREVIEW", { exact: false }).first()).toBeVisible();
         await noOverflow(page);

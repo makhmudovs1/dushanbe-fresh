@@ -1,22 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { categoryArtwork, featuredCategories, homeBanners } from "./storefront";
+import { categoryArtwork, homeCategorySections, homeBanners } from "./storefront";
 import { translate } from "@/i18n/locale";
+import type { Category } from "./api";
+
+const category = (slug: string, sortOrder = 0, extra: Partial<Category> = {}): Category => ({ id: slug, slug, name: slug, sortOrder, ...extra });
+const products = (...ids: string[]) => ids.map(id => ({ category: { id, slug: id, name: id } }));
 
 describe("storefront configuration", () => {
-  it("uses admin sorting first and assortment size for ties, including descendants", () => {
-    const categories = [
-      { id: "small", slug: "small", name: "Small", sortOrder: 0 },
-      { id: "large", slug: "large", name: "Large", sortOrder: 0 },
-      { id: "child", parentId: "large", slug: "child", name: "Child", sortOrder: 0 },
-      { id: "priority", slug: "priority", name: "Priority", sortOrder: -1 }
-    ];
-    const products = ["small", "child", "child"].map(id => ({ category: { id, slug: id, name: id } }));
-    expect(featuredCategories(categories, products).map(category => category.id)).toEqual(["priority", "large", "small"]);
-    expect(categories[0].id).toBe("small");
+  it("combines real vegetable and herb roots without creating or changing categories", () => {
+    const categories = [category("vegetables", 10), category("fruits", 20), category("greens", 30)];
+    const result = homeCategorySections(categories, products("vegetables", "fruits", "greens"));
+    expect(result.map(section => section.category.slug)).toEqual(["vegetables", "fruits"]);
+    expect(result[0].titleKey).toBe("Овощи и зелень");
+    expect(result[0].tiles.map(tile => tile.slug)).toEqual(["vegetables", "greens"]);
+    expect(categories).toHaveLength(3);
   });
-  it("limits featured roots to four without creating categories", () => {
-    const categories = Array.from({ length: 5 }, (_, id) => ({ id: String(id), name: String(id), slug: String(id), sortOrder: id }));
-    expect(featuredCategories(categories, []).map(category => category.id)).toEqual(["0", "1", "2", "3"]);
+  it("uses catalog sorting rather than a fixed JSX section order", () => {
+    const categories = [category("vegetables", 20), category("fruits", 10), category("greens", 30)];
+    expect(homeCategorySections(categories, products("vegetables", "fruits", "greens")).map(section => section.category.slug)).toEqual(["fruits", "vegetables"]);
+  });
+  it("does not show empty, inactive, hidden or hidden-parent selections", () => {
+    const categories = [category("empty"), category("hidden", 0, { isVisible: false }), category("child", 0, { parentId: "hidden" }),
+      category("inactive", 0, { isActive: false }), category("fruit")];
+    expect(homeCategorySections(categories, products("hidden", "child", "inactive", "fruit")).map(section => section.category.id)).toEqual(["fruit"]);
+  });
+  it("uses only populated real descendants and keeps standalone herbs if vegetables are absent", () => {
+    const categories = [category("root"), category("child", 10, { parentId: "root" }), category("empty", 20, { parentId: "root" }), category("greens", 30)];
+    const result = homeCategorySections(categories, products("child", "greens"));
+    expect(result[0].tiles.map(tile => tile.id)).toEqual(["child"]);
+    expect(result[1].titleKey).toBeNull();
+    expect(translate("tg", "Овощи и зелень")).not.toBe("Овощи и зелень");
   });
   it("prefers an admin upload, restores standard artwork after removal and handles unknown categories", () => {
     expect(categoryArtwork({ slug: "greens", imageUrl: "/api/v1/media/new.webp" }).image).toBe("/api/v1/media/new.webp");

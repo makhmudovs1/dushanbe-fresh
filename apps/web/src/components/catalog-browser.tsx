@@ -7,12 +7,14 @@ import { useI18n } from "@/i18n/provider";
 import { ProductCard } from "./product-card";
 import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
 import { CategorySidebar } from "./category-navigation";
+import { CatalogBreadcrumbs } from "./catalog-breadcrumbs";
 
 export function CatalogBrowser({
-  initialCategory = "", initialSearch = "", initialCategories, initialProducts, withSidebar = false
+  initialCategory = "", initialSearch = "", initialCategories, initialProducts, withSidebar = false, limit
 }: {
   initialCategory?: string; initialSearch?: string; initialCategories?: Category[] | null;
   initialProducts?: Product[] | null; withSidebar?: boolean; hideSearch?: boolean; hideCategories?: boolean;
+  limit?: number;
 }) {
   const { t, name } = useI18n();
   const params = useSearchParams();
@@ -39,10 +41,10 @@ export function CatalogBrowser({
     setPending(true); setError(false);
     try {
       const data = await getProducts({ category: category || undefined, search: search || undefined }, controller.signal);
-      if (!controller.signal.aborted) setProducts(data);
+      if (!controller.signal.aborted) setProducts(limit ? data.slice(0, limit) : data);
     } catch { if (!controller.signal.aborted) setError(true); }
     finally { if (!controller.signal.aborted) setPending(false); }
-  }, []);
+  }, [limit]);
   useEffect(() => {
     if (initialProducts !== undefined && currentCategory === initialCategory && currentSearch === initialSearch && (!withSidebar || usedSnapshot.current !== initialProducts)) {
       usedSnapshot.current = initialProducts;
@@ -61,7 +63,7 @@ export function CatalogBrowser({
     {withSidebar ? <div className="storefront-sidebar-slot">{categoriesPending ? <CategorySkeleton /> :
       <CategorySidebar categories={categoriesError ? null : categories} active={currentCategory} onRetry={() => void loadCategories()} />}</div> : null}
     <section className="catalog-browser" aria-busy={pending}>
-      {withSidebar ? <header className="page-heading"><h1>{title}</h1>
+      {withSidebar ? <header className="page-heading"><CatalogBreadcrumbs categories={categories} category={category} search={Boolean(currentSearch)} /><h1>{title}</h1>
         {currentSearch ? <p>«{currentSearch}»</p> : <p>{t("Свежие продукты, доступные сегодня")}</p>}</header> : null}
       {categoriesError && !withSidebar ? <div className="notice" role="alert">
         <p>{t("Не удалось загрузить категории. Попробуйте ещё раз.")}</p>

@@ -60,10 +60,10 @@ describe("catalog card", () => {
     expect(html).toContain("Уменьшить количество: Бананы, спелые");
     expect(html).not.toContain(">Выбрать</button>");
   });
-  it.each([true, undefined])("shows the compact availability badge for a public product (%s)", isAvailableToday => {
+  it.each([true, undefined])("does not repeat availability on a public card (%s)", isAvailableToday => {
     const html = renderToStaticMarkup(<ProductCard product={{ ...product, isAvailableToday }} />);
-    expect(html).toContain('class="availability-badge"');
-    expect(html).toContain("Сегодня в наличии");
+    expect(html).not.toContain('class="availability-badge"');
+    expect(html).not.toContain("Сегодня в наличии");
   });
   it.each([{ isAvailableToday: false }, { isActive: false }])("does not advertise unavailable products: %j", flags => {
     expect(renderToStaticMarkup(<ProductCard product={{ ...product, ...flags }} />)).not.toContain("availability-badge");

@@ -92,7 +92,8 @@ test("category photo preview, validation, replacement, removal and independent v
     expect((await publicCategory())!.iconUrl).toBeNull();
     expect(await (await page.request.get("/api/v1/products")).json()).toEqual(productsBefore);
     await page.goto("/");
-    await expect(page.locator(".storefront-category").filter({ hasText: name })).toBeVisible();
+    await expect(page.locator(".storefront-sidebar-slot").getByRole("link", { name, exact: true })).toBeVisible();
+    await expect(page.locator(".storefront-category").filter({ hasText: name })).toHaveCount(0);
   } finally {
     if (id && accessToken) {
       const result = await page.request.delete(`/api/v1/admin/categories/${id}`, { headers: { Authorization: `Bearer ${accessToken}` } });

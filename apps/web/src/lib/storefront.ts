@@ -1,13 +1,26 @@
-import { categoryDescendantIds } from "@dushanbe-fresh/shared";
+import { categoryDescendantIds, visibleCategoryTree } from "@dushanbe-fresh/shared";
 import type { Category, Product } from "./api";
 
-export function featuredCategories(categories: Category[], products: Pick<Product, "category">[]) {
-  const sizes = new Map(categories.filter(category => !category.parentId).map(category => {
-    const ids = new Set(categoryDescendantIds(categories, category.id));
-    return [category.id, products.filter(product => ids.has(product.category.id)).length];
-  }));
-  return categories.filter(category => !category.parentId).sort((a, b) =>
-    a.sortOrder - b.sortOrder || (sizes.get(b.id) ?? 0) - (sizes.get(a.id) ?? 0)).slice(0, 4);
+export function homeCategorySections(categories: Category[], products: Pick<Product, "category">[]) {
+  const visible = visibleCategoryTree(categories);
+  const populated = (category: Category) => {
+    const ids = new Set(categoryDescendantIds(visible, category.id));
+    return products.some(product => ids.has(product.category.id));
+  };
+  const roots = visible.filter(category => !category.parentId && populated(category));
+  const vegetables = roots.find(category => category.slug === "vegetables");
+  const greens = roots.find(category => category.slug === "greens");
+  const combined = vegetables && greens;
+  return roots.filter(category => !combined || category.id !== greens.id).map(category => {
+    const members = combined && category.id === vegetables.id ? [vegetables, greens] : [category];
+    const tiles = members.flatMap(member => {
+      const children = visible.filter(child => child.parentId === member.id && populated(child));
+      const ownProducts = products.some(product => product.category.id === member.id);
+      return ownProducts || !children.length ? [member, ...children] : children;
+    });
+    return { category, tiles, titleKey: members.length > 1 ? "Овощи и зелень" : null,
+      sortOrder: Math.min(...members.map(member => member.sortOrder)) };
+  }).sort((a, b) => a.sortOrder - b.sortOrder || a.category.name.localeCompare(b.category.name, "ru"));
 }
 
 // Launch artwork is replaceable by a category upload; the list still comes from the API.

@@ -5,7 +5,7 @@ import { localCatalogFixtures } from "./catalog-fixtures";
 
 test.beforeEach(({ baseURL }) => { expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL!).hostname); });
 
-test("new wordmark, transparent supplied mark, favicon and early assortment", async ({ page }) => {
+test("wordmark, transparent mark, favicon and bounded products after thematic sections", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".brand-logo__wordmark")).toHaveText("Dushanbe Fresh");
   await expect(page.locator(".brand-logo__initial")).toHaveText("F");
@@ -25,7 +25,12 @@ test("new wordmark, transparent supplied mark, favicon and early assortment", as
   })).toBe(0);
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    expect((await page.locator(".product-card").first().boundingBox())!.y).toBeLessThan(width === 375 ? 700 : 500);
+    await expect(page.locator(".product-card h3").first()).toBeAttached();
+    expect(await page.locator(".product-card").count()).toBeLessThanOrEqual(8);
+    const last = (await page.locator(".home-category-section").last().boundingBox())!;
+    expect((await page.locator(".product-card").first().boundingBox())!.y).toBeGreaterThan(last.y + last.height);
+    await expect(page.locator(".header-favorites")).toHaveCount(0);
+    await expect(page.locator(".product-card .availability-badge")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
@@ -48,7 +53,7 @@ for (const width of [375, 768, 1440]) test(`guest favorites stay synchronized an
   await expect(page.locator(".product-detail .favorite-button")).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
   await expect(page.locator(".product-detail .favorite-button")).toHaveAttribute("aria-pressed", "true");
-  await page.locator(".header-favorites").click();
+  await page.goto("/favorites");
   await expect(page).toHaveURL(/\/favorites$/);
   await expect(page.locator(".product-card")).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

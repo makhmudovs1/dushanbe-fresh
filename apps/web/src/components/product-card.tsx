@@ -29,8 +29,6 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="product-card">
       <ProductGallery product={product} href={`/products/${product.slug}`}>
         <FavoriteButton product={product} />
-        {product.isAvailableToday !== false && product.isActive !== false ?
-          <span className="availability-badge">{t("Сегодня в наличии")}</span> : null}
       </ProductGallery>
       <div className="product-card__body">
         <ProductPrice product={product} />

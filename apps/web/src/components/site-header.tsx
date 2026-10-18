@@ -5,7 +5,7 @@ import { LanguageSwitcher, useI18n } from "@/i18n/provider";
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Heart, MapPin, Menu, ShoppingCart } from "lucide-react";
+import { MapPin, Menu, ShoppingCart } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { LastOrderLink } from "./last-order-link";
 import { CatalogDialog } from "./catalog-dialog";
@@ -48,7 +48,6 @@ export function SiteHeader() {
       <DeliveryLocation />
       <nav className="site-nav" aria-label={t("Основная навигация")}>
         <LastOrderLink activeOnly />
-        <Link className="header-favorites" href="/favorites" aria-label={t("Избранное")} title={t("Избранное")}><Heart size={22} aria-hidden="true" /></Link>
         <Link className="cart-link" href="/cart" aria-label={t(hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
           <ShoppingCart size={22} aria-hidden="true" />
           <span>{t("Корзина")}</span>

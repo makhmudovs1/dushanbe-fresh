@@ -15,7 +15,7 @@ describe("customer branding", () => {
     expect(html).toContain('width="40" height="40"');
     expect(html).toContain("mark-v2.webp");
     expect(html).toContain('Dushanbe <span class="brand-logo__initial">F</span>resh');
-    expect(html).toContain('href="/favorites"');
+    expect(html).not.toContain('href="/favorites"');
     expect(html).not.toContain("theme-switcher");
     expect(html).toContain("Корзина, позиций: 2");
   });

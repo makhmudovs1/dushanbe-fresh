@@ -1,27 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { categoryDescendantIds } from "@dushanbe-fresh/shared";
 import type { Category, Product } from "@/lib/api";
+import { homeCategorySections } from "@/lib/storefront";
 import { useI18n } from "@/i18n/provider";
 import { CategoryCards } from "./category-navigation";
-import { ProductCard } from "./product-card";
 
 export function HomeCategorySections({ categories, products }: { categories: Category[] | null; products: Product[] | null }) {
   const { t, name } = useI18n();
-  if (!categories || !products) return null;
-  return <>{categories.filter(category => !category.parentId).map(category => {
-    const ids = new Set(categoryDescendantIds(categories, category.id));
-    const selected = products.filter(product => ids.has(product.category.id)).slice(0, 4);
-    const children = categories.filter(child => child.parentId === category.id);
-    if (!children.length && !selected.length) return null;
-    return <section className="storefront-section home-category-section" key={category.id}>
-      <div className="section-heading storefront-section-heading"><h2>{name(category)}</h2>
-        <Link className="storefront-more" href={`/catalog?category=${encodeURIComponent(category.slug)}`}>
-          {t("Смотреть все")}<ArrowRight size={16} aria-hidden="true" /></Link></div>
-      {children.length ? <CategoryCards categories={children} /> : null}
-      {selected.length ? <div className="product-grid">{selected.map(product => <ProductCard key={product.id} product={product} />)}</div> : null}
-    </section>;
-  })}</>;
+  if (!categories || !products) return <CategoryCards categories={null} />;
+  return <div className="home-category-sections">{homeCategorySections(categories, products).map(section =>
+    <section className={`storefront-section home-category-section${section.tiles.length > 1 ? " home-category-section--wide" : ""}`} key={section.category.id}>
+      <div className="section-heading storefront-section-heading"><h2>{section.titleKey ? t(section.titleKey) : name(section.category)}</h2></div>
+      <CategoryCards categories={section.tiles} />
+    </section>)}</div>;
 }
