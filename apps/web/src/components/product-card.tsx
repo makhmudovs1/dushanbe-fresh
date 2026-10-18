@@ -3,11 +3,10 @@ import { useI18n } from "@/i18n/provider";
 
 
 import Link from "next/link";
-import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FavoriteButton } from "./favorite-button";
 import { useCart } from "@/cart/cart-context";
-import { getCartItemKey } from "@/cart/cart";
+import { sumCartQuantities } from "@/cart/cart";
 import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-selection";
 
 import { Product } from "@/lib/api";
@@ -17,18 +16,25 @@ import { ProductPrice } from "./product-price";
 import { QuantityStepper } from "./quantity-stepper";
 
 export function ProductCard({ product }: { product: Product }) {
-  const { t, name, label } = useI18n();
+  const { t, name } = useI18n();
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
-  const [choosingQuality, setChoosingQuality] = useState(false);
   const items = state.items.filter(item => item.productId === product.id);
-  function add(qualityOptionId?: string) {
-    addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId });
-    setChoosingQuality(false);
-  }
+  const current = items.find(item => !item.qualityOptionId) ?? items[items.length - 1];
   return (
     <article className="product-card">
       <ProductGallery product={product} href={`/products/${product.slug}`}>
         <FavoriteButton product={product} />
+        <div className="product-card__selection">
+          {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : current ?
+            <QuantityStepper name={name(product)} quantity={sumCartQuantities(items)} unit={product.unit}
+              onIncrease={() => incrementItem(current)}
+              onDecrease={() => isMinimumQuantity(current) ? removeItem(current) : decrementItem(current)} /> :
+            <button className="product-card__action" type="button" aria-label={`${t("Добавить в корзину")}: ${name(product)}`}
+              title={`${t("Добавить в корзину")}: ${name(product)}`}
+              onClick={() => addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId: null })}>
+              <Plus size={26} aria-hidden="true" />
+            </button>}
+        </div>
       </ProductGallery>
       <div className="product-card__body">
         <ProductPrice product={product} />
@@ -36,32 +42,6 @@ export function ProductCard({ product }: { product: Product }) {
           <h3>
             <Link href={`/products/${product.slug}`}>{name(product)}</Link>
           </h3>
-        </div>
-        <div className="product-card__footer">
-          <div className="product-card__selection">
-            {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : <>
-              {items.map(item => <div className="product-card__line" key={getCartItemKey(item)}>
-                {item.qualityOptionLabel ? <small>{label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}</small> : null}
-                <QuantityStepper name={`${name(product)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`}
-                  quantity={item.quantity} unit={item.unit} onIncrease={() => incrementItem(item)}
-                  onDecrease={() => isMinimumQuantity(item) ? removeItem(item) : decrementItem(item)} />
-              </div>)}
-              {!items.length && !choosingQuality ? <button className={`product-card__action${product.qualityOptions.length ? " product-card__action--options" : ""}`} type="button"
-                aria-label={`${t(product.qualityOptions.length ? "Выбрать" : "Добавить в корзину")}: ${name(product)}`}
-                onClick={() => product.qualityOptions.length ? setChoosingQuality(true) : add()}><Plus size={21} aria-hidden="true" />{product.qualityOptions.length ? t("Выбрать") : null}</button> : null}
-              {items.length > 0 && product.qualityOptions.length > 0 && !choosingQuality ?
-                <button className="catalog-text-action" type="button" onClick={() => setChoosingQuality(true)}>{t("Другое качество")}</button> : null}
-              {choosingQuality ? <div className="catalog-quality">
-                <select autoFocus aria-label={`${t("Предпочтение качества:")} ${name(product)}`} value=""
-                  onChange={event => { if (event.target.value) add(event.target.value); }}>
-                  <option value="" disabled>{t("Выберите качество")}</option>
-                  {product.qualityOptions.map(option => <option key={option.id} value={option.id}>{label(option)}</option>)}
-                </select>
-                <button type="button" className="catalog-icon-action" aria-label={t("Отменить выбор качества")} title={t("Отменить выбор качества")}
-                  onClick={() => setChoosingQuality(false)}><X size={18} aria-hidden="true" /></button>
-              </div> : null}
-            </>}
-          </div>
         </div>
       </div>
     </article>

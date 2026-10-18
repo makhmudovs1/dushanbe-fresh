@@ -75,7 +75,7 @@ export function createCartItem(input: AddToCartInput): CartItem {
       option.label.toLowerCase().includes("выбор сборщика")
     ) ?? input.product.qualityOptions[0];
 
-  const qualityOption = selectedOption ?? fallbackOption ?? null;
+  const qualityOption = input.qualityOptionId === null ? null : selectedOption ?? fallbackOption ?? null;
   const quantity = normalizeQuantity(
     input.quantity,
     input.product.minQuantity,
@@ -244,6 +244,10 @@ function updateCartItemQuantity(
 
 function addQuantity(left: string, right: string) {
   return formatQuantity(parseQuantity(left) + parseQuantity(right));
+}
+
+export function sumCartQuantities(items: Pick<CartItem, "quantity">[]) {
+  return items.reduce((total, item) => addQuantity(total, item.quantity), "0");
 }
 
 function parseMoney(value: string) {

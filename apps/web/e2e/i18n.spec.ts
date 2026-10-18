@@ -10,9 +10,9 @@ for (const width of [375, 768, 1440]) test(`RU/TJ customer flow, persisted SSR l
   await page.route("**/api/v1/checkout/orders", route => route.abort());
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Свежие продукты");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Овощи и зелень");
   await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Маҳсулоти тару тоза");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Сабзавот ва кабудӣ");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "tg");
   expect((await context.cookies()).find(c => c.name === "df-language")?.value).toBe("tg");

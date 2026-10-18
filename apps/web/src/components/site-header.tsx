@@ -48,7 +48,7 @@ export function SiteHeader() {
       <DeliveryLocation />
       <nav className="site-nav" aria-label={t("Основная навигация")}>
         <LastOrderLink activeOnly />
-        <Link className="cart-link" href="/cart" aria-label={t(hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
+        <Link className="cart-link" href="/cart" aria-current={pathname === "/cart" ? "page" : undefined} aria-label={t(hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
           <ShoppingCart size={22} aria-hidden="true" />
           <span>{t("Корзина")}</span>
           <strong aria-hidden={!hydrated}>{hydrated ? lineCount : ""}</strong>

@@ -12,7 +12,7 @@ for (const width of [375, 768, 1440]) for (const language of ["ru", "tg"]) {
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: language === "ru" ? "Свежие продукты" : "Маҳсулоти тару тоза", level: 1, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: language === "ru" ? "Овощи и зелень" : "Сабзавот ва кабудӣ", level: 1, exact: true })).toBeVisible();
     const categories = page.locator(".storefront-category");
     await expect(categories.first()).toBeVisible();
     await expect(page.locator(".product-card").first()).toBeVisible();

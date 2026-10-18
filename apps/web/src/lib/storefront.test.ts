@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryArtwork, homeCategorySections, homeBanners } from "./storefront";
+import { categoryArtwork, homeCategorySections, homeBanners, homePromotionBanners } from "./storefront";
 import { translate } from "@/i18n/locale";
 import type { Category } from "./api";
 
@@ -11,7 +11,7 @@ describe("storefront configuration", () => {
     const categories = [category("vegetables", 10), category("fruits", 20), category("greens", 30)];
     const result = homeCategorySections(categories, products("vegetables", "fruits", "greens"));
     expect(result.map(section => section.category.slug)).toEqual(["vegetables", "fruits"]);
-    expect(result[0].titleKey).toBe("Овощи и зелень");
+    expect(result[0].titleKey).toBe("Овощные продукты");
     expect(result[0].tiles.map(tile => tile.slug)).toEqual(["vegetables", "greens"]);
     expect(categories).toHaveLength(3);
   });
@@ -41,5 +41,18 @@ describe("storefront configuration", () => {
       expect(banner.href).toMatch(/^\/catalog\?category=(fruits|greens)$/);
       for (const field of [banner.title, banner.text, banner.action, banner.alt]) expect(translate("tg", field)).not.toBe(field);
     }
+  });
+  it("links promotions only to visible, nonempty real categories without creating dairy", () => {
+    const categories = [category("vegetables"), category("fruits")];
+    const banners = homePromotionBanners(categories, products("vegetables", "fruits"));
+    expect(banners.map(banner => banner.href)).toEqual(["/catalog?category=vegetables", "/catalog?category=fruits", null]);
+    expect(categories).toHaveLength(2);
+    for (const banner of banners) for (const field of [banner.title, banner.action, banner.alt, ...(banner.text ? [banner.text] : [])]) {
+      expect(translate("tg", field)).not.toBe(field);
+    }
+  });
+  it("does not promote empty or hidden categories and supports populated descendants", () => {
+    const categories = [category("vegetables", 0, { isVisible: false }), category("fruits"), category("dairy"), category("milk", 0, { parentId: "dairy" })];
+    expect(homePromotionBanners(categories, products("vegetables", "milk")).map(banner => banner.href)).toEqual([null, null, "/catalog?category=dairy"]);
   });
 });

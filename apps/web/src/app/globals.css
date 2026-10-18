@@ -104,13 +104,13 @@ textarea {
 .cart-link {
   gap: 8px;
   background: var(--color-primary);
-  color: var(--color-primary-contrast) !important;
+  color: var(--color-primary-contrast);
   box-shadow: var(--shadow-soft);
 }
 
 .cart-link:hover {
-  background: var(--color-primary-dark) !important;
-  color: var(--color-primary-contrast) !important;
+  background: var(--color-primary-dark);
+  color: var(--color-primary-contrast);
 }
 
 .cart-link strong {

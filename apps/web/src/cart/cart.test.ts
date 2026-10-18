@@ -9,7 +9,8 @@ import {
   getCartItemKey,
   hasWeightedItems,
   loadCart,
-  saveCart
+  saveCart,
+  sumCartQuantities
 } from "./cart";
 import { Product } from "@/lib/api";
 
@@ -79,6 +80,22 @@ class MemoryStorage implements Storage {
 }
 
 describe("cart", () => {
+  it("explicit null adds without a quality preference while old explicit options remain intact", () => {
+    const plain = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
+    expect(plain.qualityOptionId).toBeNull();
+    expect(plain.qualityOptionLabel).toBeNull();
+    const saved = createCartItem({ product: tomatoes, quantity: "1.5", qualityOptionId: "ripe" });
+    const state = cartReducer({ items: [saved] }, { type: "add", item: plain });
+    expect(state.items).toHaveLength(2);
+    expect(state.items[0]).toEqual(saved);
+    expect(sumCartQuantities(state.items)).toBe("2");
+  });
+  it("sums saved variant quantities exactly without merging or rewriting them", () => {
+    const items = [{ quantity: "0.1" }, { quantity: "0.2" }, { quantity: "0.375" }];
+    expect(sumCartQuantities(items)).toBe("0.675");
+    expect(items.map(item => item.quantity)).toEqual(["0.1", "0.2", "0.375"]);
+    expect(sumCartQuantities([])).toBe("0");
+  });
   it("adds a product", () => {
     const item = createCartItem({
       product: tomatoes,

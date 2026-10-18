@@ -26,11 +26,14 @@ describe("catalog card", () => {
   });
   it("renders selection as a button, with separate photo and title links", () => {
     const html = renderToStaticMarkup(<ProductCard product={product} />);
-    expect(html).toMatch(/<button[^>]*>[\s\S]*Выбрать<\/button>/);
+    expect(html).toContain('aria-label="Добавить в корзину: Бананы"');
     expect(html).toContain("lucide-plus");
     expect(html).toContain("favorite-button");
     expect(html).toContain("1 кг");
     expect(html.match(/href="\/products\/bananas"/g)).toHaveLength(2);
+    expect(html).not.toContain("product-card__action--options");
+    expect(html).not.toContain("catalog-quality");
+    expect(html.indexOf('class="product-card__action"')).toBeLessThan(html.indexOf('class="product-card__body"'));
   });
   it("renders media, price, title, and action without grid descriptions or fake discounts", () => {
     const html = renderToStaticMarkup(<ProductCard product={product} />);
@@ -52,13 +55,20 @@ describe("catalog card", () => {
     expect(html.indexOf("product-price__current")).toBeLessThan(html.indexOf("product-price__meta"));
     expect(html.indexOf("product-price__meta")).toBeLessThan(html.indexOf("<h3"));
   });
-  it("renders the saved quantity and quality instead of selection", () => {
+  it("renders the saved quantity without exposing a quality chooser", () => {
     cart.state.items = [createCartItem({ product, quantity: "2.5", qualityOptionId: "ripe" })];
     const html = renderToStaticMarkup(<ProductCard product={product} />);
     expect(html).toContain("2,5 кг");
-    expect(html).toContain("спелые");
-    expect(html).toContain("Уменьшить количество: Бананы, спелые");
+    expect(html).not.toContain("спелые");
+    expect(html).toContain("Уменьшить количество: Бананы");
     expect(html).not.toContain(">Выбрать</button>");
+  });
+  it("renders one total counter for legacy variants without changing saved lines", () => {
+    cart.state.items = [createCartItem({ product, quantity: "1.5", qualityOptionId: "ripe" }), createCartItem({ product, quantity: "0.5", qualityOptionId: null })];
+    const html = renderToStaticMarkup(<ProductCard product={product} />);
+    expect(html).toContain("2 кг");
+    expect(html.match(/<output/g)).toHaveLength(1);
+    expect(cart.state.items.map(item => item.qualityOptionId)).toEqual(["ripe", null]);
   });
   it.each([true, undefined])("does not repeat availability on a public card (%s)", isAvailableToday => {
     const html = renderToStaticMarkup(<ProductCard product={{ ...product, isAvailableToday }} />);

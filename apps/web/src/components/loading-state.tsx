@@ -28,6 +28,13 @@ export function CategoryCardsSkeleton() {
   </LoadingState>;
 }
 
+export function HomePromotionsSkeleton() {
+  return <LoadingState label="Загружаем категории"><div className="home-promotions home-promotions-skeleton">
+    <Skeleton className="promotion-banner promotion-banner--primary" />
+    <Skeleton className="promotion-banner" /><Skeleton className="promotion-banner" />
+  </div></LoadingState>;
+}
+
 export function ProductGridSkeleton() {
   const { t } = useI18n();
   return <LoadingState label={t("Загружаем товары")}>

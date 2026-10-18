@@ -5,7 +5,8 @@ import { ArrowRight } from "lucide-react";
 import { CategorySidebar } from "@/components/category-navigation";
 import { CatalogBrowser } from "@/components/catalog-browser";
 import { HomeCategorySections } from "@/components/home-category-sections";
-import { CategoryCardsSkeleton, CategorySkeleton, ProductGridSkeleton } from "@/components/loading-state";
+import { HomePromotions } from "@/components/home-promotions";
+import { HomePromotionsSkeleton, CategorySkeleton, ProductGridSkeleton } from "@/components/loading-state";
 import { getPublicCategories, getPublicProducts } from "@/lib/catalog.server";
 import { HOME_TITLE, SITE_DESCRIPTION, publicMetadata } from "@/lib/seo";
 
@@ -19,7 +20,7 @@ async function AvailableProducts() {
 }
 async function Sections() {
   const [categories, products] = await Promise.all([getPublicCategories(), getPublicProducts()]);
-  return <HomeCategorySections categories={categories} products={products} />;
+  return <><HomePromotions categories={categories} products={products} /><HomeCategorySections categories={categories} products={products} /></>;
 }
 
 export default function HomePage() {
@@ -27,8 +28,7 @@ export default function HomePage() {
   return <main className="page storefront-page"><div className="shell shop-shell storefront-layout">
     <div className="storefront-sidebar-slot"><Suspense fallback={<CategorySkeleton />}><Sidebar /></Suspense></div>
     <div className="storefront-main">
-      <h1 className="sr-only">{t("Свежие продукты")}</h1>
-      <Suspense fallback={<CategoryCardsSkeleton />}><Sections /></Suspense>
+      <Suspense fallback={<HomePromotionsSkeleton />}><Sections /></Suspense>
       <section className="storefront-section">
         <div className="section-heading storefront-section-heading"><h2>{t("Сегодня в наличии")}</h2>
           <Link className="storefront-more" href="/catalog">{t("Все продукты")}<ArrowRight size={16} aria-hidden="true" /></Link></div>

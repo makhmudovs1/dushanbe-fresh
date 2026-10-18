@@ -59,12 +59,13 @@ export function CatalogBrowser({
 
   const category = categories.find(item => item.slug === currentCategory);
   const title = currentSearch ? t("Результаты поиска") : category ? name(category) : t("Каталог");
-  return <div className={withSidebar ? "storefront-layout" : undefined}>
+  return <div className={withSidebar ? "catalog-page" : undefined}>
+    {withSidebar ? <header className="page-heading catalog-page-heading"><CatalogBreadcrumbs categories={categories} category={category} search={Boolean(currentSearch)} /><h1>{title}</h1>
+      {currentSearch ? <p>«{currentSearch}»</p> : null}</header> : null}
+    <div className={withSidebar ? "storefront-layout" : undefined}>
     {withSidebar ? <div className="storefront-sidebar-slot">{categoriesPending ? <CategorySkeleton /> :
       <CategorySidebar categories={categoriesError ? null : categories} active={currentCategory} onRetry={() => void loadCategories()} />}</div> : null}
     <section className="catalog-browser" aria-busy={pending}>
-      {withSidebar ? <header className="page-heading"><CatalogBreadcrumbs categories={categories} category={category} search={Boolean(currentSearch)} /><h1>{title}</h1>
-        {currentSearch ? <p>«{currentSearch}»</p> : <p>{t("Свежие продукты, доступные сегодня")}</p>}</header> : null}
       {categoriesError && !withSidebar ? <div className="notice" role="alert">
         <p>{t("Не удалось загрузить категории. Попробуйте ещё раз.")}</p>
         <button className="secondary-link" type="button" onClick={() => void loadCategories()}>{t("Повторить")}</button>
@@ -77,5 +78,6 @@ export function CatalogBrowser({
         {t(currentSearch ? "По вашему запросу ничего не найдено." : "В этом разделе пока нет товаров.")}</p> : null}
       {!pending && !error ? <div className="product-grid">{products.map(product => <ProductCard key={product.id} product={product} />)}</div> : null}
     </section>
+    </div>
   </div>;
 }

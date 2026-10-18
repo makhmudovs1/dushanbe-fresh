@@ -46,22 +46,34 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   await expect(page).toHaveURL(`/products/${product.slug}`);
 });
 
-test("quality is explicit and existing preferences remain separate", async ({ page }) => {
+test("products with legacy qualities add directly without selecting an arbitrary preference", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 1000 });
   const product = (await products(page)).find(p => p.qualityOptions.length >= 2)!;
   expect(product).toBeTruthy();
   await page.goto("/catalog");
   const item = card(page, product);
   await item.locator(".product-card__action").click();
-  await expect(item.locator("output")).toHaveCount(0);
-  await item.getByRole("combobox").selectOption(product.qualityOptions[1].id);
-  await item.getByRole("button", { name: "Другое качество" }).click();
-  await item.getByRole("combobox").selectOption(product.qualityOptions[0].id);
-  await expect(item.locator("output")).toHaveCount(2);
+  await expect(item.locator("output")).toHaveCount(1);
+  await expect(item.getByRole("combobox")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/catalog$/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dushanbe-fresh.cart.v1")!).items[0].qualityOptionId)).toBeNull();
   await noOverflow(page);
   await page.reload();
-  await expect(item.locator(".product-card__line small")).toHaveText([product.qualityOptions[1].label, product.qualityOptions[0].label]);
+  await expect(item.locator("output")).toHaveCount(1);
+  await item.locator("h3 a").click();
+  await expect(page.locator(".quality-options")).toHaveCount(0);
   await page.getByRole("link", { name: /^Корзина/ }).click();
+  await expect(page.locator(".cart-item").filter({ hasText: product.name })).toHaveCount(1);
+});
+
+test("old cart preferences survive and appear as one catalog counter", async ({ page }) => {
+  const product = (await products(page)).find(p => p.qualityOptions.length >= 2)!;
+  const items = product.qualityOptions.slice(0, 2).map(option => createCartItem({ product, quantity: initialCatalogQuantity(product), qualityOptionId: option.id }));
+  await page.addInitScript(items => localStorage.setItem("dushanbe-fresh.cart.v1", JSON.stringify({ items })), items);
+  await page.goto("/catalog");
+  await expect(card(page, product).locator("output")).toHaveCount(1);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dushanbe-fresh.cart.v1")!).items)).toEqual(items);
+  await page.locator(".cart-link").click();
   await expect(page.locator(".cart-item").filter({ hasText: product.name })).toHaveCount(2);
 });
 

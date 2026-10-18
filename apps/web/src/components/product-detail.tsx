@@ -15,11 +15,10 @@ import { ProductGallery } from "./product-gallery";
 import { FavoriteButton } from "./favorite-button";
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
-  const { t, name, label, description, priceLabel } = useI18n();
+  const { t, name, description, priceLabel } = useI18n();
   const { addProduct, hydrated } = useCart();
   const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
   const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
-  const [qualityOption, setQualityOption] = useState(initialProduct?.qualityOptions[0]?.id ?? "");
   const [error, setError] = useState<string | null>(initialProduct === null ? "Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения." : null);
   const [notice, setNotice] = useState("");
   const [retry, setRetry] = useState(0);
@@ -35,7 +34,6 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
         if (cancelled) return;
         setProduct(nextProduct);
         setQuantity(nextProduct.minQuantity);
-        setQualityOption(nextProduct.qualityOptions[0]?.id ?? "");
       })
       .catch(() => { if (!cancelled) setError("Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения."); });
     return () => { cancelled = true; };
@@ -62,29 +60,6 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
         </strong>
         <p>{description(product)}</p>
 
-        {product.qualityOptions.length > 0 ? (
-          <fieldset className="quality-options">
-            <legend>{t("Предпочтение по качеству")}</legend>
-            <div>
-              {product.qualityOptions.map((option) => (
-                <label
-                  className={qualityOption === option.id ? "quality-chip is-active" : "quality-chip"}
-                  key={option.id}
-                >
-                  <input
-                    checked={qualityOption === option.id}
-                    name="qualityOption"
-                    onChange={() => setQualityOption(option.id)}
-                    type="radio"
-                    value={option.id}
-                  />
-                  {label(option)}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ) : null}
-
         <div className="field">
           <span>{t("Количество")}</span>
           <QuantityStepper name={name(product)} quantity={quantity} unit={product.unit}
@@ -102,7 +77,7 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
             addProduct({
               product,
               quantity,
-              qualityOptionId: qualityOption || null
+              qualityOptionId: null
             });
             setNotice("Добавлено в корзину.");
           }}

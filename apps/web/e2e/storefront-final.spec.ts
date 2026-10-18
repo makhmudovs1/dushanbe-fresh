@@ -18,9 +18,18 @@ for (const width of [375, 430, 768, 1024, 1280, 1440]) test(`final catalog compo
   const candidate = page.locator(".product-card").filter({ has: page.locator(".product-card__action:not(.product-card__action--options)") }).first();
   const href = await candidate.locator("h3 a").getAttribute("href");
   const ordinary = page.locator(".product-card").filter({ has: page.locator(`h3 a[href="${href}"]`) });
-  expect(await ordinary.locator(".product-card__action").evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(20, 92, 50)");
+  expect(await ordinary.locator(".product-card__action").evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(255, 255, 255)");
+  expect(await ordinary.locator(".product-card__action").evaluate(element => getComputedStyle(element).borderRadius)).toBe("50%");
   expect(await page.locator(".cart-link").evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
   expect(await page.locator(".cart-link svg").evaluate(element => getComputedStyle(element).color)).toBe("rgb(20, 92, 50)");
+  const header = (await page.locator(".catalog-page-heading").boundingBox())!;
+  const layout = (await page.locator(".catalog-page > .storefront-layout").boundingBox())!;
+  expect(layout.y).toBeGreaterThanOrEqual(header.y + header.height);
+  const cartBefore = await page.locator(".cart-link").boundingBox();
+  await page.locator(".cart-link").hover();
+  expect(await page.locator(".cart-link").boundingBox()).toEqual(cartBefore);
+  expect(await page.locator(".cart-link").evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+  await page.mouse.move(0, 0);
   await ordinary.locator(".product-card__action").click();
   await expect(ordinary.locator("output")).toBeVisible();
   const badge = (await page.locator(".cart-link strong").boundingBox())!;
@@ -40,6 +49,15 @@ test("thematic categories use database names, visibility and images; products oc
   const categories = await (await page.request.get("/api/v1/categories")).json() as Category[];
   await page.goto("/");
   await expect(page.locator(".home-category-section").first()).toBeVisible();
+  await expect(page.locator(".promotion-banner")).toHaveCount(3);
+  await expect(page.locator(".home-benefits li")).toHaveCount(3);
+  const sections = await page.locator(".home-category-section").evaluateAll(elements => elements.map(element => {
+    const box = element.getBoundingClientRect(); return { top: box.top, bottom: box.bottom, left: box.left };
+  }));
+  for (let i = 1; i < sections.length; i++) {
+    expect(sections[i].top).toBeGreaterThan(sections[i - 1].bottom);
+    expect(sections[i].left).toBe(sections[0].left);
+  }
   const tiles = page.locator(".storefront-category");
   for (const tile of await tiles.all()) {
     const slug = new URL((await tile.getAttribute("href"))!, page.url()).searchParams.get("category");

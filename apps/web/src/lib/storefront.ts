@@ -18,9 +18,24 @@ export function homeCategorySections(categories: Category[], products: Pick<Prod
       const ownProducts = products.some(product => product.category.id === member.id);
       return ownProducts || !children.length ? [member, ...children] : children;
     });
-    return { category, tiles, titleKey: members.length > 1 ? "Овощи и зелень" : null,
+    return { category, tiles, titleKey: category.slug === "vegetables" ? "Овощные продукты" : null,
       sortOrder: Math.min(...members.map(member => member.sortOrder)) };
   }).sort((a, b) => a.sortOrder - b.sortOrder || a.category.name.localeCompare(b.category.name, "ru"));
+}
+
+const promotionBanners = [
+  { id: "vegetables", slugs: ["vegetables", "greens"], image: "/storefront/home/vegetables.webp", title: "Овощи и зелень", text: "К вашему столу", action: "К покупкам", alt: "Помидоры, огурцы и свежая зелень", primary: true },
+  { id: "fruits", slugs: ["fruits"], image: "/storefront/home/fruits.webp", title: "Фрукты к вашему столу", text: "", action: "Выбрать", alt: "Бананы, яблоко и мандарин", primary: false },
+  { id: "dairy", slugs: ["dairy", "milk-products", "dairy-products"], image: "/storefront/home/dairy.webp", title: "Молочные продукты", text: "", action: "Смотреть", alt: "Молоко, творог и сыр", primary: false }
+] as const;
+
+export function homePromotionBanners(categories: Category[], products: Pick<Product, "category">[]) {
+  const visible = visibleCategoryTree(categories);
+  return promotionBanners.map(banner => {
+    const category = banner.slugs.map(slug => visible.find(item => item.slug === slug)).find(item => item &&
+      products.some(product => categoryDescendantIds(visible, item.id).includes(product.category.id)));
+    return { ...banner, href: category ? `/catalog?category=${encodeURIComponent(category.slug)}` : null };
+  });
 }
 
 // Launch artwork is replaceable by a category upload; the list still comes from the API.

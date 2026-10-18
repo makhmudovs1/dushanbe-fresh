@@ -1,0 +1,41 @@
+.home-promotions { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 14px; width: 100%; min-width: 0; aspect-ratio: 3.7; min-height: 300px; }
+.promotion-banner { position: relative; overflow: hidden; border-radius: 18px; background: #f3f5f1; min-width: 0; }
+.promotion-banner > img { object-fit: cover; }
+.promotion-banner--primary { grid-row: span 2; }
+.promotion-banner--primary > img { object-position: left center; }
+.promotion-banner__content { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; width: 55%; padding: 22px; gap: 10px; color: #17231b; }
+.promotion-banner h1 { font-size: 30px; line-height: 35px; font-weight: 750; margin: 0; }
+.promotion-banner h2 { font-size: 20px; line-height: 24px; margin: 0; font-weight: 700; }
+.promotion-banner p { font-size: 14px; line-height: 20px; margin: 0; color: #53634d; }
+.promotion-banner a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-primary); font-size: 14px; line-height: 18px; font-weight: 650; border-radius: 8px; }
+.promotion-banner a:hover { color: var(--color-primary-dark); text-decoration: underline; text-underline-offset: 3px; }
+.promotion-banner a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.promotion-banner--primary a { background: var(--color-primary); color: white; padding: 10px 14px; margin-top: 8px; }
+.promotion-banner--primary a:hover { background: var(--color-primary-dark); color: white; text-decoration: none; }
+.promotion-banner__soon { color: #506351; font-size: 13px; line-height: 18px; }
+.home-benefits { display: flex; justify-content: space-between; align-items: center; gap: 16px; list-style: none; margin: 18px 0 28px; padding: 14px 0; border-bottom: 1px solid #edf0ed; }
+.home-benefits li { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; font-size: 13px; line-height: 18px; color: #4a5b4f; }
+.home-benefits svg { flex: 0 0 20px; color: var(--color-primary); }
+.home-promotions-skeleton { margin-bottom: 28px; }
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .promotion-banner__content { padding: 16px; width: 58%; }
+  .promotion-banner h1 { font-size: 27px; line-height: 32px; }
+  .promotion-banner h2 { font-size: 18px; line-height: 22px; }
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+  .home-promotions { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 260px 136px; aspect-ratio: auto; min-height: 0; }
+  .promotion-banner--primary { grid-column: 1 / -1; grid-row: auto; }
+}
+@media (max-width: 767px) {
+  .home-promotions { grid-template-columns: minmax(0, 1fr); grid-template-rows: 190px 116px 116px; aspect-ratio: auto; min-height: 0; gap: 10px; }
+  .promotion-banner--primary { grid-row: auto; }
+  .promotion-banner { border-radius: 16px; }
+  .promotion-banner__content { padding: 14px 16px; gap: 6px; width: 55%; }
+  .promotion-banner h1 { font-size: 23px; line-height: 27px; }
+  .promotion-banner h2 { font-size: 18px; line-height: 22px; }
+  .promotion-banner p { font-size: 13px; line-height: 17px; }
+  .promotion-banner a { font-size: 13px; }
+  .promotion-banner--primary a { margin-top: 4px; padding-inline: 10px; }
+  .home-benefits { align-items: flex-start; gap: 8px; margin: 12px 0 24px; padding-block: 10px; }
+  .home-benefits li { flex: 1; flex-direction: column; gap: 5px; text-align: center; font-size: 11px; line-height: 15px; }
+}
