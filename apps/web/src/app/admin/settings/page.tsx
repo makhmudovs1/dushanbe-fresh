@@ -5,14 +5,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { adminRequest } from "@/lib/operations";
 import type { StaffDto } from "@dushanbe-fresh/shared";
+import { OrderPricingSettings } from "@/components/order-pricing-settings";
 export default function SettingsPage() {
   const resource = useAdminResource<Array<{ key: string; value: string }>>("settings");
   const [threshold, setThreshold] = useState<string | null>(null);
   const staff = useAdminResource<StaffDto[]>("staff");
   const [defaults, setDefaults] = useState<Record<string, string>>({});
-  const labels: Record<string, string> = { minimum_order_amount: "Минимальная сумма товаров", delivery_fee: "Доставка", service_fee: "Сервисный сбор" };
   return <main className="page"><section className="shell operations"><header className="page-heading"><h1>Настройки</h1><p>Текущие условия заказа</p></header>
-    <AdminNotice error={resource.error} busy={resource.busy} /><dl className="operations-info">{resource.data?.filter(setting => setting.key in labels).map(setting => <div key={setting.key}><dt>{labels[setting.key]}</dt><dd>{setting.value} сомони</dd></div>)}</dl>
+    <AdminNotice error={resource.error} busy={resource.busy} />
+    <OrderPricingSettings settings={resource.data} busy={resource.busy} run={resource.run} />
     <form className="operations-filters" onSubmit={event => { event.preventDefault(); void resource.run(() => adminRequest("settings/purchase-price-deviation", "PATCH", { value: threshold ?? resource.data?.find(setting => setting.key === "purchase_price_deviation_percent")?.value ?? "15" })); }}>
       <label className="field">Порог отклонения закупочной цены, %<input required inputMode="decimal" value={threshold ?? resource.data?.find(setting => setting.key === "purchase_price_deviation_percent")?.value ?? "15"} onChange={event => setThreshold(event.target.value.replace(",", "."))} /></label>
       <button className="primary-action" disabled={resource.busy || !resource.data}>Сохранить порог</button>

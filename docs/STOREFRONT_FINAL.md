@@ -58,7 +58,7 @@ not copied from a retailer. Предметная часть каждой ген�
 ## Данные и deployment
 
 Новых миграций на этом этапе нет. Production до обновления: `9e29bc5`,
-две миграции предыдущего этапа ещё не применены. Нужны только
+две миграции предыдущего этапа до обновления ещё не были применены. Применены только
 `20261018100000_category_presentation` и `20261018160000_category_hierarchy`:
 nullable image/icon/parent, `is_visible=true`, индекс и FK без переноса товаров.
 
@@ -115,3 +115,41 @@ Readonly UI smoke и screenshots RU/TJ: 375/430/768/1024/1280/1440 px.
 токена. Скриншоты: `/tmp/df-storefront-final-local-screenshots/`.
 JSON-отчёты: `/tmp/df-storefront-final-e2e.json`,
 `/tmp/df-storefront-final-e2e-retry.json`, `/tmp/df-storefront-final-layout.json`.
+
+## Результат первого production deploy
+
+Выложен `ab28da232542cc8de077bcaaf9c75f2e2e08c8ec`. Сборки выполнены отдельно от
+работающих процессов, старые сборки сохранены для rollback. Перед переключением
+создан дополнительный `database-predeploy.dump` в той же backup-директории:
+SHA-256 `d672b790999dd8f900d5c46a188febe2db0fe7df639fc52d168e9bbd965b936d`.
+Обе additive-миграции завершены, назначены пять независимых `iconUrl`.
+
+Проверены реальные RU/TJ страницы на 375/430/768/1024/1280/1440 px:
+главная, категория, фотографии и иконки, отсутствие второго поиска/сердца в
+хедере/повторного наличия, корзина, счётчик, явный выбор качества, товар,
+страница входа и неизвестный tracking token. Переполнения, page errors,
+hydration warnings и запрещённых записей нет. Полный повтор для скриншотов
+потребовался после системной смены сети Chrome `ERR_NETWORK_CHANGED`.
+Production screenshots: `/tmp/df-storefront-final-production-screenshots/`.
+Настоящие заказы и вход с production-паролем не выполнялись; проверка существующего
+tracking невозможна при нуле заказов.
+
+Сравнение 24 таблиц: старые поля категорий и все остальные данные, кроме
+`delivery_slots`, совпадают по хешам. Все прежние 30 delivery slots также совпадают
+по хешу; неизменённый `ensureDeliverySlots()` добавил 15 недостающих при старте.
+Сохранились 61 товар, 70 product_images, 6 quality options, 1 пользователь,
+3 refresh sessions, 0 заказов, 0 клиентов, 1 app setting. Публично 42 товара и
+5 категорий. Нет reset, seed, удаления данных или изменения цен.
+
+После переключения исправлена группа только `.next/cache` на `dushanbe-fresh`
+и включена групповая запись/setgid для каталогов: процесс сервиса должен иметь
+возможность сохранять оптимизированные изображения. Новых ошибок после этого
+в журнале нет, автоматических рестартов 0. DNS, Caddy, Docker, systemd units,
+production env и постоянное хранилище product-images не изменялись.
+
+Выявлен отдельный существовавший production-блокер: отсутствуют все три ключа
+`minimum_order_amount`, `delivery_fee`, `service_fee`; checkout validate возвращает
+503 с понятным сообщением. Контрольный снимок подтверждает, что настройки не
+изменились при deploy. Тарифы не подставлялись без решения владельца.
+По дополнительному запросу добавляется редактирование в `/admin/settings`,
+см. `ORDER_PRICING_SETTINGS.md`.

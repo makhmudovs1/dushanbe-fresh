@@ -45,6 +45,8 @@ export class OperationsController {
   }
   @Get("settings")
   settings() { return this.prisma.appSetting.findMany({ where: { key: { in: ["minimum_order_amount", "delivery_fee", "service_fee", "service_fee_percent", "customer_refusal_keep_fees", "purchase_price_deviation_percent", "default_picker_id", "default_courier_id"] } }, orderBy: { key: "asc" } }); }
+  @Patch("settings/order-pricing")
+  orderPricing(@Req() req: StaffRequest, @Body() body: unknown) { return this.operations.updateOrderPricing(body, req.staff); }
   @Patch("settings/default-staff")
   defaultStaff(@Req() req: StaffRequest, @Body() body: unknown) { return this.operations.updateDefaultStaff(body, req.staff); }
   @Patch("settings/purchase-price-deviation")

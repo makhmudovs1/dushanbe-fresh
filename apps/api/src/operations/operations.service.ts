@@ -112,6 +112,22 @@ export class OperationsService {
     return decimal(setting?.value ?? "15", 2, "Порог отклонения закупочной цены");
   }
 
+  async updateOrderPricing(value: unknown, actor?: StaffUser) {
+    const body = object(value);
+    const fields = [
+      ["minimumOrderAmount", "minimum_order_amount", "Минимальная сумма заказа"],
+      ["deliveryFee", "delivery_fee", "Стоимость доставки"],
+      ["serviceFee", "service_fee", "Сервисный сбор"]
+    ] as const;
+    const values = fields.map(([field, key, label]) => ({ key, value: decimal(body[field], 2, label).toFixed(2) }));
+    return this.transaction(async tx => {
+      assertRole(await this.currentActor(tx, actor), "admin");
+      for (const setting of values) await tx.appSetting.upsert({ where: { key: setting.key }, create: setting, update: { value: setting.value } });
+      await audit(tx, actor, "settings.order_pricing_changed", "order_pricing");
+      return values;
+    });
+  }
+
   async updatePurchaseThreshold(value: unknown) {
     const threshold = decimal(object(value).value, 2, "Порог отклонения закупочной цены");
     if (threshold.gt(100)) throw new BadRequestException("Порог должен быть от 0 до 100%.");

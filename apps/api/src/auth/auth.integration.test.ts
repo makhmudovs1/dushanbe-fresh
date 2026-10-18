@@ -6,7 +6,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -78,6 +78,31 @@ describe.skipIf(!url)("staff auth and RBAC over HTTP", () => {
     for (const [key, value] of savedDefaults) await db.appSetting.create({ data: { key, value } });
     await db.user.deleteMany({ where: { OR: [{ id: { in: Object.values(ids) } }, { phone }] } }); await db.$disconnect(); vi.unstubAllEnvs();
   });
+  it("allows only admin to edit complete, nonnegative order pricing without partial writes", async () => {
+    const path = "/admin/settings/order-pricing";
+    const payload = { minimumOrderAmount: "150.25", deliveryFee: "12.50", serviceFee: "0" };
+    const keys = ["minimum_order_amount", "delivery_fee", "service_fee"];
+    const before = await db.appSetting.findMany({ where: { key: { in: keys } }, orderBy: { key: "asc" } });
+    expect((await request(path, undefined, "PATCH", payload)).status).toBe(401);
+    for (const role of ["picker", "courier"]) expect((await request(path, role, "PATCH", payload)).status).toBe(403);
+    for (const value of [undefined, null, "", -1, "-1", "NaN", "Infinity", "1.001", "10000000000", "1,25"]) {
+      expect((await request(path, "admin", "PATCH", { ...payload, serviceFee: value })).status).toBe(400);
+    }
+    expect(await db.appSetting.findMany({ where: { key: { in: keys } }, orderBy: { key: "asc" } })).toEqual(before);
+    try {
+      await db.appSetting.deleteMany({ where: { key: { in: keys } } });
+      expect((await request(path, "admin", "PATCH", payload)).status).toBe(200);
+      const saved = await db.appSetting.findMany({ where: { key: { in: keys } } });
+      expect(Object.fromEntries(saved.map(row => [row.key, row.value]))).toEqual({ minimum_order_amount: "150.25", delivery_fee: "12.50", service_fee: "0.00" });
+      expect((await request(path, "admin", "PATCH", { minimumOrderAmount: "0", deliveryFee: "0", serviceFee: "9999999999.99" })).status).toBe(200);
+      expect(await db.appSetting.count({ where: { key: { in: keys } } })).toBe(3);
+      expect(await db.operationalAudit.count({ where: { userId: ids.admin, action: "settings.order_pricing_changed" } })).toBe(2);
+    } finally {
+      await db.appSetting.deleteMany({ where: { key: { in: keys } } });
+      for (const row of before) await db.appSetting.create({ data: { ...row, value: row.value ?? Prisma.JsonNull } });
+    }
+  });
+
   it("logs in with bcrypt and stores only a refresh hash in the database", async () => {
     const { response, data, cookie } = await login("admin");
     expect(data.user.roles).toEqual(["admin"]); expect(data).not.toHaveProperty("refreshToken"); expect(data.user).not.toHaveProperty("passwordHash");
