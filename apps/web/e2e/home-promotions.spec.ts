@@ -23,12 +23,11 @@ for (const width of [375, 768, 1440]) for (const locale of ["ru", "tg"]) {
       expect(banners[0].y).toBe(banners[1].y);
       expect(banners[2].y).toBeGreaterThan(banners[1].bottom);
       expect(Math.abs(banners[0].bottom - banners[2].bottom)).toBeLessThan(1);
-    } else if (width < 768) {
-      expect(banners[1].y).toBeGreaterThan(banners[0].bottom);
-      expect(banners[2].y).toBeGreaterThan(banners[1].bottom);
     } else {
-      expect(banners[1].y).toBeGreaterThan(banners[0].bottom);
+      expect(banners[1].y).toBe(banners[0].y);
       expect(banners[2].y).toBe(banners[1].y);
+      expect(banners[1].x).toBeGreaterThan(banners[0].right);
+      await expect(page.locator('.home-promotion-dots button[aria-pressed="true"]')).toHaveCount(1);
     }
     const contentFits = await page.locator(".promotion-banner__content").evaluateAll(elements => elements.every(element => {
       const parent = element.getBoundingClientRect();
@@ -37,7 +36,7 @@ for (const width of [375, 768, 1440]) for (const locale of ["ru", "tg"]) {
       });
     }));
     expect(contentFits).toBe(true);
-    const sections = await page.locator(".home-category-section").evaluateAll(elements => elements.map(element => {
+    const sections = await page.locator(".home-category-section:visible, .mobile-home-categories > section:visible").evaluateAll(elements => elements.map(element => {
       const box = element.getBoundingClientRect(); return { y: box.y, bottom: box.bottom };
     }));
     for (let i = 1; i < sections.length; i++) expect(sections[i].y).toBeGreaterThan(sections[i - 1].bottom);

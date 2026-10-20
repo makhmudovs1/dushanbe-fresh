@@ -13,26 +13,24 @@ for (const width of [375, 768, 1440]) for (const language of ["ru", "tg"]) {
     page.on("pageerror", error => errors.push(error.message));
     await page.goto("/");
     await expect(page.getByRole("heading", { name: language === "ru" ? "Овощи и зелень" : "Сабзавот ва кабудӣ", level: 1, exact: true })).toBeVisible();
-    const categories = page.locator(".storefront-category");
+    const categories = page.locator(".storefront-category:visible");
     await expect(categories.first()).toBeVisible();
     await expect(page.locator(".product-card").first()).toBeVisible();
-    for (const selector of [".storefront-category img"]) {
-      await page.locator(selector).evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
+    for (const selector of [".storefront-category:visible img"]) {
+      await page.locator(selector).evaluateAll(images => Promise.all(images.map(element => {
+        const image = element as HTMLImageElement; image.loading = "eager"; return image.decode();
+      })));
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 768 ? 114 : 65);
-    expect(await page.locator(".product-grid").first().evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(width < 768 ? 2 : width < 1024 ? 3 : 4);
+    expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 1024 ? 114 : 65);
+    expect(await page.locator(".product-grid").first().evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(width < 1024 ? 2 : 4);
     await page.screenshot({ path: info.outputPath(`home-${language}-${width}.png`), fullPage: true });
     if (width === 1440) await expect(page.locator(".storefront-sidebar-slot")).toBeVisible();
     else {
-      const trigger = page.getByRole("button", { name: language === "ru" ? "Открыть каталог" : "Кушодани каталог" });
-      await trigger.click();
-      const dialog = page.getByRole("dialog");
-      await expect(dialog.locator(".category-drawer__cart")).toBeVisible();
-      await expect(dialog.locator(".catalog-sidebar nav a").first()).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(dialog).toHaveCount(0);
-      await expect(trigger).toBeFocused();
+      await page.locator('.mobile-navigation a[href="/categories"]').click();
+      await expect(page.locator(".catalog-sidebar--category-screen nav a").first()).toBeVisible();
+      await page.goBack();
+      await expect(page.locator(".storefront-category:visible").first()).toBeVisible();
     }
     const target = await categories.first().getAttribute("href");
     await categories.first().click();
@@ -49,16 +47,16 @@ test("header search uses the existing catalog search and resets after category n
   await expect(page.locator(".product-card")).toHaveCount(1);
   await expect(page.locator(".product-card")).toContainText("Картофель");
   await page.locator(".site-logo").click();
-  await page.locator(".storefront-category").first().click();
+  await page.locator(".storefront-category:visible").first().click();
   await expect(page.locator(".header-search input")).toHaveValue("");
   expect(await page.locator(".product-card").count()).toBeGreaterThan(1);
 });
 
-test("mobile drawer can retry failed categories without hiding the error", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 900 });
+test("desktop drawer can retry failed categories without hiding the error", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   let failed = true;
   await page.route("**/api/v1/categories", route => failed ? route.fulfill({ status: 503, json: {} }) : route.continue());
-  await page.goto("/");
+  await page.goto("/about");
   await page.getByRole("button", { name: "Открыть каталог" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("status")).toContainText("Не удалось загрузить категории");
@@ -99,7 +97,7 @@ test("active-order header fits every viewport and RU/TJ without losing the saved
       await page.getByRole("button", { name: language, exact: true }).click();
       await expect(page.locator(".header-last-order")).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 768 ? 114 : 65);
+      expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 1024 ? 114 : 65);
     }
   }
 });

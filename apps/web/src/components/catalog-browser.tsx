@@ -8,6 +8,7 @@ import { ProductCard } from "./product-card";
 import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
 import { CategorySidebar } from "./category-navigation";
 import { CatalogBreadcrumbs } from "./catalog-breadcrumbs";
+import { MobileCategoryTabs } from "./mobile-category-tabs";
 
 export function CatalogBrowser({
   initialCategory = "", initialSearch = "", initialCategories, initialProducts, withSidebar = false, limit
@@ -66,6 +67,7 @@ export function CatalogBrowser({
     {withSidebar ? <div className="storefront-sidebar-slot">{categoriesPending ? <CategorySkeleton /> :
       <CategorySidebar categories={categoriesError ? null : categories} active={currentCategory} onRetry={() => void loadCategories()} />}</div> : null}
     <section className="catalog-browser" aria-busy={pending}>
+      {withSidebar && !currentSearch ? <MobileCategoryTabs categories={categories} selected={category} /> : null}
       {categoriesError && !withSidebar ? <div className="notice" role="alert">
         <p>{t("Не удалось загрузить категории. Попробуйте ещё раз.")}</p>
         <button className="secondary-link" type="button" onClick={() => void loadCategories()}>{t("Повторить")}</button>

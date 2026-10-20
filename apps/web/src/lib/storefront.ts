@@ -1,6 +1,19 @@
 import { categoryDescendantIds, visibleCategoryTree } from "@dushanbe-fresh/shared";
 import type { Category, Product } from "./api";
 
+export function mobileHomeCategories(categories: Category[], products: Pick<Product, "category">[]) {
+  const visible = visibleCategoryTree(categories);
+  const populated = visible.filter(category => {
+    const ids = new Set(categoryDescendantIds(visible, category.id));
+    return products.some(product => ids.has(product.category.id));
+  }).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "ru"));
+  return {
+    roots: populated.filter(category => !category.parentId),
+    sections: populated.map(category => ({ category, tiles: populated.filter(child => child.parentId === category.id) }))
+      .filter(section => section.tiles.length > 0)
+  };
+}
+
 export function homeCategorySections(categories: Category[], products: Pick<Product, "category">[]) {
   const visible = visibleCategoryTree(categories);
   const populated = (category: Category) => {

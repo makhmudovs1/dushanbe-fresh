@@ -14,7 +14,7 @@ for (const width of [375, 430, 768, 1024, 1280, 1440]) test(`final catalog compo
   await expect(page.locator(".product-card .availability-badge")).toHaveCount(0);
   await expect(page.getByRole("search")).toHaveCount(1);
   const grid = page.locator(".product-grid").first();
-  expect(await grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(width < 768 ? 2 : width < 1024 ? 3 : 4);
+  expect(await grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(width < 1024 ? 2 : 4);
   const candidate = page.locator(".product-card").filter({ has: page.locator(".product-card__action:not(.product-card__action--options)") }).first();
   const href = await candidate.locator("h3 a").getAttribute("href");
   const ordinary = page.locator(".product-card").filter({ has: page.locator(`h3 a[href="${href}"]`) });

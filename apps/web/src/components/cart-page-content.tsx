@@ -100,7 +100,9 @@ export function CartPageContent() {
         {containsWeightedProducts ? (
           <p>{t("Для продуктов на вес итоговая сумма может немного измениться после сборки.")}</p>
         ) : null}
-        <Link className="primary-link" href="/checkout">{t("Оформить заказ")}</Link>
+        <div className="cart-checkout-bar"><Link className="primary-link" href="/checkout" aria-label={t("Оформить заказ")}><span>{t("Оформить заказ")}</span>
+          <span className="cart-checkout-bar__amount">{subtotalPrefix}{decimalLabel(formatMoneyFromMinor(subtotalMinor))} {t("сомони")}</span>
+        </Link></div>
       </aside>
     </div>
     </>

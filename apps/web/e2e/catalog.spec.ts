@@ -30,7 +30,7 @@ test("quick selection, step, removal, and shared cart state", async ({ page }) =
   await expect(item.locator("output")).toHaveText(quantityLabel(increased, product.unit));
   await page.reload();
   await expect(item.locator("output")).toHaveText(quantityLabel(increased, product.unit));
-  await page.getByRole("link", { name: /^Корзина/ }).click();
+  await page.locator(".cart-link").click();
   const row = page.locator(".cart-item").filter({ hasText: product.name });
   await expect(row.locator("output")).toHaveText(quantityLabel(increased, product.unit));
   await row.getByRole("button", { name: /^Уменьшить количество/ }).click();
@@ -62,7 +62,7 @@ test("products with legacy qualities add directly without selecting an arbitrary
   await expect(item.locator("output")).toHaveCount(1);
   await item.locator("h3 a").click();
   await expect(page.locator(".quality-options")).toHaveCount(0);
-  await page.getByRole("link", { name: /^Корзина/ }).click();
+  await page.locator(".cart-link").click();
   await expect(page.locator(".cart-item").filter({ hasText: product.name })).toHaveCount(1);
 });
 
@@ -99,10 +99,10 @@ for (const width of [375, 768, 1440]) {
       }
     }
     const columns = await page.locator(".product-grid").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-    expect(columns).toBe(width === 1440 ? 4 : width === 768 ? 3 : 2);
+    expect(columns).toBe(width === 1440 ? 4 : 2);
     await page.screenshot({ path: testInfo.outputPath(`catalog-${width}.png`), fullPage: true });
     await page.screenshot({ path: testInfo.outputPath(`catalog-viewport-${width}.png`) });
-    await page.getByRole("link", { name: /^Корзина/ }).click();
+    await page.locator(".cart-link").click();
     await expect(page.locator(".cart-item")).toHaveCount(3);
     await noOverflow(page);
     await page.screenshot({ path: testInfo.outputPath(`cart-${width}.png`), fullPage: true });

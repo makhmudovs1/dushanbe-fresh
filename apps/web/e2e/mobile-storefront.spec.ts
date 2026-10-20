@@ -1,0 +1,131 @@
+import { expect, test } from "@playwright/test";
+import type { Product } from "../src/lib/api";
+import { initialCatalogQuantity } from "../src/cart/catalog-selection";
+import { createCartItem, incrementQuantity } from "../src/cart/cart";
+import { quantityLabel } from "../src/lib/format";
+
+for (const width of [375, 390, 430, 768]) for (const locale of ["ru", "tg"] as const) {
+  test(`mobile shopping, banner swipe and navigation ${locale} ${width}px`, async ({ page, context, baseURL }, info) => {
+    expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL!).hostname);
+    await page.setViewportSize({ width, height: 844 });
+    await context.addCookies([{ name: "df-language", value: locale, url: baseURL! }]);
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    const products = await (await page.request.get("/api/v1/products")).json() as Product[];
+    const product = products.find(item => item.slug === "potatoes")!;
+    expect(product).toBeTruthy();
+    const name = locale === "tg" ? product.nameTj! : product.name;
+    const minimum = initialCatalogQuantity(product);
+    const increased = incrementQuantity(createCartItem({ product, quantity: minimum, qualityOptionId: null }));
+    await page.goto("/");
+    const navigation = page.locator(".mobile-navigation");
+    await expect(navigation).toBeVisible();
+    await expect(navigation.locator("a")).toHaveCount(3);
+    await expect(navigation.locator('a[href="/"]')).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("search")).toHaveCount(1);
+    await expect(page.locator(".header-catalog-trigger")).toBeHidden();
+    await expect(page.locator(".mobile-home-categories .storefront-category").first()).toBeVisible();
+    await expect(page.locator(".product-card h3").first()).toBeVisible();
+    await expect(page.locator(".product-card")).toHaveCount(8);
+    const search = (await page.locator(".header-search").boundingBox())!;
+    expect(search.width).toBe(width - 32);
+    expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(114);
+    const tiles = await page.locator(".mobile-home-categories .storefront-category").evaluateAll(elements => elements.map(element => element.getAttribute("href")));
+    expect(new Set(tiles).size).toBe(tiles.length);
+    await expect(page.locator(".product-card .favorite-button:visible")).toHaveCount(0);
+    await page.screenshot({ path: info.outputPath(`home-${locale}-${width}.png`) });
+
+    const track = page.locator(".home-promotions");
+    const bounds = (await track.boundingBox())!;
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+    const y = bounds.y + bounds.height - 25;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: bounds.x + bounds.width - 20, y }] });
+    for (let step = 1; step <= 8; step++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: bounds.x + bounds.width - 20 - step * (bounds.width - 40) / 8, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect.poll(() => track.evaluate(element => element.scrollLeft)).toBeGreaterThan(bounds.width / 2);
+    await expect(page.locator(".home-promotion-dots button").nth(1)).toHaveAttribute("aria-pressed", "true");
+    // Wait for native touch momentum and scroll snapping before a new gesture.
+    await track.evaluate(element => new Promise<void>(resolve => {
+      let previous = element.scrollLeft, stable = 0;
+      function frame() {
+        stable = Math.abs(element.scrollLeft - previous) < 0.1 ? stable + 1 : 0;
+        previous = element.scrollLeft;
+        if (stable >= 6) resolve(); else requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }));
+    await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+    await cdp.detach();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.locator(".home-promotion-dots button").first().click();
+    await expect.poll(() => track.evaluate(element => element.scrollLeft)).toBe(0);
+
+    await navigation.locator('a[href="/categories"]').click();
+    const menu = page.locator(".catalog-sidebar--category-screen");
+    await expect(menu).toBeVisible();
+    await expect(menu.locator('.catalog-sidebar__sections a')).toHaveCount(1);
+    await page.screenshot({ path: info.outputPath(`catalog-${locale}-${width}.png`) });
+    await menu.locator('a[href="/catalog?category=vegetables"]').click();
+    await expect(page.locator(".catalog-page-heading h1")).toHaveText(locale === "ru" ? "Овощи" : "Сабзавот");
+    await expect(page.locator(".storefront-sidebar-slot")).toBeHidden();
+    expect(await page.locator(".product-grid").evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(2);
+    await page.screenshot({ path: info.outputPath(`category-${locale}-${width}.png`) });
+    const card = page.locator(".product-card").filter({ has: page.getByRole("heading", { name, exact: true }) });
+    const action = card.locator(".product-card__action");
+    expect((await action.boundingBox())!.width).toBeGreaterThanOrEqual(44);
+    const cardBefore = await card.boundingBox();
+    await action.click();
+    await expect(card.locator("output")).toHaveText(quantityLabel(minimum, product.unit, locale));
+    await card.locator(".quantity-stepper button").last().click();
+    await expect(card.locator("output")).toHaveText(quantityLabel(increased, product.unit, locale));
+    expect(await card.boundingBox()).toEqual(cardBefore);
+    await page.reload();
+    await expect(card.locator("output")).toHaveText(quantityLabel(increased, product.unit, locale));
+    await card.locator(".quantity-stepper button").first().click();
+    await card.locator(".quantity-stepper button").first().click();
+    await expect(action).toBeVisible();
+    await action.click();
+    await card.locator("h3 a").click();
+    await expect(page).toHaveURL(`/products/${product.slug}`);
+    await page.goBack();
+    await expect(card.locator("output")).toHaveText(quantityLabel(minimum, product.unit, locale));
+
+    const input = page.locator(".header-search input");
+    await input.fill(name);
+    await expect(page.locator(".product-card")).toHaveCount(1);
+    await expect(page.locator(".product-card h3")).toHaveText(name);
+    await input.blur();
+    await page.screenshot({ path: info.outputPath(`search-${locale}-${width}.png`) });
+    await page.locator(".header-search__clear").click();
+    await expect(page).toHaveURL(/\/catalog\?category=vegetables$/);
+    expect(await page.locator(".product-card").count()).toBeGreaterThan(1);
+    await page.goBack();
+    await expect(input).toHaveValue(name);
+    await page.goForward();
+    await expect(input).toHaveValue("");
+
+    await navigation.locator('a[href="/cart"]').click();
+    const row = page.locator(".cart-item");
+    await expect(row).toHaveCount(1);
+    const amount = page.locator(".cart-checkout-bar__amount");
+    const before = await amount.innerText();
+    await row.locator(".quantity-stepper button").last().click();
+    await expect(amount).not.toHaveText(before);
+    const bar = (await page.locator(".cart-checkout-bar").boundingBox())!;
+    const nav = (await navigation.boundingBox())!;
+    expect(bar.y + bar.height).toBeLessThanOrEqual(nav.y);
+    expect((await page.locator(".cart-checkout-bar a").boundingBox())!.width).toBe(width - 32);
+    await page.screenshot({ path: info.outputPath(`cart-${locale}-${width}.png`) });
+    await page.locator(".cart-checkout-bar a").click();
+    await expect(page).toHaveURL("/checkout");
+    await expect(navigation).toHaveCount(0);
+    await expect(page.locator("form.checkout-layout")).toBeVisible();
+    await page.goBack();
+    await row.locator(".cart-item__delete").click();
+    await expect(page.locator(".empty-cart")).toBeVisible();
+    await expect(page.locator(".cart-checkout-bar")).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
+  });
+}

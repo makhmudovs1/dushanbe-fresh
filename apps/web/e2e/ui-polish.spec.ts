@@ -134,7 +134,7 @@ for (const width of [375, 768, 1440]) {
         const logoBox = (await page.locator(".site-logo").boundingBox())!;
         const navBox = (await page.locator(".site-nav").boundingBox())!;
         expect(navBox.x).toBeGreaterThanOrEqual(logoBox.x + logoBox.width);
-        expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 768 ? 114 : 65);
+        expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 1024 ? 114 : 65);
         expect(await background(page)).toBe("rgb(248, 250, 248)");
         await page.screenshot({ path: info.outputPath(`${index}-light-${width}.png`), fullPage: true });
       }

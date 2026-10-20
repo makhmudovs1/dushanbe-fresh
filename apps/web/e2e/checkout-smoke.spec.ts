@@ -19,7 +19,7 @@ test("mobile catalog selection reaches checkout and order confirmation", async (
   for (let quantity = Number(product.minQuantity); quantity < 3; quantity += Number(product.quantityStep)) {
     await card.getByRole("button", { name: /^Увеличить количество/ }).click();
   }
-  await page.getByRole("link", { name: /^Корзина/ }).click();
+  await page.locator(".cart-link").click();
   await page.getByRole("link", { name: "Оформить заказ", exact: true }).click();
   await page.getByLabel("Имя", { exact: true }).fill("Проверка UI, НЕ ДОСТАВЛЯТЬ");
   await page.getByLabel("Телефон", { exact: true }).fill("+992900000000");

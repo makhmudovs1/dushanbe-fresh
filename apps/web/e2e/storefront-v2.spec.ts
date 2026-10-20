@@ -27,7 +27,7 @@ test("wordmark, transparent mark, favicon and bounded products after thematic se
     await page.setViewportSize({ width, height: 1000 });
     await expect(page.locator(".product-card h3").first()).toBeAttached();
     expect(await page.locator(".product-card").count()).toBeLessThanOrEqual(8);
-    const last = (await page.locator(".home-category-section").last().boundingBox())!;
+    const last = (await page.locator(".home-category-section:visible, .mobile-home-categories > section:visible").last().boundingBox())!;
     expect((await page.locator(".product-card").first().boundingBox())!.y).toBeGreaterThan(last.y + last.height);
     await expect(page.locator(".header-favorites")).toHaveCount(0);
     await expect(page.locator(".product-card .availability-badge")).toHaveCount(0);
@@ -43,7 +43,12 @@ for (const width of [375, 768, 1440]) test(`guest favorites stay synchronized an
   const card = page.locator(".product-card").filter({ has: page.getByRole("heading", { name: product.name, exact: true }) });
   const heart = card.locator(".favorite-button");
   await expect(heart).toBeEnabled();
-  await heart.click();
+  if (width < 1024) {
+    await expect(heart).toBeHidden();
+    await card.locator("h3 a").click();
+    await page.locator(".product-detail .favorite-button").click();
+    await page.goBack();
+  } else await heart.click();
   await expect(heart).toHaveAttribute("aria-pressed", "true");
   await expect(page).toHaveURL(/\/catalog$/);
   await expect(page.getByRole("link", { name: "Корзина, позиций: 0" })).toBeVisible();
@@ -58,7 +63,11 @@ for (const width of [375, 768, 1440]) test(`guest favorites stay synchronized an
   await expect(page.locator(".product-card")).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath(`favorites-tg-${width}.png`) });
-  await page.locator(".favorite-button").click();
+  if (width < 1024) {
+    await page.locator(".product-card h3 a").click();
+    await page.locator(".product-detail .favorite-button").click();
+    await page.goBack();
+  } else await page.locator(".favorite-button").click();
   await expect(page.getByRole("heading", { name: "Ҳоло маҳсулоти писандида нест" })).toBeVisible();
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), FAVORITES_KEY)).toEqual([]);
 });
@@ -200,14 +209,20 @@ test.describe("real category hierarchy", () => {
     await expect(nav.getByRole("link", { name: children[0].name, exact: true })).toBeVisible();
     expect(await parent.locator(":scope > .category-children").evaluate(element => getComputedStyle(element).transitionDuration)).toBe("0s");
   });
-  test("mobile drawer preserves the expanded branch and direct child selection", async ({ page }) => {
+  test("mobile category screen preserves the expanded branch, tabs and direct child selection", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 1000 });
     await page.goto(`/catalog?category=${children[0].slug}`);
-    await page.getByRole("button", { name: "Открыть каталог" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("link", { name: children[0].name, exact: true })).toHaveAttribute("aria-current", "page");
-    await dialog.getByRole("link", { name: children[1].name, exact: true }).click();
-    await expect(dialog).toHaveCount(0);
+    const tabs = page.locator(".mobile-category-tabs");
+    await expect(tabs.getByRole("link", { name: children[0].name, exact: true })).toHaveAttribute("aria-current", "page");
+    await page.locator('.mobile-navigation a[href^="/categories"]').click();
+    const menu = page.locator(".catalog-sidebar--category-screen");
+    await expect(menu.getByRole("link", { name: children[0].name, exact: true })).toHaveAttribute("aria-current", "page");
+    await menu.getByRole("link", { name: children[1].name, exact: true }).click();
+    await expect(page.locator("main h1")).toHaveText(children[1].name);
+    await expect(tabs.getByRole("link", { name: children[1].name, exact: true })).toHaveAttribute("aria-current", "page");
+    await tabs.getByRole("link", { name: "Все", exact: true }).click();
+    await expect(page.locator(".product-card")).toHaveCount(2);
+    await page.goBack();
     await expect(page.locator("main h1")).toHaveText(children[1].name);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });

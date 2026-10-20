@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryArtwork, homeCategorySections, homeBanners, homePromotionBanners } from "./storefront";
+import { categoryArtwork, homeCategorySections, homeBanners, homePromotionBanners, mobileHomeCategories } from "./storefront";
 import { translate } from "@/i18n/locale";
 import type { Category } from "./api";
 
@@ -7,6 +7,16 @@ const category = (slug: string, sortOrder = 0, extra: Partial<Category> = {}): C
 const products = (...ids: string[]) => ids.map(id => ({ category: { id, slug: id, name: id } }));
 
 describe("storefront configuration", () => {
+  it("keeps mobile roots and populated child selections separate without repeated tiles", () => {
+    const categories = [category("fruit", 10), category("vegetables", 0), category("child", 0, { parentId: "vegetables" }), category("empty", 0, { parentId: "vegetables" })];
+    const result = mobileHomeCategories(categories, products("fruit", "child"));
+    expect(result.roots.map(item => item.id)).toEqual(["vegetables", "fruit"]);
+    expect(result.sections.map(section => [section.category.id, section.tiles.map(item => item.id)])).toEqual([["vegetables", ["child"]]]);
+    expect(new Set([...result.roots, ...result.sections.flatMap(section => section.tiles)].map(item => item.id)).size).toBe(3);
+  });
+  it("excludes unpublished mobile categories, their children and empty roots", () => {
+    expect(mobileHomeCategories([category("empty"), category("hidden", 0, { isVisible: false }), category("child", 0, { parentId: "hidden" })], products("child"))).toEqual({ roots: [], sections: [] });
+  });
   it("combines real vegetable and herb roots without creating or changing categories", () => {
     const categories = [category("vegetables", 10), category("fruits", 20), category("greens", 30)];
     const result = homeCategorySections(categories, products("vegetables", "fruits", "greens"));
