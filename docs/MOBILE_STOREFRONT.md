@@ -1,6 +1,7 @@
 # Мобильная витрина Dushanbe Fresh
 
-Локальная доработка от 2026-10-20. Production не обновлялся.
+Доработка от 2026-10-20. После отдельного подтверждения владельца изменения
+выложены на https://dushanbefresh.tj (подробности ниже).
 Preview: http://localhost:3101. Мобильная компоновка действует до 1023px;
 с 1024px используется прежняя desktop-компоновка.
 
@@ -58,7 +59,8 @@ Preview: http://localhost:3101. Мобильная компоновка дейс
 ## Безопасность
 
 API, Prisma schema, цены, названия товаров, quantity rules, checkout и Telegram
-не менялись. Миграций нет. Production не подключался и не изменялся.
+не менялись. Миграций нет. Production обновлён только по Web после backup;
+данные каталога, пользователей и заказов не изменялись.
 Тесты используют отдельную локальную test-БД. Checkout smoke создаёт и отменяет
 только локальный технический заказ; admin tests очищают собственные fixtures.
 Reset/seed не выполнялись. Личные development-серверы на 3000/4000 не трогались.
@@ -96,5 +98,56 @@ Reset/seed не выполнялись. Личные development-серверы 
 
 Проверить на физическом iPhone Safari safe areas, экранную клавиатуру и touch
 momentum. Автоматизация использует установленный Chrome, а не реальный iPhone.
-Адресного picker пока нет; он не имитируется. В production ничего не выкладывать
-без отдельного подтверждения владельца.
+Адресного picker пока нет; он не имитируется. Следующие production-изменения
+требуют отдельного подтверждения владельца.
+
+## Production deployment 20 октября
+
+Владелец подтвердил push и deployment после локального просмотра. Все изменения
+запушены в `origin/main`, код релиза:
+`830b7652d2df5e2386482768a4c0eeaef2e80900`.
+
+Перед deployment повторно прошли lint, typecheck, все 411 unit/integration tests
+и API build. Последняя Web-сборка и 89 browser tests были успешны локально;
+на сервере Web/API также успешно собраны в отдельном staging-каталоге.
+
+Создан и проверен PostgreSQL custom backup:
+`/home/deploy/backups/dushanbe-fresh/mobile-storefront-20261020/database.dump`.
+Размер 83 329 bytes; SHA-256:
+`5c237c321eed52efaef2514c74b3a3d3f557b5f32fd3f95513ac56d3a0fa669c`.
+`pg_restore --list` подтвердил читаемый архив, 160 archive entries.
+
+Использован существующий deployment process: проверенный Git bundle по SSH,
+fast-forward, frozen lockfile, Prisma generate/validate без миграций, staging
+build, перенос `.next` с сохранением старых static chunks и rollback-сборки.
+GitHub credentials, Caddy, Docker, systemd units и production env не менялись.
+
+Web активирован **20 октября 2026 в 22:57:43 МСК (UTC+3)**. Перезапущен только
+`dushanbe-fresh-web`; API сохранил прежний PID `3255865`, NRestarts у обоих 0.
+Прежняя сборка для rollback:
+`/home/deploy/backups/dushanbe-fresh/mobile-storefront-20261020/previous.next`.
+
+Сразу после активации все поля 24 таблиц совпали по количествам и хешам со
+снимком перед переключением. Production smoke выполнен в RU/TJ на
+375/390/430/768/1280/1440px: главная, баннеры, категории, поиск, detail,
+plus/stepper, reload, корзина, checkout без отправки, admin login page и
+неизвестный tracking token. 12 сценариев, без page errors, hydration warnings,
+overflow и запрещённых POST-записей. Production admin-пароль не использовался.
+
+После открытия checkout штатный `ensureDeliverySlots` добавил три окна нового
+дня: 51 -> 54. Все прежние 51 записи совпали по контрольному хешу. Остальные
+23 таблицы неизменны: 61 product, 70 product_images, 6 quality options,
+6 categories, 1 user, 4 refresh sessions, 0 orders/customers. Публично по-прежнему
+42 товара и 5 категорий. Новых application errors в Web journal нет; присутствует
+лишь Node/Next deprecation warning `util._extend`, без автоматических рестартов.
+
+**Прежний эксплуатационный блокер сохранён:** отсутствуют три app settings
+`minimum_order_amount`, `delivery_fee`, `service_fee`. Проверка
+`POST /api/v1/checkout/validate` возвращает 503 с понятным сообщением.
+Владельцу нужно сохранить минимальную сумму, стоимость доставки и сервисный
+сбор в `/admin/settings`. Значения автоматически не подставлялись. Настоящие
+заказы и Telegram-уведомления при production smoke не создавались.
+
+Production-скриншоты и результаты:
+`/tmp/df-mobile-production-20261020/`,
+`/tmp/df-mobile-production-smoke-20261020.jsonl`.
