@@ -51,10 +51,81 @@ release. Generated browser archives are not committed.
 
 ## Verification
 
-Tests and rollout results are recorded after the exact committed release passes
-its isolated production build and browser suites. The owner's intermittent iOS
-paint failure is not claimed to be reproduced by desktop-hosted WebKit. Physical
-iPhone Safari toolbar/compositor verification remains a separate device check.
+Final runtime release: `73e64e18b466cf982357602c2248d320cd43c6f0`.
+
+- Lint, typecheck and both production builds passed in an isolated Git archive,
+  excluding the uncommitted account backend. Unit/integration: 464 passed,
+  zero skips (shared 6, Web 207, API 251). Database tests used only the isolated
+  local `dushanbe_fresh_interface_test_20261021` database.
+- Production preview: all 41 WebKit and all 41 Chrome browser cases passed.
+  Coverage includes 375/390/430/768px, navigation scrolling and reduced visible
+  height, one product modal, direct URLs, cart-bar hiding, inner scroll/upward
+  action, real three-column grids, rapid quantities, RU/TJ, canceled clear/focus,
+  malformed/failed optional recommendations and late detail responses.
+- The first complete run exposed unused hidden favorite controls, Safari focus
+  restoration, stale horizontal-rail assertions and transient catalog-skeleton
+  overflow. These were fixed, not skipped. The loading-row fixture holds the
+  four real skeleton classes on screen deterministically.
+- Desktop 1440x1000 comparison: home/categories/cart have zero changed pixels;
+  catalog has 111 differing pixels confined to the product-media region, under
+  0.01% of the viewport. No desktop layout change was observed. Comparison files:
+  `/tmp/df-mobile-nav-desktop-before-20261022` and
+  `/tmp/df-mobile-nav-desktop-after-20261022`.
+- Four new-screen production flows passed without page/hydration errors:
+  WebKit RU at 375/390/430px and Chrome TJ at 390px. They exercise scrolling,
+  navigation removal, product suggestions, counters, selection in the same
+  screen, direct product URLs, cart bar suppression, empty cart and its black
+  catalog action. All API writes were blocked; only fresh browser-local carts
+  and favorites were changed.
+
+The owner's intermittent iOS paint failure is not claimed to be reproduced by
+desktop-hosted WebKit 18.4. Physical iPhone Safari toolbar/compositor behavior
+remains a separate device check. No iOS simulator is installed here.
+
+Additional old purchase-smoke diagnostics: an early production run reported
+WebKit access-control messages for speculative product `_rsc` requests at a
+forced reload. The same observation predates this release and is recorded in
+`MOBILE_SAFARI_FIXES.md`. A diagnostic 390px replay passed; the original failed
+log is retained at `/tmp/df-mobile-navigation-73e64e1-purchase-live.log`.
+Do not describe the early run as clean or the underlying transport issue as fixed.
+
+The subsequent detailed purchase replay completed seven of eight cases with no
+page/hydration errors. Its final Chrome/TJ case exceeded the helper's unchanged
+5-second wait for fresh product details. The isolated repeat, with the same
+5-second limit, passed: the initial detail returned HTTP 200 after 3.506 seconds,
+and three subsequent opens returned 200 in 189-250ms. The disabled purchase
+button until fresh data arrives is intentional. This is an observed latency
+outlier, not evidence that every live network request meets a latency target.
+Logs: `/tmp/df-mobile-navigation-73e64e1-purchase-final.log` and
+`/tmp/df-mobile-navigation-73e64e1-tj-diagnostic.log`. These failures are retained,
+not filtered out of the report. Existing speculative prefetch/network behavior
+was not rewritten as part of this mobile UI task.
+
+## Rollout
+
+Activated 2026-10-22 at 14:16:50 UTC (17:16:50 Moscow).
+Build ID `yejUgH5mTiRqzrI3qpYZR`, Web PID `4129959`, API PID still `3604550`,
+both services active with no automatic restarts. The compiled API checksum is
+unchanged. Final data audit compares all 24 public tables with zero changes and
+finds zero Web runtime failures. No migration, seed, configuration write,
+Docker/Caddy/systemd change, account activation or API restart.
+
+Backup/rollback:
+`/home/deploy/backups/dushanbe-fresh/mobile-safari-20261022-73e64e1`.
+Verified PostgreSQL dump: 83,385 bytes, 160 entries, SHA-256
+`5bd22cde078cc8f8cf3c9ea7e12f7562b40edeac88ca5097b7825074a4584306`.
+Previous `.next`, runtime link and old static chunks remain available.
+
+Production screenshots: `/tmp/df-mobile-navigation-73e64e1-20261022/index.html`.
+Local production preview: http://localhost:3117. Temporary previews created on
+3113-3116 were stopped; the user's original servers were not touched.
+
+Existing owner pricing settings `minimum_order_amount`, `delivery_fee` and
+`service_fee` are still absent in production. This rollout does not invent amounts
+or certify real order submission. Checkout UI and existing order behavior are
+covered locally; no production order was created. SMS/geocoding configuration
+also remains outside this change. Account backend sources remain preserved on
+`feature/customer-accounts`, without production activation.
 
 ## Files
 
