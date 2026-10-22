@@ -14,7 +14,8 @@ at the bottom of the screen, without visible labels. Removed the document-positi
 VisualViewport hook and its obsolete unit tests. Safe-area spacing, cart count,
 search-focus hiding and complete removal during product viewing remain unchanged.
 Browser assertions now cover native fixed positioning, scroll, viewport resize,
-orientation and search focus. This follow-up has not been deployed.
+orientation and search focus. Deployed with the owner's approval as `afc86d9`
+at 2026-10-22T16:40:27Z; pushed to GitHub main.
 
 Follow-up verification: Web lint, typecheck, 204 unit tests and production build
 passed in `/tmp/df-fixed-navigation-20261022`. Production-preview browser checks:
@@ -24,6 +25,17 @@ products; after correcting only that preview setting, both runs passed.
 Screenshots are in `/tmp/df-fixed-navigation-webkit-final-20261022` and
 `/tmp/df-fixed-navigation-chrome-final-20261022`. Physical iPhone Safari's toolbar
 animation was not tested. Existing account backend changes were not included.
+
+Production follow-up: the isolated server build passed, a verified PostgreSQL
+archive and previous Web runtime were retained in
+`/home/deploy/backups/dushanbe-fresh/mobile-safari-20261022-afc86d9`.
+Only Web restarted (PID 4163830, build `plVzidNlWrSwcUlBpOHNs`); API PID 3604550
+and compiled code remained unchanged. No migrations or seed commands ran.
+Live checks passed in WebKit at 375/390/430px RU and Chrome at 390px TJ, including
+native fixed positioning, icon-only navigation, scrolling, product opening and
+closing, cart, recommendations and direct product URLs. All API writes were
+blocked by the browser checks. No page/hydration errors were observed.
+Production screenshots/results: `/tmp/df-mobile-navigation-afc86d9-20261022`.
 
 - Bottom navigation has four icon-only links with accessible names, active state
   and the existing cart count. It uses CSS fixed positioning, with no JavaScript
