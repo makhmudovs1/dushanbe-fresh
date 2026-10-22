@@ -27,6 +27,7 @@ for (const width of [375, 390, 430]) {
     const cards = page.locator(".product-card");
     const first = cards.first();
     const plus = first.locator(".product-card__action");
+    await expect(plus).toHaveCSS("background-color", "rgb(255, 255, 255)");
     const original = await plus.elementHandle();
     const mediaBefore = await first.locator(".product-gallery__media").boundingBox();
     await page.screenshot({ path: info.outputPath(`before-${width}.png`) });
@@ -41,6 +42,7 @@ for (const width of [375, 390, 430]) {
     expect(await control.boundingBox()).toEqual(dimensionsBefore);
     expect(await first.locator(".product-gallery__media").boundingBox()).toEqual(mediaBefore);
     await counterFits(control);
+    await expect(control.locator("button").last()).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     for (let i = 1; i < 4; i++) {
       await cards.nth(i).locator(".product-card__action").tap();
       for (let n = 0; n < 6; n++) await cards.nth(i).locator(".quantity-stepper button").last().tap();

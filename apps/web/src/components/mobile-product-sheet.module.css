@@ -64,7 +64,7 @@
 .footer :global(.product-price__group) { flex-wrap: wrap; }
 .footer :global(.quantity-stepper) { width: 100%; min-width: 0; height: 52px; border: 0; border-radius: 24px; color: #1b1b1b; background: #f5f5f5; grid-template-columns: 44px minmax(0, 1fr) 44px; }
 .footer :global(.quantity-stepper button) { width: 44px; height: 52px; background: transparent; color: #1b1b1b; }
-.footer :global(.quantity-stepper button:hover) { background: #ededed; }
+.footer :global(.quantity-stepper button:hover) { background: transparent; }
 .footer :global(.quantity-stepper output) { min-width: 0; white-space: nowrap; font-size: 13px; }
 .add { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 52px; padding: 12px; border: 0; border-radius: 24px; background: #1f1f1f; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
 .add svg { flex-shrink: 0; }

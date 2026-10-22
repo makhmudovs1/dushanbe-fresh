@@ -38,7 +38,9 @@ for (const width of [375, 390, 430]) {
     await capture("home-tj");
     await page.getByRole("button", { name: "Язык / Забон", exact: true }).click();
     await page.getByRole("button", { name: "Русский", exact: true }).click();
-    await page.goto("/categories");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+    await page.locator('.mobile-navigation a[href="/categories"]').click();
+    await expect(page).toHaveURL(/\/categories$/);
     await expect(page.locator(".catalog-sidebar--category-screen nav a").first()).toBeVisible();
     await capture("categories");
     await page.goto("/catalog?category=vegetables");

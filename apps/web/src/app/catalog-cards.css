@@ -11,7 +11,7 @@
 .product-card .quantity-stepper.quantity-stepper--empty { height: 44px; min-height: 44px; border: 0; background: transparent; box-shadow: none; overflow: visible; pointer-events: none; }
 .quantity-stepper--empty > :not(:last-child) { visibility: hidden; pointer-events: none; }
 .quantity-stepper--empty > button:last-child { pointer-events: auto; }
-.product-card .quantity-stepper--empty .product-card__action { color: #202820; }
+.product-card .quantity-stepper--empty .product-card__action { color: #202820; background: #fff; }
 .product-card .quantity-stepper output span { display: inline; }
 .product-card .catalog-cart-pending { width: 100%; height: 46px; }
 .product-price { display: grid; gap: 2px; min-height: 44px; min-width: 0; color: var(--color-primary); }
