@@ -1,6 +1,7 @@
 # Mobile Visual Review, 2026-10-21
 
-Local review only. No production deployment, API/schema changes, migrations,
+Original local review. Web rollout on 2026-10-22 is recorded in
+`WEB_RELEASE_20261022.md`. No API/schema changes, migrations,
 catalog edits or production-data writes in this visual task. Existing unfinished
 account/API work in the worktree belongs to the earlier task and is preserved.
 

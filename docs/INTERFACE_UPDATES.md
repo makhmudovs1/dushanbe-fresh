@@ -1,6 +1,7 @@
 # Customer Interface Updates, 2026-10-21
 
-Local only. No deployment, production writes or new migrations in this UI task.
+Initially verified locally. Web rollout on 2026-10-22 is recorded in
+`WEB_RELEASE_20261022.md`. No new migrations in this UI task.
 The existing uncommitted customer-account migration belongs to the preceding
 account feature and remains subject to its own launch checklist.
 
