@@ -42,6 +42,9 @@ release. Generated browser archives are not committed.
   unit prices, quantities and arithmetic are unchanged. RU/TJ strings included.
 - Optional recommendation errors/empty responses omit the section, never block
   purchases or produce made-up products.
+- Compact suggestions omit unused favorite controls entirely; the product's
+  top favorite action remains. The mobile cart clear trigger is explicitly
+  focused before opening confirmation, so Safari can restore focus on cancellation.
 
 ## Verification
 
@@ -61,7 +64,9 @@ iPhone Safari toolbar/compositor verification remains a separate device check.
 - `apps/web/src/components/product-recommendations.tsx`,
   `product-recommendations.module.css`, `product-recommendations.test.ts`
 - `apps/web/src/components/cart-page-content.tsx`, `cart-enhancements.module.css`
+- `apps/web/src/components/product-card.tsx`, `cart-mobile-header.tsx`
+- `apps/web/src/components/product-card.test.tsx`
 - `apps/web/src/i18n/messages.ts`
 - `apps/web/e2e/mobile-bottom-flow.spec.ts`, `cart-enhancements.spec.ts`,
-  `interface-updates.spec.ts`
+  `interface-updates.spec.ts`, `mobile-visual-polish.spec.ts`
 - `docs/DECISIONS.md`, this document

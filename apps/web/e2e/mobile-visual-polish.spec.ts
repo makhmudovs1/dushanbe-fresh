@@ -66,8 +66,8 @@ for (const width of [375, 390, 430]) {
     expect(await row.locator(".quantity-stepper").evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgb(245, 245, 245)");
     await capture("cart");
     const recommendations = page.getByRole("region", { name: "Подобрали для вас", exact: true }).locator("div").first();
-    expect(await recommendations.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
-    await recommendations.evaluate(el => { el.scrollLeft = 170; });
+    expect(await recommendations.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(3);
+    expect(await recommendations.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await expect(page.locator(".cart-checkout-bar a")).toBeInViewport();
     await page.goto("/catalog");
     await page.locator(".header-location--mobile").click();

@@ -30,7 +30,7 @@ export function useRecommendationProducts() {
 
 export function RecommendationGrid({ products }: { products: Product[] }) {
   return <div className={styles.grid} data-recommendation-grid>
-    {products.map(product => <ProductCard key={product.id} product={product} />)}
+    {products.map(product => <ProductCard key={product.id} product={product} showFavorite={false} />)}
   </div>;
 }
 

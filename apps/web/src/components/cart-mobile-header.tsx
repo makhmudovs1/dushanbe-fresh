@@ -80,7 +80,10 @@ export function CartMobileHeader() {
             <Search size={22} aria-hidden="true" />
           </Link>
           <button className="catalog-icon-action" type="button" disabled={disabled}
-            aria-label={t("Очистить корзину")} title={t("Очистить корзину")} onClick={() => setConfirmClear(true)}>
+            aria-label={t("Очистить корзину")} title={t("Очистить корзину")} onClick={event => {
+              event.currentTarget.focus({ preventScroll: true });
+              setConfirmClear(true);
+            }}>
             <Trash2 size={21} aria-hidden="true" />
           </button>
         </div>

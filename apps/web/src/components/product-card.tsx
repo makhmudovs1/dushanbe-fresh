@@ -15,7 +15,7 @@ import { ProductPrice } from "./product-price";
 import { QuantityStepper } from "./quantity-stepper";
 import { useMobileProductLink } from "./mobile-product-sheet-provider";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, showFavorite = true }: { product: Product; showFavorite?: boolean }) {
   const { t, name } = useI18n();
   const openProduct = useMobileProductLink(product);
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
@@ -24,7 +24,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <ProductGallery product={product} href={`/products/${product.slug}`}>
-        <FavoriteButton product={product} />
+        {showFavorite ? <FavoriteButton product={product} /> : null}
         <div className="product-card__selection" onClick={event => event.stopPropagation()}
           onTouchStart={event => event.stopPropagation()} onTouchEnd={event => event.stopPropagation()}>
           {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> :

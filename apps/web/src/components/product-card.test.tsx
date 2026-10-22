@@ -42,6 +42,12 @@ describe("catalog card", () => {
     expect(html.indexOf("product-price")).toBeLessThan(html.indexOf("<h3"));
     expect(html).not.toContain("product-gallery__dots");
   });
+  it("can omit unused favorite controls in compact mobile recommendations without changing purchase actions", () => {
+    const html = renderToStaticMarkup(<ProductCard product={product} showFavorite={false} />);
+    expect(html).not.toContain("favorite-button");
+    expect(html).toContain('aria-label="Добавить в корзину: Бананы"');
+    expect(html.match(/href="\/products\/bananas"/g)).toHaveLength(2);
+  });
   it("uses an accessible plus action for an ordinary product", () => {
     const html = renderToStaticMarkup(<ProductCard product={{ ...product, qualityOptions: [] }} />);
     expect(html).toContain('aria-label="Добавить в корзину: Бананы"');
