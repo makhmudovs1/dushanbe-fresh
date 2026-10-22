@@ -2,7 +2,9 @@
 
 ## Status And Ownership
 
-Account backend implemented locally, not deployed. The Web-only release plan is
+Account backend is preserved on GitHub in `feature/customer-accounts`, not deployed.
+It was saved separately at the owner's request on 2026-10-22; it is not merged
+into the production branch. The Web-only release plan is
 recorded in `WEB_RELEASE_20261022.md`; it does not activate customer accounts.
 No SMS provider has been selected. Login and
 mandatory verification are disabled by default; guest checkout remains available.
@@ -100,8 +102,9 @@ Before production activation:
    repeats/current prices, manual COD review and courier navigation.
 
 Rollback uses feature flags, not deletion of schema/users/orders. Public tracking
-links remain valid. The account backend and migration have not been pushed or
-deployed; frontend scaffolding alone does not enable login.
+links remain valid. The account backend and migration are pushed only to
+`feature/customer-accounts`, not deployed; frontend scaffolding alone does not
+enable login.
 
 ## Local Tests
 

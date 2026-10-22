@@ -30,7 +30,46 @@ hit testing. A structural regression fails on the old production preview because
 its native dialog retains `matrix(1, 0, 0, 1, 0, 0)` at rest; this is not claimed
 as reproduction of the physical-device clipping itself.
 
-Follow-up verification and rollout results will be recorded after completion.
+Follow-up verification for `fdedb8657dbca939cd53ba3bf911584a0c08f7c8`:
+
+- Lint, typecheck, both production builds, 458 unit/integration tests passed
+  (shared 6, Web 201, API 251), with no skipped tests, in an isolated Git archive.
+- Production-build preview: 23 WebKit and 32 Chrome browser scenarios passed.
+  The new sheet tests run at 375/390/430px; existing journeys also cover 768px.
+- Home/catalog/categories/cart desktop comparisons: zero changed pixels at
+  1440x1000 (RGB tolerance 5).
+- Eight read-only production flows passed: WebKit and Chrome, RU at 375/390/430px
+  and TJ at 390px. Each includes rapid weighted edits, four products, persistence,
+  rotation, repeated sheet opens, cart and checkout UI. Footer checks include
+  actual screenshot pixels as well as geometry and hit testing after animation.
+  No orders or other mutating API requests were allowed.
+
+Activated on 2026-10-22 at 09:26:54 UTC. Build ID `QSxTRBOz8qEWBPuzNXyQF`;
+Web PID `4058931`, API PID still `3604550`, no automatic restarts. Final audit:
+zero Web runtime failures, all 24 table fingerprints unchanged, compiled API
+checksum unchanged. No migrations, seeds, settings writes, infrastructure changes
+or account activation. Missing checkout pricing settings are still the existing
+owner configuration issue described below; this rollout does not certify actual
+production order submission.
+
+Backup/rollback directory:
+`/home/deploy/backups/dushanbe-fresh/mobile-safari-20261022-fdedb86`.
+Verified PostgreSQL dump: 83,385 bytes, 160 entries, SHA-256
+`d276bea05a83969ddbbce9c8b9df2ffce6ed36aedd7f2be882f0c4a27b2c957b`.
+Previous `.next`, runtime link and old static chunks are retained.
+
+Screenshots: `/tmp/df-safari-production-fdedb86-20261022/index.html`.
+Local production preview: http://localhost:3112. The temporary dev preview on
+3111 was stopped. Original user servers were not touched.
+
+The owner explicitly requested that the remaining account backend be pushed to
+`feature/customer-accounts` separately, without deployment. It is not included
+in this Web release. The generated local `test-results.zip` is not published.
+
+**Remaining device check:** physical iPhone Safari toolbar/compositor behavior
+cannot be verified here. WebKit 18.4 is desktop-hosted, and no iOS simulator is
+installed. Recheck the owner's intermittent sequence on a freshly loaded release;
+do not claim that the exact device failure was reproduced and proven eliminated.
 
 ## Findings And Changes
 
