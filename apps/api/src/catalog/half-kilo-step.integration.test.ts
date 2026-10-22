@@ -19,7 +19,7 @@ describe.skipIf(!url)("half-kilo catalog configuration", () => {
     ] as const) await db.product.create({ data: {
       id: `${marker}-${index}`, slug: `${marker}-${index}`, categoryId: marker, name: `Fixture ${index}`,
       unit, isWeighted, minQuantity, quantityStep, currentPurchasePrice: "8", currentSalePrice: "10.5",
-      ...(index === 5 ? { deletedAt: new Date() } : {})
+      ...(index === 5 ? { deletedAt: new Date(), isActive: false, isAvailableToday: false } : {})
     } });
     before = await db.product.findMany({ where: { categoryId: marker }, orderBy: { id: "asc" } });
   });
