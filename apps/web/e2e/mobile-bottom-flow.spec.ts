@@ -161,12 +161,12 @@ test("late details cannot overwrite a recommendation selected in the same screen
   } finally { release(); }
 });
 
-test("optional recommendation errors do not block buying or leave a bottom background", async ({ page }) => {
+for (const status of [503, 200]) test(`optional invalid recommendations (${status}) do not block buying or leave a bottom background`, async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 844 });
   await page.goto("/catalog?category=vegetables");
   await expect(page.locator(".product-card__action").first()).toBeVisible();
-  await page.route("**/api/v1/products", route => route.fulfill({ status: 503, json: {} }));
-  const response = page.waitForResponse(response => response.url().endsWith("/api/v1/products") && response.status() === 503);
+  await page.route("**/api/v1/products", route => route.fulfill({ status, json: {} }));
+  const response = page.waitForResponse(response => response.url().endsWith("/api/v1/products") && response.status() === status);
   await page.locator(".product-card h3 a").first().click();
   await response;
   const sheet = page.getByRole("dialog");
@@ -176,4 +176,25 @@ test("optional recommendation errors do not block buying or leave a bottom backg
   await add.click();
   await expect(sheet.locator("footer output")).toBeVisible();
   await expect(page.locator(".mobile-navigation")).toHaveCount(0);
+});
+
+test("category loading chips cannot expand the mobile document", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 844 });
+  await page.goto("/");
+  await expect(page.locator(".mobile-navigation")).toBeVisible();
+  // Same four-chip markup as CategorySkeleton, held on screen deterministically.
+  await page.evaluate(() => {
+    const row = document.createElement("div");
+    row.className = "skeleton-categories";
+    row.style.width = "calc(100% - 32px)";
+    row.style.marginInline = "16px";
+    for (let index = 0; index < 4; index++) {
+      const chip = document.createElement("span");
+      chip.className = "skeleton skeleton-chip";
+      row.append(chip);
+    }
+    document.body.append(row);
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator("body > .skeleton-categories")).toHaveCSS("overflow-x", "hidden");
 });

@@ -21,7 +21,7 @@ export function useRecommendationProducts() {
   useEffect(() => {
     const controller = new AbortController();
     getProducts(undefined, controller.signal).then(data => {
-      if (!controller.signal.aborted) setProducts(data);
+      if (!controller.signal.aborted && Array.isArray(data)) setProducts(data);
     }).catch(() => { /* Optional catalog suggestions must not block purchasing. */ });
     return () => controller.abort();
   }, []);

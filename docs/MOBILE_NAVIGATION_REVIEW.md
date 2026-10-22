@@ -45,6 +45,9 @@ release. Generated browser archives are not committed.
 - Compact suggestions omit unused favorite controls entirely; the product's
   top favorite action remains. The mobile cart clear trigger is explicitly
   focused before opening confirmation, so Safari can restore focus on cancellation.
+- Mobile category loading chips clip within their own row. Previously the four
+  fixed-width chips briefly expanded the document during catalog navigation.
+  This is locally scoped, not a blanket overflow rule on the page.
 
 ## Verification
 

@@ -131,6 +131,7 @@
   .empty-cart p { color: #7a7a7a; font-size: 14px; }
   .empty-cart .primary-link { display: none; }
   .skeleton { background-color: #f5f5f5; }
+  .skeleton-categories { max-width: 100%; overflow: hidden; }
 }
 @media (min-width: 600px) and (max-width: 1023px) {
   .home-promotions { grid-template-rows: 142px 142px; }
