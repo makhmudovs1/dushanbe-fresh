@@ -2,8 +2,8 @@
 
 ## Scope
 
-Set the existing catalog `quantityStep` to `0.5` for weighted products sold in
-`kg`. Keep configured minimum quantities, prices, availability, units, options
+Set the existing catalog `quantityStep` to `0.5` for non-deleted weighted products
+sold in `kg`. Keep configured minimum quantities, prices, availability, units, options
 and existing order snapshots unchanged. Piece/bunch/non-weighted products do not
 change. A 0.5kg minimum yields 0.5, 1, 1.5kg; a smaller existing minimum remains
 the starting point (for example 0.2, 0.7, 1.2kg). This is a step change, not an

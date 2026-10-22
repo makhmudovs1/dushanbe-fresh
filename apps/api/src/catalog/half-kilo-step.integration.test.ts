@@ -14,10 +14,12 @@ describe.skipIf(!url)("half-kilo catalog configuration", () => {
     await db.category.create({ data: { id: marker, name: "Quantity fixture", slug: marker } });
     for (const [index, unit, isWeighted, minQuantity, quantityStep] of [
       [0, "kg", true, "0.5", "0.25"], [1, "kg", true, "0.2", "0.1"],
-      [2, "kg", true, "1", "0.5"], [3, "bunch", false, "1", "1"], [4, "kg", false, "1", "1"]
+      [2, "kg", true, "1", "0.5"], [3, "bunch", false, "1", "1"], [4, "kg", false, "1", "1"],
+      [5, "kg", true, "0.5", "0.25"]
     ] as const) await db.product.create({ data: {
       id: `${marker}-${index}`, slug: `${marker}-${index}`, categoryId: marker, name: `Fixture ${index}`,
-      unit, isWeighted, minQuantity, quantityStep, currentPurchasePrice: "8", currentSalePrice: "10.5"
+      unit, isWeighted, minQuantity, quantityStep, currentPurchasePrice: "8", currentSalePrice: "10.5",
+      ...(index === 5 ? { deletedAt: new Date() } : {})
     } });
     before = await db.product.findMany({ where: { categoryId: marker }, orderBy: { id: "asc" } });
   });
@@ -39,7 +41,7 @@ describe.skipIf(!url)("half-kilo catalog configuration", () => {
     for (let index = 0; index < before.length; index++) {
       const changed = index < 2;
       expect(after[index]).toEqual({ ...before[index], ...(changed ? { quantityStep: after[index].quantityStep, updatedAt: after[index].updatedAt } : {}) });
-      expect(after[index].quantityStep.toString()).toBe(index < 3 ? "0.5" : "1");
+      expect(after[index].quantityStep.toString()).toBe(index < 3 ? "0.5" : index === 5 ? "0.25" : "1");
     }
   });
   it("is idempotent on a second apply", async () => {
