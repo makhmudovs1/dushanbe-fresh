@@ -93,7 +93,8 @@ export function MobileProductSheet({ initialProduct, onClose, onNavigate = onClo
   }
 
   return <CatalogDialog title={product ? name(product) : t("Товар")} busy={closing} onClose={requestClose} fitVisualViewport
-    closeLabel={t("Закрыть товар")} className={`${styles.sheet}${closing ? ` ${styles.closing}` : ""}`}>
+    closeLabel={t("Закрыть товар")} className={`${styles.viewport}${closing ? ` ${styles.closing}` : ""}`}
+    surfaceClassName={styles.sheet}>
     <div className={styles.toolbar}>
       <button className={styles.icon} type="button" onClick={() => void share()} disabled={sharing}
         aria-label={t("Поделиться товаром")} title={t("Поделиться товаром")}><Share2 size={21} aria-hidden="true" /></button>

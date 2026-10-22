@@ -22,6 +22,43 @@ async function counterFits(counter: Locator) {
 }
 
 for (const width of [375, 390, 430]) {
+  test(`untransformed sheet frame and locked background after repeated opens ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const link = page.locator(".product-card h3 a").nth(4);
+    await link.scrollIntoViewIfNeeded();
+    const scrollBefore = await page.evaluate(() => scrollY);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await link.click();
+      const sheet = page.getByRole("dialog");
+      await expect(sheet.locator("footer button").last()).toBeEnabled();
+      // A transformed, viewport-fixed top-layer dialog is not a stable iOS paint frame.
+      await expect(sheet).toHaveCSS("transform", "none");
+      await expect(sheet).toHaveCSS("position", "absolute");
+      await expect(page.locator("body")).toHaveCSS("position", "fixed");
+      await expect(sheet.locator('[data-product-sheet-surface]')).toHaveCSS("transform", "none");
+      const footer = sheet.locator("footer");
+      const content = sheet.locator('[class*="content"]');
+      for (const height of [560, 744, 610]) {
+        await page.setViewportSize({ width, height });
+        await content.evaluate(el => { el.scrollTop = el.scrollHeight; });
+        await expect.poll(async () => Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height)).toBe(height);
+        expect(await footer.evaluate(el => {
+          const button = el.querySelector("button:last-child")!;
+          const r = button.getBoundingClientRect();
+          return button.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+        })).toBe(true);
+      }
+      await sheet.locator(".catalog-dialog__header button").focus();
+      await link.evaluate(el => el.focus());
+      expect(await sheet.evaluate(el => el.contains(document.activeElement))).toBe(true);
+      await sheet.locator(".catalog-dialog__header button").click();
+      await expect(sheet).toHaveCount(0);
+      await expect(page.locator("body")).not.toHaveCSS("position", "fixed");
+      await page.setViewportSize({ width, height: 844 });
+      await expect.poll(() => page.evaluate(() => scrollY)).toBe(scrollBefore);
+    }
+  });
+
   test(`stable weighted counter and rapid multi-product taps ${width}`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 844 });
     const cards = page.locator(".product-card");
@@ -124,9 +161,9 @@ for (const width of [375, 390, 430]) {
     await counterFits(sheet.locator("footer .quantity-stepper"));
     await sheet.getByRole("button", { name: "Закрыть товар", exact: true }).first().click();
     await expect(sheet).toHaveCount(0);
-    await page.goto("/cart");
+    await page.locator('.mobile-navigation a[href="/cart"]').click();
     await expect(page.locator(".cart-checkout-bar .primary-link")).toHaveCSS("background-color", "rgb(31, 31, 31)");
-    await page.goto("/favorites");
+    await page.locator('.mobile-navigation a[href="/favorites"]').click();
     await expect(page.locator(".product-card")).toHaveCount(1);
     await page.locator(".product-card h3 a").click();
     await expect(page.getByRole("dialog").locator(".favorite-button")).toHaveCSS("color", "rgb(255, 77, 79)");

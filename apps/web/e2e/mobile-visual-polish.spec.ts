@@ -52,7 +52,7 @@ for (const width of [375, 390, 430]) {
     await capture("product");
     const share = await sheet.getByRole("button", { name: "Поделиться товаром", exact: true }).boundingBox();
     expect(share!.x).toBeGreaterThan(width - 170);
-    expect(await sheet.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeGreaterThanOrEqual(28);
+    expect(await sheet.locator('[data-product-sheet-surface]').evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeGreaterThanOrEqual(28);
     await sheet.getByRole("button", { name: "В корзину", exact: true }).click();
     await capture("product-added");
     await sheet.getByRole("button", { name: "Закрыть товар", exact: true }).first().click();

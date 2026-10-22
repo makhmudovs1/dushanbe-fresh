@@ -864,3 +864,13 @@
   the explicit instruction not to change desktop. Mobile card hearts stay hidden.
 - WebKit emulation cannot certify physical Safari browser chrome/compositor.
   Evidence, regression tests and rollout: [MOBILE_SAFARI_FIXES.md](MOBILE_SAFARI_FIXES.md).
+
+## 2026-10-22: Safari Sheet Follow-Up
+
+- The owner's iPhone still clips the footer intermittently after the viewport fix.
+  Do not treat desktop WebKit screenshots as proof that this device bug is gone.
+- Keep the native modal/focus/inert behavior, but separate its untransformed
+  absolute viewport frame from the animated inner surface. Only product sheets
+  opt into fixed-body background locking with scroll/style/focus restoration.
+- Keep the purchase footer outside the scroll region and non-shrinking. No
+  checkout, catalog, price, variant or database changes are needed.

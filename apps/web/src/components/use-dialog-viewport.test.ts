@@ -8,6 +8,10 @@ describe("product dialog visible viewport", () => {
   it("falls back without VisualViewport", () => {
     expect(dialogViewport(null, 664)).toEqual({ height: 664, top: 0 });
   });
+  it("positions the absolute top-layer frame in document coordinates", () => {
+    expect(dialogViewport({ height: 540, offsetTop: 24 }, 844, 300)).toEqual({ height: 540, top: 324 });
+    expect(dialogViewport(null, 664, 100)).toEqual({ height: 664, top: 100 });
+  });
   it.each([0, -1, NaN, Infinity])("ignores transient invalid height %s", height => {
     expect(dialogViewport({ height, offsetTop: -15 }, 664)).toEqual({ height: 664, top: 0 });
   });

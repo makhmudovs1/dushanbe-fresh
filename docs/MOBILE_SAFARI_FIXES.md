@@ -1,5 +1,37 @@
 # Mobile Safari Fixes, 2026-10-22
 
+## Follow-Up: Intermittent Sheet Clipping
+
+The owner reported footer clipping again after `d9c7e21`. The earlier viewport
+height correction alone was insufficient on the owner's iPhone. Desktop WebKit
+has not reproduced the exact iOS compositor failure; do not equate synthetic
+viewport coverage with verification on that device.
+
+The mobile sheet now separates an untransformed, absolute-positioned native
+top-layer dialog frame from the inner animated surface. The frame follows the
+visible viewport in document coordinates; it is not a transformed fixed layer.
+The footer is a non-shrinking flex sibling of the only scrolling content region.
+Only the inner surface transforms during entry, dismissal or an intentional drag;
+at rest neither surface nor viewport frame retains a transform.
+
+Product sheets also lock the document and fix the background body at its saved
+scroll position. Closing restores the previous inline styles, scroll position
+and focus without scrolling. Other dialogs retain their existing scroll behavior.
+This removes two remaining browser-sensitive mechanisms, rather than adding a
+footer offset: iOS fixed-layer adjustment and background scrolling despite
+`overflow:hidden`. Related upstream reports:
+[WebKit 297779](https://bugs.webkit.org/show_bug.cgi?id=297779),
+[WebKit 240860](https://bugs.webkit.org/show_bug.cgi?id=240860).
+Their relationship to the owner's exact screenshot remains an inference.
+
+New browser coverage exercises four opens/closes per width, background inertness,
+scroll restoration, changing visible height, inner scrolling and footer button
+hit testing. A structural regression fails on the old production preview because
+its native dialog retains `matrix(1, 0, 0, 1, 0, 0)` at rest; this is not claimed
+as reproduction of the physical-device clipping itself.
+
+Follow-up verification and rollout results will be recorded after completion.
+
 ## Findings And Changes
 
 - The product dialog was fixed to layout-viewport `dvh` dimensions. A smaller or
