@@ -9,12 +9,26 @@ release. Generated browser archives are not committed.
 
 ## Implementation
 
+Local follow-up, 2026-10-22: at the owner's request, restored CSS `position: fixed`
+at the bottom of the screen, without visible labels. Removed the document-positioned
+VisualViewport hook and its obsolete unit tests. Safe-area spacing, cart count,
+search-focus hiding and complete removal during product viewing remain unchanged.
+Browser assertions now cover native fixed positioning, scroll, viewport resize,
+orientation and search focus. This follow-up has not been deployed.
+
+Follow-up verification: Web lint, typecheck, 204 unit tests and production build
+passed in `/tmp/df-fixed-navigation-20261022`. Production-preview browser checks:
+21 WebKit and 9 Chrome passed, including 375/390/430/768px navigation flows.
+An initial preview run lacked the runtime `API_URL` and could not load catalog
+products; after correcting only that preview setting, both runs passed.
+Screenshots are in `/tmp/df-fixed-navigation-webkit-final-20261022` and
+`/tmp/df-fixed-navigation-chrome-final-20261022`. Physical iPhone Safari's toolbar
+animation was not tested. Existing account backend changes were not included.
+
 - Bottom navigation has four icon-only links with accessible names, active state
-  and the existing cart count. Its entire background and icons share one paint
-  container. The document-positioned container follows VisualViewport and window
-  scroll through a single animation-frame update; ResizeObserver includes its
-  real safe-area height. This avoids a viewport-fixed background with separately
-  adjusted descendants. Route changes and viewport changes retain navigation.
+  and the existing cart count. It uses CSS fixed positioning, with no JavaScript
+  scroll positioning or inline coordinates. Its height includes the bottom safe
+  area. Route changes retain navigation.
 - A product-open context removes the navigation node while a sheet is mounted;
   the normal-flow spacer stays to avoid moving the saved background position.
   The product dialog also marks its lifetime on body. Mobile cart checkout bars

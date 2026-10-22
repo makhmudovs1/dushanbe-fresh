@@ -26,7 +26,9 @@ for (const width of [375, 390, 430, 768]) {
     const nav = page.locator(".mobile-navigation");
     await expect(nav.locator("a")).toHaveCount(4);
     expect((await nav.innerText()).trim()).toBe("");
-    await expect(nav).toHaveCSS("position", "absolute");
+    await expect(nav).toHaveCSS("position", "fixed");
+    await expect(nav).toHaveCSS("bottom", "0px");
+    expect(await nav.getAttribute("style")).toBeNull();
     for (const y of [450, 1000, 200, 1400, 0]) {
       await page.evaluate(y => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, y); }, y);
       await expect.poll(async () => {
@@ -35,17 +37,17 @@ for (const width of [375, 390, 430, 768]) {
       }).toBe(844);
       await expect(nav.getByRole("link", { name: "Корзина", exact: true }).locator("svg")).toBeInViewport();
     }
-    await page.evaluate(() => {
-      Object.defineProperty(visualViewport!, "height", { configurable: true, get: () => 664 });
-      Object.defineProperty(visualViewport!, "offsetTop", { configurable: true, get: () => 24 });
-      visualViewport!.dispatchEvent(new Event("resize"));
-    });
-    await expect.poll(async () => { const r = (await nav.boundingBox())!; return Math.round(r.y + r.height); }).toBe(688);
-    await page.evaluate(() => {
-      Reflect.deleteProperty(visualViewport!, "height");
-      Reflect.deleteProperty(visualViewport!, "offsetTop");
-      visualViewport!.dispatchEvent(new Event("resize"));
-    });
+    for (const viewport of [{ width, height: 664 }, { width: 844, height: width }, { width, height: 844 }]) {
+      await page.setViewportSize(viewport);
+      await expect.poll(async () => { const r = (await nav.boundingBox())!; return Math.round(r.y + r.height); }).toBe(viewport.height);
+      await expect(nav.locator("a")).toHaveCount(4);
+      expect(await nav.getAttribute("style")).toBeNull();
+    }
+    const search = page.locator(".header-search input");
+    await search.focus();
+    await expect(nav).toBeHidden();
+    await search.blur();
+    await expect(nav).toBeVisible();
     await page.screenshot({ path: info.outputPath(`navigation-${width}.png`) });
     const product = page.locator(".home-available-products .product-card").first();
     const currentHref = await product.locator("h3 a").getAttribute("href");
