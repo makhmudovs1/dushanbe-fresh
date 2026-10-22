@@ -8,6 +8,11 @@ import { MobileProductSheet } from "./mobile-product-sheet";
 
 export const MOBILE_PRODUCT_QUERY = "(max-width: 1023px)";
 const Context = createContext<((product: Product | string) => void) | null>(null);
+const OpenContext = createContext(false);
+export function useProductSheetOpen() { return useContext(OpenContext); }
+export function ProductSheetSelection({ onSelect, children }: { onSelect: (product: Product | string) => void; children: ReactNode }) {
+  return <Context.Provider value={onSelect}>{children}</Context.Provider>;
+}
 const HISTORY_KEY = "__dushanbeFreshProductSheet";
 
 export function productSheetHistoryState(state: Record<string, unknown> | null, id: string) {
@@ -30,7 +35,7 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
   const sequence = useRef(0);
   const entry = useRef<{ id: string; href: string } | null>(null);
   const closing = useRef(false);
-  const [selection, setSelection] = useState<{ product: Product | string; pathname: string | null; replaceRoute: boolean } | null>(null);
+  const [selection, setSelection] = useState<{ product: Product | string; pathname: string | null } | null>(null);
   const dismiss = useCallback(() => {
     entry.current = null;
     closing.current = false;
@@ -53,7 +58,7 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
       window.history.pushState(productSheetHistoryState(window.history.state, id), "", href);
       entry.current = { id, href };
     } catch { entry.current = null; }
-    setSelection({ product, pathname, replaceRoute: entry.current !== null });
+    setSelection({ product, pathname });
   }, [owner, pathname]);
 
   useEffect(() => {
@@ -75,12 +80,12 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
 
   useEffect(() => { dismiss(); }, [pathname, dismiss]);
 
-  return <Context.Provider value={open}>
+  return <Context.Provider value={open}><OpenContext.Provider value={!!selection && selection.pathname === pathname}>
     {children}
     {selection && selection.pathname === pathname ?
       <MobileProductSheet key={typeof selection.product === "string" ? selection.product : selection.product.slug}
-        initialProduct={selection.product} onClose={close} onNavigate={dismiss} replaceRoute={selection.replaceRoute} /> : null}
-  </Context.Provider>;
+        initialProduct={selection.product} onClose={close} /> : null}
+  </OpenContext.Provider></Context.Provider>;
 }
 
 // Without a provider (or JavaScript), the anchor remains a normal product route.

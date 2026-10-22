@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, Heart, Plus, RotateCw, Share2 } from "lucide-react";
+import { ArrowUp, Heart, Plus, RotateCw, Share2 } from "lucide-react";
 import { useCart } from "@/cart/cart-context";
 import { sumCartQuantities } from "@/cart/cart";
 import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-selection";
@@ -13,6 +12,8 @@ import { FavoriteButton } from "./favorite-button";
 import { ProductGallery } from "./product-gallery";
 import { ProductPrice } from "./product-price";
 import { QuantityStepper } from "./quantity-stepper";
+import { ProductSheetSelection } from "./mobile-product-sheet-provider";
+import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
 import styles from "./mobile-product-sheet.module.css";
 
 export function isProductSheetDismissal(dx: number, dy: number) {
@@ -41,23 +42,41 @@ export function MobileProductSheetCart({ product, ready }: { product: Product; r
   </footer>;
 }
 
-export function MobileProductSheet({ initialProduct, onClose, onNavigate = onClose, replaceRoute = false }: {
-  initialProduct: Product | string; onClose: () => void; onNavigate?: () => void; replaceRoute?: boolean;
+export function MobileProductSheet({ initialProduct, onClose }: {
+  initialProduct: Product | string; onClose: () => void;
 }) {
   const { t, name, description } = useI18n();
-  const slug = typeof initialProduct === "string" ? initialProduct : initialProduct.slug;
+  const [selection, setSelection] = useState(initialProduct);
+  const slug = typeof selection === "string" ? selection : selection.slug;
   const [product, setProduct] = useState<Product | null>(typeof initialProduct === "string" ? null : initialProduct);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const requestVersion = useRef(0);
   const [retry, setRetry] = useState(0);
   const [shareNotice, setShareNotice] = useState("");
   const [sharing, setSharing] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const recommendedProducts = useRecommendationProducts();
+  const excluded = new Set<string>();
+  if (product) excluded.add(product.id);
+  const recommendations = selectRecommendations(recommendedProducts, excluded, 12);
   const closingRef = useRef(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   const suppressHandleClick = useRef(false);
   const href = `/products/${encodeURIComponent(slug)}`;
   useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
+  function selectProduct(next: Product | string) {
+    if (closingRef.current) return;
+    requestVersion.current++;
+    setSelection(next);
+    setProduct(typeof next === "string" ? null : next);
+    setStatus("loading");
+    setShareNotice("");
+    setShowTop(false);
+    contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }
   function requestClose() {
     if (closingRef.current) return;
     closingRef.current = true;
@@ -68,12 +87,13 @@ export function MobileProductSheet({ initialProduct, onClose, onNavigate = onClo
 
   useEffect(() => {
     let cancelled = false;
+    const version = ++requestVersion.current;
     setStatus("loading");
     void getProduct(slug).then(next => {
-      if (cancelled) return;
+      if (cancelled || version !== requestVersion.current) return;
       setProduct(next);
       setStatus("ready");
-    }).catch(() => { if (!cancelled) setStatus("error"); });
+    }).catch(() => { if (!cancelled && version === requestVersion.current) setStatus("error"); });
     return () => { cancelled = true; };
   }, [slug, retry]);
 
@@ -133,7 +153,8 @@ export function MobileProductSheet({ initialProduct, onClose, onNavigate = onClo
         onLostPointerCapture={event => { drag.current = null; event.currentTarget.closest("dialog")?.removeAttribute("data-dragging"); event.currentTarget.closest("dialog")?.style.removeProperty("--sheet-drag"); }}><span aria-hidden="true" /></button>
     </div>
     <p role="status" aria-live="polite" className={styles.shareNotice} hidden={!shareNotice}>{shareNotice ? t(shareNotice) : null}</p>
-    <div className={styles.content}>
+    <div className={styles.scrollArea}>
+    <div className={styles.content} ref={contentRef} onScroll={event => setShowTop(event.currentTarget.scrollTop > 320)}>
       {product ? <ProductGallery product={product} eager /> : null}
       <div className={styles.details}>
         {product ? <>
@@ -149,12 +170,16 @@ export function MobileProductSheet({ initialProduct, onClose, onNavigate = onClo
             <RotateCw size={18} aria-hidden="true" />{t("Повторить загрузку товара")}
           </button>
         </div> : null}
-        <Link className={styles.route} href={href} replace={replaceRoute} onClick={event => {
-          if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) onNavigate();
-        }}>
-          <ExternalLink size={16} aria-hidden="true" />{t("Открыть страницу товара")}
-        </Link>
       </div>
+      {recommendations.length ? <section className={styles.recommendations} aria-labelledby="product-recommendations-title">
+        <h2 id="product-recommendations-title">{t("Может, ещё кое-что?")}</h2>
+        <ProductSheetSelection onSelect={selectProduct}><RecommendationGrid products={recommendations} /></ProductSheetSelection>
+        <BrowseAll />
+      </section> : null}
+    </div>
+    {showTop ? <button className={styles.scrollTop} type="button" aria-label={t("Наверх")} title={t("Наверх")}
+      onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}>
+      <ArrowUp size={22} aria-hidden="true" /></button> : null}
     </div>
     {product ? <MobileProductSheetCart product={product} ready={status === "ready"} /> : null}
   </CatalogDialog>;

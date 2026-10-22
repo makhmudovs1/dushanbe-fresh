@@ -13,10 +13,19 @@ import { QuantityStepper } from "./quantity-stepper";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductGallery } from "./product-gallery";
 import { FavoriteButton } from "./favorite-button";
+import { useMobileViewport } from "./use-mobile-viewport";
+import { MobileProductSheet } from "./mobile-product-sheet";
+import { useRouter } from "next/navigation";
+
+function MobileProductRoute({ initialProduct }: { initialProduct: Product | string }) {
+  const router = useRouter();
+  return <MobileProductSheet initialProduct={initialProduct} onClose={() => router.replace("/catalog")} />;
+}
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
   const { t, name, description, priceLabel } = useI18n();
   const { addProduct, hydrated } = useCart();
+  const mobile = useMobileViewport();
   const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
   const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
   const [error, setError] = useState<string | null>(initialProduct === null ? "Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения." : null);
@@ -38,6 +47,8 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
       .catch(() => { if (!cancelled) setError("Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения."); });
     return () => { cancelled = true; };
   }, [slug, retry, initialProduct]);
+
+  if (mobile) return <MobileProductRoute initialProduct={product ?? slug} />;
 
   if (error) {
     return <div className="notice" role="alert"><p>{t(error)}</p>

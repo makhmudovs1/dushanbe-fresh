@@ -21,7 +21,9 @@ export function CatalogDialog({ title, children, busy, onClose, className = "", 
     const saved = properties.map(property => [property, body.style.getPropertyValue(property), body.style.getPropertyPriority(property)]);
     const rootOverflow = root.style.overflow;
     const scrollBehavior = root.style.scrollBehavior;
+    const previousSheet = body.getAttribute("data-product-sheet-open");
     if (fitVisualViewport) {
+      body.setAttribute("data-product-sheet-open", "true");
       // overflow:hidden alone does not stop iOS background/toolbar scrolling.
       root.style.overflow = "hidden";
       body.style.position = "fixed";
@@ -35,6 +37,8 @@ export function CatalogDialog({ title, children, busy, onClose, className = "", 
       dialog.close();
       document.body.style.overflow = overflow;
       if (fitVisualViewport) {
+        if (previousSheet === null) body.removeAttribute("data-product-sheet-open");
+        else body.setAttribute("data-product-sheet-open", previousSheet);
         for (const [property, value, priority] of saved) {
           if (value) body.style.setProperty(property, value, priority);
           else body.style.removeProperty(property);

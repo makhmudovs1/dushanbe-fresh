@@ -1,0 +1,27 @@
+.grid { min-width: 0; }
+.browseAll { display: none; }
+@media (max-width: 1023px) {
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 8px; }
+  .grid :global(.product-card) { min-width: 0; }
+  .grid :global(.product-card .product-gallery__media) { border-radius: 18px; }
+  .grid :global(.product-card .product-gallery__dots) { height: 16px; padding: 0; }
+  .grid :global(.product-card .product-gallery) { padding-bottom: 0; }
+  .grid :global(.product-card .product-image__fallback-label) { display: none; }
+  .grid :global(.product-card .product-image--placeholder) { top: 30%; }
+  .grid :global(.product-card .product-card__body) { padding: 5px 1px 0; }
+  .grid :global(.product-card h3) { font-size: 12px; line-height: 16px; height: 32px; }
+  .grid :global(.product-card .product-price) { min-height: 40px; }
+  .grid :global(.product-card .product-price__current) { flex-wrap: wrap; gap: 2px; }
+  .grid :global(.product-card .product-price__current strong) { font-size: 16px; line-height: 21px; }
+  .grid :global(.product-card .product-price__current > span) { font-size: 8px; }
+  .grid :global(.product-card .product-price__meta) { font-size: 10px; line-height: 14px; }
+  .grid :global(.product-card__selection) { inset: auto 0 4px; }
+  .grid :global(.product-card .quantity-stepper) { grid-template-columns: 44px minmax(0, 1fr) 44px; height: 44px; min-height: 44px; border-radius: 24px; }
+  .grid :global(.quantity-stepper > output) { padding: 0; text-align: center; font-size: 10px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The unit stays in the price metadata and the full accessible quantity label. */
+  .grid :global(.quantity-stepper > output span:last-child) { display: none; }
+  .grid :global(.product-card .quantity-stepper.quantity-stepper--empty) { height: 44px; min-height: 44px; background: transparent; box-shadow: none; }
+  .browseAll { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; margin-top: 24px; border-radius: 20px; padding: 12px 16px; background: #1f1f1f; color: #fff; font-weight: 600; font-size: 15px; }
+  .browseAll:hover, .browseAll:active { background: #1f1f1f; color: #fff; }
+  .browseAll:focus-visible { outline: 2px solid #17643b; outline-offset: 3px; }
+}

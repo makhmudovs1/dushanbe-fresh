@@ -77,8 +77,14 @@
   .mobile-category-tabs a { border-radius: 22px; background: #f5f5f5; color: #575757; }
   .mobile-category-tabs a[aria-current="page"] { color: #17643b; background: #edf4ef; }
   .catalog-sidebar--category-screen nav a { border-radius: 16px; color: #1b1b1b; }
-  .mobile-navigation { border-color: #f2f2f2; background: #fff; }
-  .mobile-navigation a { color: #8b8b8b; font-size: 10px; font-weight: 500; gap: 4px; }
+  .mobile-navigation { position: absolute; inset: auto 0 auto; border-color: #f2f2f2; background: #fff; visibility: hidden; isolation: isolate; contain: paint; }
+  .mobile-navigation[data-positioned="true"] { visibility: visible; }
+  .mobile-navigation a { flex-direction: row; color: #8b8b8b; gap: 0; }
+  .mobile-navigation__icon { width: 44px; height: 44px; }
+  .mobile-navigation__count { top: 1px; right: 0; }
+  body[data-product-sheet-open] .mobile-navigation,
+  body[data-product-sheet-open] .cart-checkout-bar,
+  body:has(.header-search input:focus) .mobile-navigation { display: none; }
   .mobile-navigation a[aria-current="page"] { color: #17643b; font-weight: 600; }
   .mobile-navigation__count { background: #d95043; }
   .language-dialog { border-radius: 24px; }
@@ -119,11 +125,11 @@
   .product-detail__content .primary-action, .product-detail__content .primary-action:hover { background: #1f1f1f; color: #fff; transform: none; }
   .product-detail .quantity-stepper { background: #f5f5f5; color: #1f1f1f; }
   .product-detail .quantity-stepper button { background: transparent; color: #1f1f1f; }
-  .empty-cart { min-height: 300px; }
-  .empty-cart__icon { background: #f5f5f5; box-shadow: none; }
+  .empty-cart { min-height: 240px; padding: 24px 0; border: 0; box-shadow: none; }
+  .empty-cart__icon { background: #f5f5f5; box-shadow: none; width: 72px; height: 72px; }
   .empty-cart h1 { color: #1b1b1b; font-size: 24px; font-weight: 700; }
   .empty-cart p { color: #7a7a7a; font-size: 14px; }
-  .empty-cart .primary-link { border-radius: 24px; min-height: 48px; }
+  .empty-cart .primary-link { display: none; }
   .skeleton { background-color: #f5f5f5; }
 }
 @media (min-width: 600px) and (max-width: 1023px) {

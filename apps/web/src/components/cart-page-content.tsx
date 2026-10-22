@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/provider";
 
 import { decimalLabel } from "@/lib/format";
-import { Trash2 } from "lucide-react";
+import { ShoppingBag, Trash2 } from "lucide-react";
 import { isMinimumQuantity } from "@/cart/catalog-selection";
 
 import Link from "next/link";
@@ -19,9 +18,11 @@ import { useCart } from "@/cart/cart-context";
 import { CartSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
 import { QuantityStepper } from "./quantity-stepper";
-import { getProducts, type Product } from "@/lib/api";
+import { type Product } from "@/lib/api";
 import { CartMobileHeader } from "./cart-mobile-header";
 import { ProductCard } from "./product-card";
+import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
+import { useMobileViewport } from "./use-mobile-viewport";
 import styles from "./cart-enhancements.module.css";
 
 export function CartPageContent() {
@@ -29,32 +30,31 @@ export function CartPageContent() {
     <CartMobileHeader />
     <CartContents />
     <CartRecommendations />
+    <CartBrowseAll />
   </div>;
 }
 
 export function selectCartRecommendations(products: Product[], cartIds: Set<string>) {
-  return products.filter(product => !cartIds.has(product.id)
-    && product.isActive !== false && product.isAvailableToday !== false).slice(0, 4);
+  return selectRecommendations(products, cartIds, 4);
+}
+
+function CartBrowseAll() {
+  const { state, hydrated } = useCart();
+  return hydrated && !state.items.length ? <BrowseAll /> : null;
 }
 
 function CartRecommendations() {
   const { t } = useI18n();
   const { state, hydrated } = useCart();
-  const [products, setProducts] = useState<Product[]>([]);
-  useEffect(() => {
-    const controller = new AbortController();
-    getProducts(undefined, controller.signal).then(data => {
-      if (!controller.signal.aborted) setProducts(data);
-    }).catch(() => { /* Recommendations are optional; keep checkout available. */ });
-    return () => controller.abort();
-  }, []);
-  const recommendations = selectCartRecommendations(products, new Set(state.items.map(item => item.productId)));
+  const mobile = useMobileViewport();
+  const products = useRecommendationProducts();
+  const recommendations = selectRecommendations(products, new Set(state.items.map(item => item.productId)), mobile ? 12 : 4);
   if (!hydrated || !recommendations.length) return null;
   return <section className={styles.recommendations} aria-labelledby="cart-recommendations-title">
     <h2 id="cart-recommendations-title">{t("Подобрали для вас")}</h2>
-    <div className={styles.recommendationGrid}>
+    {mobile ? <RecommendationGrid products={recommendations} /> : <div className={styles.recommendationGrid}>
       {recommendations.map(product => <ProductCard key={product.id} product={product} />)}
-    </div>
+    </div>}
   </section>;
 }
 
@@ -71,7 +71,8 @@ function CartContents() {
     return (
       <div className="empty-cart">
         <div className="empty-cart__icon" aria-hidden="true">
-          <span className="cart-icon" />
+          <span className={`cart-icon ${styles.desktopEmptyIcon}`} />
+          <ShoppingBag className={styles.mobileEmptyIcon} size={48} strokeWidth={1.3} />
         </div>
         <h1 className={styles.emptyTitle}>{t("Корзина пока пустая")}</h1>
         <p>{t("Добавьте свежие продукты из каталога.")}</p>

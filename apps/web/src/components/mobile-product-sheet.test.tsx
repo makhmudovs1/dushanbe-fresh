@@ -52,7 +52,7 @@ describe("mobile product sheet", () => {
     expect(html).toContain("aria-labelledby=");
     expect(html).toContain("Свежие бананы");
     expect(html).toContain("Загружаем карточку товара");
-    expect(html).toContain('href="/products/banana"');
+    expect(html).not.toContain("Открыть страницу товара");
     expect(html).toContain("Поделиться товаром");
     expect(html).not.toContain("спелые");
     expect(html).not.toContain('type="radio"');

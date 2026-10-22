@@ -59,14 +59,14 @@ for (const width of [320, 375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/cart");
     const section = page.getByRole("region", { name: "Подобрали для вас" });
-    await expect(section.locator(".product-card")).toHaveCount(4);
+    await expect(section.locator(".product-card")).toHaveCount(width < 1024 ? 7 : 4);
     await expect(section.getByRole("heading", { name: "Товар 0", exact: true })).toHaveCount(0);
     await expect(section.getByRole("heading", { name: "Товар 1", exact: true })).toBeVisible();
     await expect(page.locator(".cart-checkout-bar")).toContainText("21");
     await section.getByRole("button", { name: "Добавить в корзину: Товар 1", exact: true }).click();
     await expect(page.locator(".cart-item")).toHaveCount(3);
     await expect(section.getByRole("heading", { name: "Товар 1", exact: true })).toHaveCount(0);
-    await expect(section.locator(".product-card")).toHaveCount(4);
+    await expect(section.locator(".product-card")).toHaveCount(width < 1024 ? 6 : 4);
     await expect(page.locator(".cart-checkout-bar")).toContainText("26,25");
     await expect(page.locator(".cart-checkout-bar a")).toHaveAttribute("href", "/checkout");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

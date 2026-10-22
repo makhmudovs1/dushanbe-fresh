@@ -874,3 +874,15 @@
   opt into fixed-body background locking with scroll/style/focus restoration.
 - Keep the purchase footer outside the scroll region and non-shrinking. No
   checkout, catalog, price, variant or database changes are needed.
+
+## 2026-10-22: Mobile Navigation And Complete Product Screen
+
+- Bottom navigation uses icons with accessible names and follows the visible
+  viewport in document coordinates. Remove the complete nav node while products
+  are open; explicitly hide background cart bars for the same modal lifetime.
+- The existing product sheet is the complete mobile product screen, including
+  direct URLs. Suggestions replace its contents without nesting dialogs. Keep
+  desktop product routes unchanged and preserve existing basket/quantity rules.
+- Three-column real-catalog suggestions belong to mobile products and carts;
+  normal catalog grids remain two columns. Optional failures omit suggestions.
+- Review and release evidence: [MOBILE_NAVIGATION_REVIEW.md](MOBILE_NAVIGATION_REVIEW.md).

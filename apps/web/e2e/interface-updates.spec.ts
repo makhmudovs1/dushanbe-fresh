@@ -47,7 +47,7 @@ for (const width of [375, 390, 430, 768]) {
     await expect(sheet).toBeVisible();
     await expect(page).toHaveURL(/\/catalog\?category=vegetables$/);
     await sheet.getByRole("button", { name: "В корзину", exact: true }).click();
-    await expect(sheet.locator(".quantity-stepper")).toBeVisible();
+    await expect(sheet.locator("footer .quantity-stepper")).toBeVisible();
     await sheet.getByRole("button", { name: `Увеличить количество: ${name}`, exact: true }).click();
     await sheet.getByRole("button", { name: new RegExp("Добавить в избранное") }).click();
     await page.screenshot({ path: info.outputPath(`product-${width}.png`) });

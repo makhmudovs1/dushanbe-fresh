@@ -53,7 +53,11 @@
 .sheet button:focus-visible, .route:focus-visible { outline: 2px solid #17643b; outline-offset: -3px; }
 .sheet button:disabled { opacity: .55; cursor: default; }
 .shareNotice { position: absolute; left: 16px; right: 16px; top: 64px; z-index: 7; margin: 0; padding: 10px 12px; border-radius: 16px; background: #fff; color: #555; font-size: 13px; overflow-wrap: anywhere; }
-.content { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
+.scrollArea { position: relative; flex: 1; min-height: 0; min-width: 0; }
+.content { height: 100%; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
+.recommendations { padding: 8px 16px 64px; }
+.recommendations > h2 { margin: 0 0 16px; font-size: 23px; line-height: 29px; font-weight: 700; }
+.scrollTop { position: absolute; z-index: 5; left: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #eee; border-radius: 50%; background: #fff; color: #1f1f1f; box-shadow: 0 2px 8px rgb(0 0 0 / 8%); cursor: pointer; }
 .content :global(.product-gallery) { width: min(100%, 560px); margin: 0 auto; }
 .content :global(.product-gallery__media) { border-radius: 30px; background: #f5f5f5; }
 .content :global(.product-gallery__media .product-image) { background: #f5f5f5; }
