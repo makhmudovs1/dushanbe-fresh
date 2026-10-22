@@ -853,3 +853,14 @@
 - Mobile address UI progressively reveals street/building then extra details;
   existing storage, map and checkout behavior remain. No new provider/API/DB work.
 - No deployment. Review and changed files: [MOBILE_VISUAL_REVIEW.md](MOBILE_VISUAL_REVIEW.md).
+
+## 2026-10-22: Mobile Safari Purchase Controls
+
+- Product sheets alone follow VisualViewport geometry; other dialogs and desktop
+  layout retain their existing sizing. Footer safe-area padding stays inside it.
+- Keep catalog quantity controls mounted between empty/added states. Existing
+  decimal, min/step, prices and variant ownership remain unchanged.
+- Graphite purchase CTAs and red active favorites apply only on mobile, honoring
+  the explicit instruction not to change desktop. Mobile card hearts stay hidden.
+- WebKit emulation cannot certify physical Safari browser chrome/compositor.
+  Evidence, regression tests and rollout: [MOBILE_SAFARI_FIXES.md](MOBILE_SAFARI_FIXES.md).

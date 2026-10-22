@@ -3,7 +3,6 @@ import { useI18n } from "@/i18n/provider";
 
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { FavoriteButton } from "./favorite-button";
 import { useCart } from "@/cart/cart-context";
 import { sumCartQuantities } from "@/cart/cart";
@@ -26,16 +25,13 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="product-card">
       <ProductGallery product={product} href={`/products/${product.slug}`}>
         <FavoriteButton product={product} />
-        <div className="product-card__selection">
-          {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> : current ?
+        <div className="product-card__selection" onClick={event => event.stopPropagation()}
+          onTouchStart={event => event.stopPropagation()} onTouchEnd={event => event.stopPropagation()}>
+          {!hydrated ? <span className="skeleton catalog-cart-pending" role="status" aria-label={t("Загружаем количество в корзине")} /> :
             <QuantityStepper name={name(product)} quantity={sumCartQuantities(items)} unit={product.unit}
-              onIncrease={() => incrementItem(current)}
-              onDecrease={() => isMinimumQuantity(current) ? removeItem(current) : decrementItem(current)} /> :
-            <button className="product-card__action" type="button" aria-label={`${t("Добавить в корзину")}: ${name(product)}`}
-              title={`${t("Добавить в корзину")}: ${name(product)}`}
-              onClick={() => addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId: null })}>
-              <Plus size={26} aria-hidden="true" />
-            </button>}
+              onIncrease={() => { if (current) incrementItem(current); }}
+              onDecrease={() => { if (current) { if (isMinimumQuantity(current)) removeItem(current); else decrementItem(current); } }}
+              onAdd={current ? undefined : () => addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId: null })} />}
         </div>
       </ProductGallery>
       <div className="product-card__body">

@@ -2,12 +2,14 @@
 
 import { ReactNode, useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
+import { useDialogViewport } from "./use-dialog-viewport";
 
-export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму" }: {
+export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму", fitVisualViewport = false }: {
   title: string; children: ReactNode; busy: boolean; onClose: () => void;
-  className?: string; closeLabel?: string;
+  className?: string; closeLabel?: string; fitVisualViewport?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  useDialogViewport(ref, fitVisualViewport);
   const titleId = useId();
   useEffect(() => {
     const dialog = ref.current!;

@@ -6,8 +6,9 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   workers: 1,
   use: {
+    browserName: process.env.PLAYWRIGHT_BROWSER === "webkit" ? "webkit" : "chromium",
     baseURL: process.env.UI_BASE_URL || "http://localhost:3000",
-    channel: process.env.PLAYWRIGHT_CHANNEL || "chrome",
+    channel: process.env.PLAYWRIGHT_BROWSER === "webkit" ? undefined : process.env.PLAYWRIGHT_CHANNEL || "chrome",
     viewport: { width: 1440, height: 1000 },
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

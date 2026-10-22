@@ -57,8 +57,13 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
   }, [owner, pathname]);
 
   useEffect(() => {
-    window.addEventListener("popstate", dismiss);
-    return () => window.removeEventListener("popstate", dismiss);
+    const pop = (event: PopStateEvent) => {
+      // Closing our same-URL entry must not start a competing Next navigation.
+      if (entry.current?.href === window.location.href) event.stopImmediatePropagation();
+      dismiss();
+    };
+    window.addEventListener("popstate", pop, true);
+    return () => window.removeEventListener("popstate", pop, true);
   }, [dismiss]);
 
   useEffect(() => {

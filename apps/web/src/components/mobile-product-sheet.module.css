@@ -1,13 +1,15 @@
 .sheet[open] {
+  --sheet-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sheet-viewport-height: var(--dialog-viewport-height, 100vh);
+  --sheet-height: min(calc(var(--sheet-viewport-height) * .92), calc(var(--sheet-viewport-height) - env(safe-area-inset-top, 0px) - 12px));
   position: fixed;
-  inset: auto 0 0;
-  display: flex;
-  flex-direction: column;
+  inset: calc(var(--dialog-viewport-top, 0px) + var(--sheet-viewport-height) - var(--sheet-height)) 0 auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
-  height: 92vh;
-  height: 92dvh;
-  max-height: calc(100dvh - env(safe-area-inset-top) - 12px);
+  height: var(--sheet-height);
+  max-height: var(--sheet-height);
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -20,23 +22,24 @@
   transition: transform 180ms ease;
   animation: sheet-enter 200ms ease-out;
 }
+@supports (height: 100dvh) { .sheet[open] { --sheet-viewport-height: var(--dialog-viewport-height, 100dvh); } }
 .sheet[open].closing { transform: translateY(100%); }
 .sheet[data-dragging="true"] { transition: none; }
 .sheet::backdrop { background: rgb(0 0 0 / 38%); }
 .sheet :global(.catalog-dialog__header) { position: absolute; z-index: 6; inset: 12px 12px auto auto; display: block; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
 .sheet :global(.catalog-dialog__header h2) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .sheet :global(.catalog-dialog__header button), .icon { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: #fff; color: #1b1b1b; box-shadow: 0 2px 8px rgb(0 0 0 / 6%); cursor: pointer; }
-.sheet :global(.catalog-dialog__body) { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 0; }
+.sheet :global(.catalog-dialog__body) { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; min-width: 0; padding: 0; overflow: hidden; }
 .toolbar { position: absolute; z-index: 6; top: 12px; right: 64px; display: flex; gap: 8px; height: 44px; pointer-events: none; }
 .toolbar button { flex-shrink: 0; pointer-events: auto; }
 .toolbar :global(.favorite-button) { position: static; color: #1b1b1b; width: 44px; height: 44px; box-shadow: 0 2px 8px rgb(0 0 0 / 6%); }
-.toolbar :global(.favorite-button[aria-pressed="true"]) { color: #17643b; }
+.toolbar :global(.favorite-button[aria-pressed="true"]) { color: #ff4d4f; }
 .handle { position: fixed; top: 0; left: 12px; display: grid; place-items: start center; width: 80px; height: 44px; border: 0; background: transparent; color: #909090; padding: 9px; touch-action: none; cursor: grab; }
 .handle span { width: 24px; height: 3px; border-radius: 2px; background: #cfcfcf; opacity: .6; }
 .sheet button:focus-visible, .route:focus-visible { outline: 2px solid #17643b; outline-offset: -3px; }
 .sheet button:disabled { opacity: .55; cursor: default; }
 .shareNotice { position: absolute; left: 16px; right: 16px; top: 64px; z-index: 7; margin: 0; padding: 10px 12px; border-radius: 16px; background: #fff; color: #555; font-size: 13px; overflow-wrap: anywhere; }
-.content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.content { min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
 .content :global(.product-gallery) { width: min(100%, 560px); margin: 0 auto; }
 .content :global(.product-gallery__media) { border-radius: 30px; background: #f5f5f5; }
 .content :global(.product-gallery__media .product-image) { background: #f5f5f5; }
@@ -52,7 +55,7 @@
 .route, .retry { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #17643b; font-size: 12px; }
 .route svg, .retry svg { flex-shrink: 0; }
 .retry { border: 0; background: transparent; padding: 0; text-align: left; cursor: pointer; }
-.footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: center; gap: 12px; flex-shrink: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #f0f0f0; border-radius: 24px 24px 0 0; background: #fff; color: #1b1b1b; overflow-wrap: anywhere; }
+.footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: center; gap: 12px; padding: 12px 16px calc(12px + var(--sheet-safe-bottom)); border-top: 1px solid #f0f0f0; border-radius: 24px 24px 0 0; background: #fff; color: #1b1b1b; overflow-wrap: anywhere; }
 .footer :global(.product-price) { color: #1b1b1b; gap: 0; min-height: 0; }
 .footer :global(.product-price__current strong) { font-size: 26px; line-height: 30px; font-weight: 700; }
 .footer :global(.product-price__current > span) { font-size: 10px; color: #777; }
@@ -63,7 +66,7 @@
 .footer :global(.quantity-stepper button) { width: 44px; height: 52px; background: transparent; color: #1b1b1b; }
 .footer :global(.quantity-stepper button:hover) { background: #ededed; }
 .footer :global(.quantity-stepper output) { min-width: 0; white-space: nowrap; font-size: 13px; }
-.add { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 52px; padding: 12px; border: 0; border-radius: 24px; background: #1b1b1b; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+.add { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 52px; padding: 12px; border: 0; border-radius: 24px; background: #1f1f1f; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
 .add svg { flex-shrink: 0; }
 .cartPending { font-size: 13px; }
 @keyframes sheet-enter { from { transform: translateY(100%); } to { transform: translateY(0); } }
