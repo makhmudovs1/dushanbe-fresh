@@ -20,6 +20,9 @@
 - Mobile primary purchase/checkout buttons use #1F1F1F with white text. Image
   plus buttons stay white; counters stay white/light gray. Active mobile favorites
   are #FF4D4F, inactive hearts are dark, with reduced-motion-aware transition.
+- The empty add button has an explicit opaque white background inside the shared
+  stepper. Mobile stepper children stay transparent even in hover state, avoiding
+  Safari's persistent touch-hover segments; the parent paints the whole pill.
 
 The exact intermittent white-rectangle repaint from the owner's iPhone was not
 reproduced in desktop-hosted WebKit 18.4. Structural DOM/geometry regressions were
@@ -37,6 +40,13 @@ regression tests fail on the prior production build and pass with these fixes.
   portrait/landscape, 34px bottom inset, red favorites and graphite purchase CTA.
 - 29 Chrome scenarios pass, including the previous interface/cart/map/RU-TJ suites.
 - Unit coverage adds seven VisualViewport/fallback validation cases.
+- The exact committed release passes lint, typecheck, both production builds and
+  457 unit/integration tests (shared 6, Web 200, API 251), with zero skips. Database
+  tests use only the isolated local `dushanbe_fresh_interface_test_20261021`.
+- The production-build preview passes 20 WebKit and 29 Chrome scenarios. Two
+  interrupted runs had machine-sleep pauses; clean reruns used sleep prevention.
+  The visual test now uses the real bottom-nav link after RU/TJ instead of racing
+  an artificial hard navigation against Next's language refresh.
 - Desktop screenshot comparison: home, catalog, categories and cart have zero
   changed pixels in the first 1440x1000 viewport (RGB tolerance 5).
 
@@ -50,5 +60,51 @@ Existing uncommitted account backend work remains separate.
 
 ## Rollout
 
-Pending the exact-release build and production checks. Web only, with verified
-PostgreSQL backup, previous build/runtime retained and no API service restart.
+Final Web release `d9c7e218f1c1eda5989e98d9820b6ae314f0a8a7` was activated on
+2026-10-22 at 08:26:13 UTC. Build ID: `nCHzhgTwZ7ABji8qA27_x`.
+Web PID `4043986`; API PID remains `3604550` and its compiled checksum is unchanged.
+Both services are active, with no automatic restarts after activation.
+The earlier structural fix `47b96bc` was followed by this small palette/hover
+correction after screenshot review. All release checks were rerun on the final
+commit, including its explicit white-add-button/transparent-counter assertions.
+
+Verified backup and rollback files:
+`/home/deploy/backups/dushanbe-fresh/mobile-safari-20261022-d9c7e21`.
+The PostgreSQL custom archive is 83,385 bytes, with 160 verified archive entries.
+SHA-256: `400edac3c63c95af9d9ca99d0ad8a060ed85c751f739f13513e9b373e1bbc628`.
+All 24 table fingerprints match before/after activation; no rows changed.
+
+Dependencies are isolated in
+`/opt/dushanbe-fresh/dist/web-releases/mobile-safari-d9c7e21`. The previous Web
+build/runtime link and old static chunks are retained. No API deployment,
+migration, seed, settings write or Docker/Caddy/systemd change.
+
+Production still lacks the owner's minimum-order/delivery/service-fee settings;
+actual order submission was not performed. This pre-existing configuration issue
+was not replaced with invented amounts. SMS and geocoding remain unconfigured.
+
+Final production smoke passed eight complete flows: WebKit and Chrome at
+375/390/430px RU, plus 390px TJ. It covers rapid weighted changes, four products,
+reload, sheet scrolling/rotation, favorite color, cart and checkout UI. No orders
+or other mutating API calls were allowed. Final journal/data audit found zero
+runtime failures and zero changed table fingerprints.
+
+An early live WebKit run emitted transient access-control errors for speculative
+`_rsc` loads. Diagnostic replay, two subsequent full WebKit replays and the final
+eight-flow run were clean. Storefront networking was not changed; this observation
+does not certify every real-device Safari transport/compositor variation.
+
+Production screenshots: `/tmp/df-safari-production-d9c7e21-20261022/index.html`.
+Isolated local production preview: http://localhost:3110.
+
+## Files
+
+- `apps/web/src/components/catalog-dialog.tsx`, `use-dialog-viewport.ts`,
+  `use-dialog-viewport.test.ts`
+- `apps/web/src/components/mobile-product-sheet.tsx`,
+  `mobile-product-sheet.module.css`, `mobile-product-sheet-provider.tsx`
+- `apps/web/src/components/product-card.tsx`, `quantity-stepper.tsx`
+- `apps/web/src/app/catalog-cards.css`, `mobile-visual-polish.css`
+- `apps/web/playwright.config.ts`, `e2e/mobile-safari-regressions.spec.ts`,
+  `e2e/mobile-visual-polish.spec.ts`
+- `docs/DECISIONS.md`, this document
