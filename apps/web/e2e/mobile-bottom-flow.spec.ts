@@ -93,6 +93,14 @@ for (const width of [375, 390, 430, 768]) {
     await expect(sheet).toHaveCount(0);
     await expect(nav.locator("a")).toHaveCount(4);
     await nav.getByRole("link", { name: "Корзина", exact: true }).click();
+    await expect(page.locator(".cart-checkout-bar")).toBeVisible();
+    await page.locator(".cart-item h3 a").first().click();
+    await expect(page.getByRole("dialog").locator("footer")).toBeVisible();
+    await expect(nav).toHaveCount(0);
+    await expect(page.locator(".cart-checkout-bar")).toBeHidden();
+    await page.getByRole("dialog").locator(".catalog-dialog__header button").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator(".cart-checkout-bar")).toBeVisible();
     await page.getByRole("button", { name: "Очистить корзину", exact: true }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Удалить все товары", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Корзина пока пустая", exact: true })).toBeVisible();
