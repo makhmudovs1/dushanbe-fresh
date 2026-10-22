@@ -22,6 +22,10 @@ async function Sections() {
   const [categories, products] = await Promise.all([getPublicCategories(), getPublicProducts()]);
   return <><HomePromotions categories={categories} products={products} /><HomeCategorySections categories={categories} products={products} /></>;
 }
+async function RemainingMobileCategories() {
+  const [categories, products] = await Promise.all([getPublicCategories(), getPublicProducts()]);
+  return <HomeCategorySections categories={categories} products={products} placement="after-products" />;
+}
 
 export default function HomePage() {
   const { t } = serverI18n();
@@ -29,11 +33,12 @@ export default function HomePage() {
     <div className="storefront-sidebar-slot"><Suspense fallback={<CategorySkeleton />}><Sidebar /></Suspense></div>
     <div className="storefront-main">
       <Suspense fallback={<HomePromotionsSkeleton />}><Sections /></Suspense>
-      <section className="storefront-section">
+      <section className="storefront-section home-available-products">
         <div className="section-heading storefront-section-heading"><h2>{t("Сегодня в наличии")}</h2>
           <Link className="storefront-more" href="/catalog">{t("Все продукты")}<ArrowRight size={16} aria-hidden="true" /></Link></div>
         <Suspense fallback={<ProductGridSkeleton />}><AvailableProducts /></Suspense>
       </section>
+      <Suspense fallback={null}><RemainingMobileCategories /></Suspense>
     </div>
   </div></main>;
 }

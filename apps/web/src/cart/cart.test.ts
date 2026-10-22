@@ -80,6 +80,14 @@ class MemoryStorage implements Storage {
 }
 
 describe("cart", () => {
+  it("repeats using current prices and quantity rules without replacing other cart lines", () => {
+    const previous = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
+    const fresh = createCartItem({ product: { ...tomatoes, sellingPrice: "12.25", minQuantity: "1", quantityStep: "0.5" }, quantity: "0.5", qualityOptionId: null });
+    const another = createCartItem({ product: cilantro, quantity: "2", qualityOptionId: null });
+    const result = cartReducer({ items: [previous, another] }, { type: "repeat", items: [fresh] });
+    expect(result.items[0]).toMatchObject({ sellingPrice: "12.25", quantity: "1.5", minQuantity: "1", qualityOptionId: null });
+    expect(result.items[1]).toEqual(another);
+  });
   it("explicit null adds without a quality preference while old explicit options remain intact", () => {
     const plain = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
     expect(plain.qualityOptionId).toBeNull();

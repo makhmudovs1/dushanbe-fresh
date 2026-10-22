@@ -1,5 +1,25 @@
 # Принятые решения
 
+## 2026-10-21: Клиентский аккаунт и SMS, без production deployment
+
+- По явному запросу владельца расширяем прежний гостевой MVP. Переиспользуем
+  `User`, `Customer`, `CustomerAddress`; staff-авторизация остаётся отдельной.
+- Провайдер не выбран. HTTP SMS-адаптер выключен по умолчанию; до реальной
+  настройки и проверки гостевой checkout сохраняется. В production нельзя
+  имитировать отправку, выдавать фиксированные коды или включать тестовый шлюз.
+- Новый заказ принадлежит аккаунту через явный nullable `accountUserId`.
+  Старые гостевые заказы не раскрываются по совпадению телефона: нужны приватная
+  ссылка и подтверждённый совпадающий номер. Риск/COD/финансы не переписываются.
+- Сессии клиента opaque/httpOnly, отдельны от staff JWT. OTP одноразовые,
+  HMAC-хешированные, ограничены по времени, телефону, IP и попыткам.
+- Адреса квартиры/дома и необязательная точка используют прежние адреса и
+  snapshot заказа. Карта загружается по нажатию, GPS только по разрешению.
+- Повтор заказа дополняет корзину актуальными публичными товарами, ценами и
+  min/step; недоступные товары/варианты пропускаются с сообщением. Checkout
+  повторно проверяет сумму и наличие, не меняя существующие расчёты.
+- Нужна только additive migration `20261021090000_customer_accounts`.
+  Настройки запуска, ограничения и тестовое окружение: `docs/CUSTOMER_ACCOUNTS.md`.
+
 ## 2026-10-20: Только мобильная витрина, без production deployment
 
 - Новая компоновка ограничена `max-width: 1023px`, включая планшет 768px.
@@ -809,3 +829,27 @@
   выше двухколоночного каталога. Подкатегории по названиям товаров не создаются.
 - Это Web-only deployment после проверок и backup, без миграций и записи
   production catalog/settings/order данных.
+
+## 2026-10-21: Mobile Sheets And Delivery Address Selector
+
+- Language is now an icon-triggered RU/TJ dialog on all viewports. Mobile adds a
+  compact scrolling header, favorites tab, product sheets and confirmed cart
+  clearing. Existing prices, null-quality additions and old cart variants remain.
+- Header address selection shares the checkout draft and existing account
+  addresses. Explicit choice replaces address; automatic defaults preserve drafts.
+- No geocoder is configured: real saved-address filtering, manual input and a
+  draggable map pin work. External suggestions use an optional server adapter.
+- The Dushanbe coordinate envelope is approximate, not a promised delivery zone.
+  Strict geographic validation requires an approved polygon/provider integration.
+- No deployment or new migration in this UI change. Configuration and limitations:
+  [INTERFACE_UPDATES.md](INTERFACE_UPDATES.md).
+
+## 2026-10-21: Mobile Visual Refinement
+
+- The latest visual-only request supersedes red cart counters and the dark sheet
+  footer: counters are neutral, the footer is white with a dark purchase button.
+- Mobile home uses the same artwork in a compact mosaic and shows products before
+  the remaining category sections. Desktop composition stays unchanged.
+- Mobile address UI progressively reveals street/building then extra details;
+  existing storage, map and checkout behavior remain. No new provider/API/DB work.
+- No deployment. Review and changed files: [MOBILE_VISUAL_REVIEW.md](MOBILE_VISUAL_REVIEW.md).

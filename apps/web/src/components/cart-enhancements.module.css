@@ -1,0 +1,30 @@
+.page { min-width: 0; }
+.mobileHeader { display: none; }
+.recommendations { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--color-border); }
+.recommendations h2 { margin: 0 0 20px; font-size: 24px; line-height: 1.3; overflow-wrap: anywhere; }
+.recommendationGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 16px; }
+.clearDialog { width: min(440px, calc(100% - 32px)); }
+.confirmActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.confirmActions button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; max-width: 100%; white-space: normal; }
+
+@media (max-width: 1023px) {
+  .mobileHeader { display: block; margin-bottom: 2px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+  .headerRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; }
+  .headerRow h1 { margin: 0; min-width: 0; font-size: 21px; line-height: 28px; font-weight: 650; color: #1b1b1b; overflow-wrap: anywhere; }
+  .actions { display: flex; flex-shrink: 0; gap: 2px; }
+  .actions > * { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; color: #1b1b1b; border-radius: 50%; }
+  .actions > :disabled { opacity: .4; cursor: default; }
+  .notice { margin: 8px 0 0; font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+  .notice:empty { margin: 0; }
+  .desktopHeading { display: none; }
+  .page .emptyTitle { font-size: 24px; line-height: 30px; }
+  .recommendations { margin-top: 12px; padding: 18px 0 12px; border-color: #f0f0f0; }
+  .recommendations h2 { margin-bottom: 12px; font-size: 21px; line-height: 27px; font-weight: 700; color: #1b1b1b; }
+  .recommendationGrid { display: grid; grid-auto-flow: column; grid-auto-columns: 146px; grid-template-columns: none; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain; padding: 0 0 8px; }
+  .recommendationGrid::-webkit-scrollbar { display: none; }
+  .recommendationGrid > * { scroll-snap-align: start; }
+  .recommendationGrid :global(.product-card .product-gallery__media) { border-radius: 22px; }
+  .recommendationGrid :global(.product-card h3) { font-size: 13px; line-height: 18px; height: 36px; }
+  .recommendationGrid :global(.product-card .product-price__current strong) { font-size: 18px; }
+  .recommendationGrid :global(.product-card .product-price__current > span) { font-size: 9px; }
+}

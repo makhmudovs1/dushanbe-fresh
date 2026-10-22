@@ -25,7 +25,7 @@ test("mobile catalog selection reaches checkout and order confirmation", async (
   await page.getByLabel("Телефон", { exact: true }).fill("+992900000000");
   await page.getByLabel("Улица", { exact: true }).fill("Тестовая улица UI");
   await page.getByLabel("Дом", { exact: true }).fill("1");
-  await page.getByLabel("Комментарий курьеру").fill("Техническая проверка интерфейса; заказ будет отменён сразу после проверки.");
+  await page.getByLabel("Комментарий / ориентир").fill("Техническая проверка интерфейса; заказ будет отменён сразу после проверки.");
   await page.locator('input[name="delivery-slot"]:enabled').first().check();
   await page.getByLabel("Я проверил товары, стоимость и время доставки").check();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

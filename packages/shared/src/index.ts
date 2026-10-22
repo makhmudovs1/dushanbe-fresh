@@ -10,5 +10,6 @@ export type HealthStatus = {
   service: string;
 };
 export type * from "./auth";
+export type * from "./customer";
 export * from "./delivery-finance";
 export * from "./tracking";

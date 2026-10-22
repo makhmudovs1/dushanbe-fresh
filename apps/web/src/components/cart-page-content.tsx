@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/provider";
 
 import { decimalLabel } from "@/lib/format";
@@ -6,6 +7,7 @@ import { Trash2 } from "lucide-react";
 import { isMinimumQuantity } from "@/cart/catalog-selection";
 
 import Link from "next/link";
+import { MobileProductLink } from "./mobile-product-sheet-provider";
 
 import {
   calculateCartSubtotalMinor,
@@ -17,8 +19,46 @@ import { useCart } from "@/cart/cart-context";
 import { CartSkeleton } from "./loading-state";
 import { ProductImage } from "./product-image";
 import { QuantityStepper } from "./quantity-stepper";
+import { getProducts, type Product } from "@/lib/api";
+import { CartMobileHeader } from "./cart-mobile-header";
+import { ProductCard } from "./product-card";
+import styles from "./cart-enhancements.module.css";
 
 export function CartPageContent() {
+  return <div className={styles.page}>
+    <CartMobileHeader />
+    <CartContents />
+    <CartRecommendations />
+  </div>;
+}
+
+export function selectCartRecommendations(products: Product[], cartIds: Set<string>) {
+  return products.filter(product => !cartIds.has(product.id)
+    && product.isActive !== false && product.isAvailableToday !== false).slice(0, 4);
+}
+
+function CartRecommendations() {
+  const { t } = useI18n();
+  const { state, hydrated } = useCart();
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    getProducts(undefined, controller.signal).then(data => {
+      if (!controller.signal.aborted) setProducts(data);
+    }).catch(() => { /* Recommendations are optional; keep checkout available. */ });
+    return () => controller.abort();
+  }, []);
+  const recommendations = selectCartRecommendations(products, new Set(state.items.map(item => item.productId)));
+  if (!hydrated || !recommendations.length) return null;
+  return <section className={styles.recommendations} aria-labelledby="cart-recommendations-title">
+    <h2 id="cart-recommendations-title">{t("Подобрали для вас")}</h2>
+    <div className={styles.recommendationGrid}>
+      {recommendations.map(product => <ProductCard key={product.id} product={product} />)}
+    </div>
+  </section>;
+}
+
+function CartContents() {
   const { t, name, label, priceLabel } = useI18n();
   const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount } = useCart();
   const subtotalMinor = calculateCartSubtotalMinor(state);
@@ -33,7 +73,7 @@ export function CartPageContent() {
         <div className="empty-cart__icon" aria-hidden="true">
           <span className="cart-icon" />
         </div>
-        <h1>{t("Корзина пока пустая")}</h1>
+        <h1 className={styles.emptyTitle}>{t("Корзина пока пустая")}</h1>
         <p>{t("Добавьте свежие продукты из каталога.")}</p>
         <Link className="primary-link" href="/catalog">{t(" Перейти в каталог ")}</Link>
       </div>
@@ -42,7 +82,7 @@ export function CartPageContent() {
 
   return (
     <>
-      <header className="page-heading">
+      <header className={`page-heading ${styles.desktopHeading}`}>
         <h1>{t("Корзина")}</h1>
         <p>{t("Ваши продукты")}</p>
       </header>
@@ -54,13 +94,14 @@ export function CartPageContent() {
 
           return (
             <article className="cart-item" key={itemKey}>
-              <Link className="cart-item__media" href={`/products/${item.slug}`} aria-label={name(item)}>
+              <MobileProductLink className="cart-item__media" product={item.slug} aria-label={name(item)}>
                 <ProductImage src={item.imageUrl} name={name(item)} />
-              </Link>
+              </MobileProductLink>
               <div className="cart-item__info">
-                <h3><Link href={`/products/${item.slug}`}>{name(item)}</Link></h3>
+                <h3><MobileProductLink product={item.slug}>{name(item)}</MobileProductLink></h3>
                 {item.qualityOptionLabel ? <p>{t("Качество: ")}{label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}</p> : null}
-                <p>{priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
+                <p className="cart-item__unit-price">{priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
+                <p className="cart-item__mobile-price" title={priceLabel(item.sellingPrice, item.unit, item.slug)}><strong>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)} {t("сомони")}</strong></p>
               </div>
               <QuantityStepper name={`${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`}
                 quantity={item.quantity} unit={item.unit} decreaseDisabled={isMinimumQuantity(item)}

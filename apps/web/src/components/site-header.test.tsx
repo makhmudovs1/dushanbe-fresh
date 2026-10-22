@@ -5,6 +5,7 @@ import { SiteHeader } from "./site-header";
 const route = vi.hoisted(() => ({ path: "/catalog" }));
 vi.mock("next/navigation", () => ({ usePathname: () => route.path, useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/cart/cart-context", () => ({ useCart: () => ({ lineCount: 2, hydrated: true }) }));
+vi.mock("@/customer/customer-context", () => ({ useCustomer: () => ({ status: { enabled: false }, user: null }) }));
 
 describe("customer branding", () => {
   it("keeps a separate text wordmark and the provided mark with only F accented", () => {

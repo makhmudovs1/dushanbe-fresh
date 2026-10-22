@@ -27,6 +27,9 @@ export type DeliverySlotDto = {
   remainingCapacity: number;
 };
 export type AddressInput = {
+  housingType?: "apartment" | "house";
+  latitude?: number | null;
+  longitude?: number | null;
   street: string;
   building: string;
   apartment: string;

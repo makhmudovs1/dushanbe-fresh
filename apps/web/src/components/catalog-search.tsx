@@ -20,6 +20,9 @@ export function CatalogSearch() {
   const dirty = useRef(false);
   const revision = useRef(0);
   const submitted = useRef<{ key: string; revision: number } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const focusSearch = params?.get("focusSearch");
+  useEffect(() => { if (focusSearch === "1") inputRef.current?.focus(); }, [focusSearch]);
 
   useEffect(() => {
     // A committed search must not replace text typed after that navigation began.
@@ -56,7 +59,7 @@ export function CatalogSearch() {
 
   return <form className="header-search" action="/catalog" role="search" onSubmit={submit}>
     <span className="header-search__icon">{pending ? <LoaderCircle className="is-spinning" size={20} aria-hidden="true" /> : <Search size={20} aria-hidden="true" />}</span>
-    <input name="search" maxLength={120} autoComplete="off" aria-label={t("Поиск товаров")} placeholder={t("Поиск товаров")}
+    <input ref={inputRef} name="search" maxLength={120} autoComplete="off" aria-label={t("Поиск товаров")} placeholder={t("Поиск товаров")}
       aria-busy={pending} value={value} onChange={event => change(event.target.value)} />
     <button className={!value ? "header-search__clear is-empty" : "header-search__clear"} type="button" disabled={!value}
       aria-label={t("Очистить поиск")} title={t("Очистить поиск")} onClick={() => change("")}><X size={18} aria-hidden="true" /></button>

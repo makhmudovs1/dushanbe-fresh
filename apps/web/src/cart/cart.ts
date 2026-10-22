@@ -30,6 +30,7 @@ export type AddToCartInput = {
 };
 
 export type CartAction =
+  | { type: "repeat"; items: CartItem[] }
   | { type: "add"; item: CartItem }
   | { type: "increment"; key: string }
   | { type: "decrement"; key: string }
@@ -46,6 +47,12 @@ export const emptyCartState: CartState = {
 
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
+    case "repeat":
+      return action.items.reduce((current, fresh) => {
+        const existing = current.items.find(item => getCartItemKey(item) === getCartItemKey(fresh));
+        const item = { ...fresh, quantity: normalizeQuantity(existing ? addQuantity(existing.quantity, fresh.quantity) : fresh.quantity, fresh.minQuantity, fresh.quantityStep) };
+        return { items: existing ? current.items.map(old => getCartItemKey(old) === getCartItemKey(item) ? item : old) : [...current.items, item] };
+      }, state);
     case "clear":
       return { items: [] };
     case "add":

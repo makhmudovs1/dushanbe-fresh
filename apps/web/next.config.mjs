@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@dushanbe-fresh/shared"],
   async headers() {
-    return ["/order/:path*", "/orders/:path*", "/admin/:path*", "/cart", "/checkout", "/api/:path*"].map(source => ({ source, headers: [
+    return ["/order/:path*", "/orders/:path*", "/admin/:path*", "/account/:path*", "/cart", "/checkout", "/api/:path*"].map(source => ({ source, headers: [
       { key: "X-Robots-Tag", value: "noindex, nofollow" },
       ...(["/order/:path*", "/orders/:path*"].includes(source) ? [{ key: "Referrer-Policy", value: "no-referrer" }] : [])
     ] }));

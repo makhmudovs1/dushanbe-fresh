@@ -1,4 +1,5 @@
 import "./styles.css";
+import "leaflet/dist/leaflet.css";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
@@ -10,6 +11,10 @@ import { FavoritesProvider } from "@/favorites/favorites-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileNavigation } from "@/components/mobile-navigation";
+import { CustomerProvider } from "@/customer/customer-context";
+import { ScrollToTop } from "@/components/scroll-to-top";
+import { DeliveryAddressProvider } from "@/customer/delivery-address-context";
+import { MobileProductSheetProvider } from "@/components/mobile-product-sheet-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -30,12 +35,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang={locale}>
       <body>
         <LanguageProvider initialLocale={locale}>
-        <FavoritesProvider><CartProvider>
+        <FavoritesProvider><CartProvider><CustomerProvider><DeliveryAddressProvider><MobileProductSheetProvider>
           <SiteHeader />
           {children}
           <SiteFooter />
           <Suspense fallback={null}><MobileNavigation /></Suspense>
-        </CartProvider></FavoritesProvider>
+          <ScrollToTop />
+        </MobileProductSheetProvider></DeliveryAddressProvider></CustomerProvider></CartProvider></FavoritesProvider>
         </LanguageProvider>
       </body>
     </html>

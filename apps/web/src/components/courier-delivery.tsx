@@ -15,6 +15,7 @@ export function CourierOrders({ orders, run, canDeliver = false }: { orders: Adm
     <p><strong>{order.address.recipientName}</strong><br /><a href={`tel:${order.address.phone}`}>{order.address.phone}</a></p>
     <p>{order.address.city}, {order.address.street}, {order.address.building}{order.address.apartment && `, кв. ${order.address.apartment}`}{order.address.entrance && `, подъезд ${order.address.entrance}`}{order.address.floor && `, этаж ${order.address.floor}`}</p>
     {order.address.instructions ? <p>{order.address.instructions}</p> : null}
+    {typeof order.address.latitude === "number" && typeof order.address.longitude === "number" && Number.isFinite(order.address.latitude) && Number.isFinite(order.address.longitude) ? <p><a target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/dir/?api=1&destination=${order.address.latitude},${order.address.longitude}`}>Открыть навигацию</a></p> : null}
     {order.customerComment ? <p>{order.customerComment}</p> : null}
     {canDeliver ? <DeliveryFinancePanel id={order.id} updated={() => void run(async () => undefined)} /> : <strong>После упаковки: {order.totalFinal === null ? "Ожидает сборки" : `${order.totalFinal} сомони`}</strong>}
   </article>)}</div>;

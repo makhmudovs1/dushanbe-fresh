@@ -8,11 +8,13 @@ import { productPhotos, swipeDirection } from "@/lib/product-gallery";
 import { photoAttribution } from "@/lib/photo-attribution";
 import { useI18n } from "@/i18n/provider";
 import { ProductImage } from "./product-image";
+import { useMobileProductLink } from "./mobile-product-sheet-provider";
 
 export function ProductGallery({ product, href, eager = false, children }: {
   product: Product; href?: string; eager?: boolean; children?: ReactNode;
 }) {
   const { name, t, locale } = useI18n();
+  const openProduct = useMobileProductLink(product);
   const photos = productPhotos(product);
   const [index, setIndex] = useState(0);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -37,6 +39,7 @@ export function ProductGallery({ product, href, eager = false, children }: {
     }} onTouchCancel={() => { touch.current = null; }}>
       {href ? <Link className="product-gallery__link" href={href} aria-label={name(product)} onClick={event => {
         if (event.detail > 0 && Date.now() < suppressClickUntil.current) event.preventDefault();
+        openProduct(event);
       }}>{image}</Link> : image}
       {children}
       {credit ? <details className="product-gallery__credit" key={credit.imageUrl}>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, LayoutGrid, ShoppingCart } from "lucide-react";
+import { Home, Heart, LayoutGrid, ShoppingCart } from "lucide-react";
 import { useCart } from "@/cart/cart-context";
 import { useI18n } from "@/i18n/provider";
 
@@ -17,6 +17,7 @@ export function MobileNavigation() {
     { href: "/", label: "Главная", Icon: Home, active: pathname === "/" },
     { href: `/categories${category ? `?category=${encodeURIComponent(category)}` : ""}`, label: "Каталог", Icon: LayoutGrid,
       active: pathname === "/categories" || pathname === "/catalog" || pathname.startsWith("/products/") },
+    { href: "/favorites", label: "Избранное", Icon: Heart, active: pathname === "/favorites" },
     { href: "/cart", label: "Корзина", Icon: ShoppingCart, active: pathname === "/cart" }
   ];
   return <>

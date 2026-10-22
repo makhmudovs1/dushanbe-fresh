@@ -14,9 +14,11 @@ import { Product } from "@/lib/api";
 import { ProductGallery } from "./product-gallery";
 import { ProductPrice } from "./product-price";
 import { QuantityStepper } from "./quantity-stepper";
+import { useMobileProductLink } from "./mobile-product-sheet-provider";
 
 export function ProductCard({ product }: { product: Product }) {
   const { t, name } = useI18n();
+  const openProduct = useMobileProductLink(product);
   const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
   const items = state.items.filter(item => item.productId === product.id);
   const current = items.find(item => !item.qualityOptionId) ?? items[items.length - 1];
@@ -40,7 +42,7 @@ export function ProductCard({ product }: { product: Product }) {
         <ProductPrice product={product} />
         <div>
           <h3>
-            <Link href={`/products/${product.slug}`}>{name(product)}</Link>
+            <Link href={`/products/${product.slug}`} onClick={openProduct}>{name(product)}</Link>
           </h3>
         </div>
       </div>

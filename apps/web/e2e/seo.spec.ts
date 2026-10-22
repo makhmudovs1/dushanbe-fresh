@@ -51,7 +51,7 @@ test("robots and sitemap expose public canonical URLs only", async ({ page }) =>
 });
 
 test("private pages stay noindex with no private canonical or social URL", async ({ request }) => {
-  for (const path of ["/cart", "/checkout", "/admin/login", `/order/${"0".repeat(64)}`, "/orders/SEO-NONEXISTENT/success"]) {
+  for (const path of ["/cart", "/checkout", "/account", "/admin/login", `/order/${"0".repeat(64)}`, "/orders/SEO-NONEXISTENT/success"]) {
     // Read HTML only: no login attempt, checkout submission or tracking API request.
     const response = await request.get(path);
     expect(response.status()).toBe(200);

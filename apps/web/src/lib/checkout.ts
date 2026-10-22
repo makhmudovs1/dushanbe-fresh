@@ -3,7 +3,7 @@ import { errorMessage } from "./error-message";
 import { rememberTracking } from "./tracking";
 
 export class CheckoutError extends Error {
-  constructor(message: string, public quote?: CheckoutQuote) { super(message); }
+  constructor(message: string, public quote?: CheckoutQuote, public status?: number) { super(message); }
 }
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
@@ -13,7 +13,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new CheckoutError(
-    errorMessage(data?.message, "Не удалось связаться с магазином. Попробуйте ещё раз."), data?.quote
+    errorMessage(data?.message, "Не удалось связаться с магазином. Попробуйте ещё раз."), data?.quote, response.status
   );
   return data as T;
 }

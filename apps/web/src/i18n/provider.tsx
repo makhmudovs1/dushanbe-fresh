@@ -6,6 +6,8 @@ import { productDescription } from "@dushanbe-fresh/shared";
 import { LOCALE_COOKIE, localizedName, translate, type Locale } from "./locale";
 import * as format from "@/lib/format";
 import { slotLabel as formatSlot } from "@/lib/checkout";
+import { Check, Languages } from "lucide-react";
+import { CatalogDialog } from "@/components/catalog-dialog";
 
 const Context = createContext<{ locale: Locale; change: (locale: Locale) => void }>({ locale: "ru", change: () => {} });
 
@@ -39,9 +41,11 @@ export function useI18n() {
 
 export function LanguageSwitcher() {
   const { locale, change } = useI18n();
-  return <div className="language-switcher" role="group" aria-label="Язык / Забон">
-    <button type="button" lang="ru" aria-label="Русский" aria-pressed={locale === "ru"} onClick={() => change("ru")}>RU</button>
-    <span aria-hidden="true">|</span>
-    <button type="button" lang="tg" aria-label="Тоҷикӣ" aria-pressed={locale === "tg"} onClick={() => change("tg")}>TJ</button>
+  const [open, setOpen] = useState(false);
+  return <div className="language-switcher language-switcher--menu">
+    <button type="button" aria-label="Язык / Забон" title="Язык / Забон" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Languages size={21} aria-hidden="true" /></button>
+    {open ? <CatalogDialog title="Язык / Забон" closeLabel={locale === "ru" ? "Закрыть" : "Пӯшидан"} className="language-dialog" busy={false} onClose={() => setOpen(false)}>
+      {([{ code: "ru", label: "Русский" }, { code: "tg", label: "Тоҷикӣ" }] as const).map(language => <button className="language-choice" type="button" key={language.code} lang={language.code} aria-pressed={locale === language.code} onClick={() => { change(language.code); setOpen(false); }}><span>{language.label}</span>{locale === language.code ? <Check size={20} aria-hidden="true" /> : null}</button>)}
+    </CatalogDialog> : null}
   </div>;
 }

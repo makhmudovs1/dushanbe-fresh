@@ -31,6 +31,7 @@ type AddProductInput = {
 type CartContextValue = {
   state: CartState;
   addProduct: (input: AddProductInput) => void;
+  repeatProducts: (items: AddProductInput[]) => void;
   incrementItem: (item: CartItem) => void;
   decrementItem: (item: CartItem) => void;
   removeItem: (item: CartItem) => void;
@@ -67,6 +68,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addProduct: (input) => {
         dispatch({ type: "add", item: createCartItem(input) });
       },
+      repeatProducts: items => dispatch({ type: "repeat", items: items.map(createCartItem) }),
       incrementItem: (item) => {
         dispatch({ type: "increment", key: getCartItemKey(item) });
       },
