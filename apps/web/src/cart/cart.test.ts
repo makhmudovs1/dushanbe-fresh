@@ -8,6 +8,8 @@ import {
   formatMoneyFromMinor,
   getCartItemKey,
   hasWeightedItems,
+  hasInvalidCartQuantity,
+  adjustQuantity,
   loadCart,
   saveCart,
   sumCartQuantities
@@ -80,6 +82,45 @@ class MemoryStorage implements Storage {
 }
 
 describe("cart", () => {
+  it("uses half-kilo increments and decrements without changing the price", () => {
+    const item = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
+    let state = { items: [item] };
+    for (const quantity of ["1", "1.5", "2"]) {
+      state = cartReducer(state, { type: "increment", key: getCartItemKey(item) });
+      expect(state.items[0].quantity).toBe(quantity);
+      expect(state.items[0].sellingPrice).toBe("10.50");
+    }
+    state = cartReducer(state, { type: "decrement", key: getCartItemKey(item) });
+    expect(state.items[0].quantity).toBe("1.5");
+    expect(formatMoneyFromMinor(calculateCartSubtotalMinor(state))).toBe("15.75");
+  });
+  it("refreshes saved quantity rules without silently changing weight, price, variants or missing products", () => {
+    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.75", qualityOptionId: "ripe" });
+    const another = createCartItem({ product: cilantro, quantity: "2", qualityOptionId: null });
+    const refreshed = cartReducer({ items: [old, another] }, { type: "refresh-quantity-rules", products: [{ ...tomatoes, sellingPrice: "99" }] });
+    expect(refreshed.items[0]).toEqual({ ...old, quantityStep: "0.5" });
+    expect(refreshed.items[1]).toEqual(another);
+    expect(hasInvalidCartQuantity(refreshed)).toBe(true);
+    expect(cartReducer(refreshed, { type: "increment", key: getCartItemKey(old) }).items[0].quantity).toBe("1");
+    expect(cartReducer(refreshed, { type: "decrement", key: getCartItemKey(old) }).items[0].quantity).toBe("0.5");
+    expect(hasInvalidCartQuantity(cartReducer(refreshed, { type: "increment", key: getCartItemKey(old) }))).toBe(false);
+  });
+  it("preserves configured smaller minimums and piece/bunch rules", () => {
+    expect(adjustQuantity("0.2", "0.2", "0.5", "increment")).toBe("0.7");
+    expect(adjustQuantity("0.25", "0.25", "0.5", "increment")).toBe("0.75");
+    expect(adjustQuantity("1", "1", "0.5", "increment")).toBe("1.5");
+    const item = createCartItem({ product: cilantro, quantity: "1", qualityOptionId: null });
+    expect(cartReducer({ items: [item] }, { type: "increment", key: getCartItemKey(item) }).items[0].quantity).toBe("2");
+  });
+  it("uses fresh rules when adding to a saved line while preserving its price and option", () => {
+    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.5", qualityOptionId: "ripe" });
+    const fresh = createCartItem({ product: { ...tomatoes, sellingPrice: "99" }, quantity: "0.5", qualityOptionId: "ripe" });
+    const state = cartReducer({ items: [old] }, { type: "add", item: fresh });
+    expect(state.items[0]).toEqual({ ...old, quantity: "1", quantityStep: "0.5" });
+    const storage = new MemoryStorage();
+    saveCart(storage, state);
+    expect(loadCart(storage)).toEqual(state);
+  });
   it("repeats using current prices and quantity rules without replacing other cart lines", () => {
     const previous = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
     const fresh = createCartItem({ product: { ...tomatoes, sellingPrice: "12.25", minQuantity: "1", quantityStep: "0.5" }, quantity: "0.5", qualityOptionId: null });

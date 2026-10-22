@@ -12,6 +12,7 @@ import {
   calculateCartSubtotalMinor,
   calculateItemSubtotalMinor,
   formatMoneyFromMinor,
+  hasInvalidCartQuantity,
   hasWeightedItems
 } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
@@ -87,6 +88,7 @@ function CartContents() {
         <h1>{t("Корзина")}</h1>
         <p>{t("Ваши продукты")}</p>
       </header>
+      {hasInvalidCartQuantity(state) ? <p className="form-error" role="status">{t("Изменился шаг покупки. Уточните количество кнопками минус и плюс.")}</p> : null}
     <div className="cart-layout">
       <div className="cart-items">
         {state.items.map((item) => {

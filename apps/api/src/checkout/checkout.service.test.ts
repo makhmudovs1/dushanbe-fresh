@@ -41,6 +41,21 @@ function fixture() {
 }
 
 describe("checkout validation", () => {
+  it.each(["0.5", "1", "1.5", "2"])("accepts quantity %s with the updated half-kilo catalog rule", async quantity => {
+    const { service, product, settings } = fixture();
+    product.quantityStep = new D("0.5"); settings[0].value = "0";
+    const quote = await service.validate({ ...input, items: [{ ...input.items[0], quantity }] });
+    expect(quote.valid).toBe(true);
+    expect(quote.items[0].errors).toEqual([]);
+    expect(quote.itemsSubtotal).toBe(new D(quantity).mul("10.5").toFixed(2));
+  });
+  it("rejects a saved quarter-kilo quantity after the catalog step changes", async () => {
+    const { service, product, settings } = fixture();
+    product.quantityStep = new D("0.5"); settings[0].value = "0";
+    const quote = await service.validate({ ...input, items: [{ ...input.items[0], quantity: "0.75" }] });
+    expect(quote.valid).toBe(false);
+    expect(quote.items[0].errors.join()).toContain("шаг 0.5");
+  });
   it("ignores frontend prices, names and totals; calculates from the database", async () => {
     const { service } = fixture();
     const parsed = parseCheckout({ ...input, totalEstimated: "0", items: [{ ...input.items[0], sellingPrice: "0.01", name: "Подмена", subtotal: "0" }] });

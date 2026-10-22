@@ -30,6 +30,7 @@ export type AddToCartInput = {
 };
 
 export type CartAction =
+  | { type: "refresh-quantity-rules"; products: Product[] }
   | { type: "repeat"; items: CartItem[] }
   | { type: "add"; item: CartItem }
   | { type: "increment"; key: string }
@@ -47,6 +48,13 @@ export const emptyCartState: CartState = {
 
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
+    case "refresh-quantity-rules": {
+      const products = new Map(action.products.map(product => [product.id, product]));
+      return { items: state.items.map(item => {
+        const product = products.get(item.productId);
+        return product ? { ...item, minQuantity: product.minQuantity, quantityStep: product.quantityStep } : item;
+      }) };
+    }
     case "repeat":
       return action.items.reduce((current, fresh) => {
         const existing = current.items.find(item => getCartItemKey(item) === getCartItemKey(fresh));
@@ -125,6 +133,8 @@ export function addCartItem(state: CartState, nextItem: CartItem): CartState {
 
       return {
         ...item,
+        minQuantity: nextItem.minQuantity,
+        quantityStep: nextItem.quantityStep,
         quantity: addQuantity(item.quantity, nextItem.quantity)
       };
     })
@@ -136,16 +146,11 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "qualityOption
 }
 
 export function incrementQuantity(item: CartItem) {
-  return addQuantity(item.quantity, item.quantityStep);
+  return adjustQuantity(item.quantity, item.minQuantity, item.quantityStep, "increment");
 }
 
 export function decrementQuantity(item: CartItem) {
-  const current = parseQuantity(item.quantity);
-  const min = parseQuantity(item.minQuantity);
-  const step = parseQuantity(item.quantityStep);
-  const next = Math.max(min, current - step);
-
-  return formatQuantity(next);
+  return adjustQuantity(item.quantity, item.minQuantity, item.quantityStep, "decrement");
 }
 
 export function adjustQuantity(
@@ -157,9 +162,20 @@ export function adjustQuantity(
   const current = parseQuantity(quantity);
   const min = parseQuantity(minQuantity);
   const step = parseQuantity(quantityStep);
-  const next = direction === "increment" ? current + step : Math.max(min, current - step);
+  const distance = (current - min) / step;
+  const nextStep = direction === "increment" ? Math.floor(distance) + 1 : Math.ceil(distance) - 1;
+  const next = min + Math.max(0, nextStep) * step;
 
   return formatQuantity(next);
+}
+
+export function hasInvalidCartQuantity(state: CartState) {
+  return state.items.some(item => {
+    const quantity = parseQuantity(item.quantity);
+    const min = parseQuantity(item.minQuantity);
+    const step = parseQuantity(item.quantityStep);
+    return step <= 0 || quantity < min || (quantity - min) % step !== 0;
+  });
 }
 
 export function normalizeQuantity(quantity: string, minQuantity: string, quantityStep: string) {

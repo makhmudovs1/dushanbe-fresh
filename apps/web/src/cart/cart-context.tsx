@@ -20,7 +20,7 @@ import {
   loadCart,
   saveCart
 } from "./cart";
-import { Product } from "@/lib/api";
+import { getProducts, Product } from "@/lib/api";
 
 type AddProductInput = {
   product: Product;
@@ -47,8 +47,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    dispatch({ type: "hydrate", state: loadCart(window.localStorage) });
+    const saved = loadCart(window.localStorage);
+    const controller = new AbortController();
+    dispatch({ type: "hydrate", state: saved });
     setHydrated(true);
+    if (saved.items.length) {
+      void getProducts(undefined, controller.signal).then(products => {
+        if (!controller.signal.aborted && Array.isArray(products)) dispatch({ type: "refresh-quantity-rules", products });
+      }).catch(() => { /* Keep the saved cart; checkout still validates server-side. */ });
+    }
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
