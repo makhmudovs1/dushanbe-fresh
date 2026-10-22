@@ -11,6 +11,7 @@ import { MediaModule } from "./media/media.module";
 import { StaffModule } from "./staff/staff.module";
 import { DeliveryFinanceModule } from "./delivery-finance/delivery-finance.module";
 import { PublicOrdersModule } from "./public-orders/public-orders.module";
+import { CustomerAccountModule } from "./customer-account/customer-account.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PublicOrdersModule } from "./public-orders/public-orders.module";
     }),
     HealthModule,
     AuthModule,
+    CustomerAccountModule,
     MediaModule,
     StaffModule,
     DeliveryFinanceModule,
