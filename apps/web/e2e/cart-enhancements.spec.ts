@@ -8,8 +8,8 @@ const products: Product[] = Array.from({ length: 8 }, (_, index) => ({
   minQuantity: "0.5", quantityStep: "0.5", category: { id: "fruit", name: "Фрукты", slug: "fruit" },
   qualityOptions: [{ id: "ripe", label: "спелые", sortOrder: 0 }]
 }));
-const items = [createCartItem({ product: products[0], quantity: "1.5", qualityOptionId: "ripe" }),
-  createCartItem({ product: products[0], quantity: "0.5", qualityOptionId: null })];
+const items = [createCartItem({ product: products[0], quantity: "1.5", qualityOptionId: null }),
+  createCartItem({ product: products[1], quantity: "0.5", qualityOptionId: null })];
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/products", route => route.fulfill({ json: products }));
@@ -59,14 +59,14 @@ for (const width of [320, 375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/cart");
     const section = page.getByRole("region", { name: "Подобрали для вас" });
-    await expect(section.locator(".product-card")).toHaveCount(width < 1024 ? 7 : 4);
+    await expect(section.locator(".product-card")).toHaveCount(6);
     await expect(section.getByRole("heading", { name: "Товар 0", exact: true })).toHaveCount(0);
-    await expect(section.getByRole("heading", { name: "Товар 1", exact: true })).toBeVisible();
+    await expect(section.getByRole("heading", { name: "Товар 2", exact: true })).toBeVisible();
     await expect(page.locator(".cart-checkout-bar")).toContainText("21");
-    await section.getByRole("button", { name: "Добавить в корзину: Товар 1", exact: true }).click();
+    await section.getByRole("button", { name: "Добавить в корзину: Товар 2", exact: true }).click();
     await expect(page.locator(".cart-item")).toHaveCount(3);
-    await expect(section.getByRole("heading", { name: "Товар 1", exact: true })).toHaveCount(0);
-    await expect(section.locator(".product-card")).toHaveCount(width < 1024 ? 6 : 4);
+    await expect(section.getByRole("heading", { name: "Товар 2", exact: true })).toHaveCount(0);
+    await expect(section.locator(".product-card")).toHaveCount(5);
     await expect(page.locator(".cart-checkout-bar")).toContainText("26,25");
     await expect(page.locator(".cart-checkout-bar a")).toHaveAttribute("href", "/checkout");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -103,7 +103,7 @@ test("share button copies actual cart text without inventing a URL", async ({ pa
   await page.getByRole("button", { name: "Поделиться корзиной" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Состав корзины скопирован" })).toBeVisible();
   const text = await page.locator("html").getAttribute("data-shared-cart");
-  expect(text).toContain("Товар 0 (спелые): 1,5 кг - ≈ 15,75 сомони");
+  expect(text).toContain("Товар 0: 1,5 кг - ≈ 15,75 сомони");
   expect(text).toContain("Предварительно: ≈ 21 сомони");
   expect(text).not.toMatch(/https?:|\/cart/);
 });

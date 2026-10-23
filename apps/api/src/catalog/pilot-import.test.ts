@@ -7,6 +7,13 @@ const fixture = JSON.parse(readFileSync(resolve("prisma/data/pilot_catalog.json"
 const canonical = JSON.parse(readFileSync(resolve("prisma/data/pilot_catalog_canonical.json"), "utf8"));
 
 describe("pilot catalog", () => {
+  it("refuses preference writes before opening an import transaction", async () => {
+    const data = parsePilotCatalog(structuredClone(fixture));
+    data.products[0].qualityOptions = [{ label: "спелый" }];
+    const db = { $transaction: vi.fn() };
+    await expect(importPilotCatalog(db as never, data, true)).rejects.toThrow("read-only");
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
   it("validates 41 canonical products and 19 explicitly merged variants", () => {
     const data = parsePilotCatalog(canonical);
     expect(data.products).toHaveLength(41);
@@ -101,7 +108,8 @@ describe("pilot catalog", () => {
       product: { findMany: vi.fn().mockResolvedValue([{ id: "old-id", slug: "potatoes", imageUrl: "/api/v1/media/old.webp", deletedAt: null }]), upsert: vi.fn().mockResolvedValue({ id: "old-id" }) }
     };
     const db = { $transaction: vi.fn(fn => fn(tx)) };
-    const data = parsePilotCatalog(fixture);
+    const data = parsePilotCatalog(structuredClone(fixture));
+    data.products[0].qualityOptions = [];
     const dry = await importPilotCatalog(db as never, data);
     expect(dry).toMatchObject({ created: 52, updated: 1, applied: false });
     expect(tx.product.upsert).not.toHaveBeenCalled();

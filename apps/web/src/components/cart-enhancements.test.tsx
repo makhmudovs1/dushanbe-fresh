@@ -38,11 +38,11 @@ describe("cart enhancements", () => {
   });
 
   it("retains checkout and weighted totals", () => {
-    cart.state.items = [createCartItem({ product, quantity: "1.5", qualityOptionId: "ripe" })];
+    cart.state.items = [createCartItem({ product, quantity: "1.5" })];
     const html = renderToStaticMarkup(<CartPageContent />);
     expect(html).toContain('href="/checkout"');
     expect(html).toContain("≈ 15,75");
-    expect(html).toContain("Качество: спелые");
+    expect(html).not.toContain("Качество:");
     expect(html).not.toMatch(/disabled="" aria-label="Очистить корзину"/);
     expect(cart.state.items[0].quantity).toBe("1.5");
   });
@@ -57,7 +57,7 @@ describe("cart enhancements", () => {
 
   it("uses localized names, quality and quantities and does not approximate unweighted items", () => {
     const item = createCartItem({ product: { ...product, nameTj: "Банан", isWeighted: false, unit: "piece",
-      qualityOptions: [{ id: "ripe", label: "спелые", labelTj: "пухта", sortOrder: 0 }] }, quantity: "2" });
+      qualityOptions: [{ id: "ripe", label: "спелые", labelTj: "пухта", sortOrder: 0 }] }, quantity: "2", qualityOptionId: "ripe" });
     const text = cartShareText({ items: [item] }, { ...labels,
       name: value => value.nameTj || value.name, label: value => value.labelTj || value.label,
       quantityLabel: (quantity, unit) => quantityLabel(quantity, unit, "tg") });

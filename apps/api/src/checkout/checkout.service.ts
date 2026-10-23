@@ -59,7 +59,7 @@ export class CheckoutService {
           errors.push(`Проверьте количество: минимум ${product.minQuantity}, шаг ${product.quantityStep}.`);
         }
         if (product.currentSalePrice.lt(0)) errors.push("Цена товара временно недоступна.");
-        if (item.qualityOptionId && !quality) errors.push("Выбранное предпочтение больше недоступно. Удалите позицию и выберите товар заново.");
+        if (item.qualityOptionId) errors.push("В корзине осталось старое предпочтение. Удалите позицию и выберите конкретный товар заново.");
         if (item.observedPrice !== undefined && !product.currentSalePrice.eq(item.observedPrice)) {
           warnings.push(`Цена «${product.name}» изменилась с ${item.observedPrice} до ${product.currentSalePrice.toFixed(2)} сомони за единицу.`);
         }

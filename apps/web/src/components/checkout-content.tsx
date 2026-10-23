@@ -15,6 +15,8 @@ import { CustomerError, customerRequest } from "@/lib/customer";
 import { CHECKOUT_DRAFT_KEY, loadCheckoutDraft, saveCheckoutDraft } from "@/lib/checkout-draft";
 import { AddressFields, emptyAddress } from "./address-fields";
 import { useCart } from "@/cart/cart-context";
+import { hasLegacyCartItems } from "@/cart/cart";
+import { LegacyCartNotice } from "./legacy-cart-notice";
 import { CheckoutError, finishCheckout, getDeliverySlots, validateCheckout } from "@/lib/checkout";
 import { decimalLabel } from "@/lib/format";
 import { CheckoutSkeleton, DeliverySlotsSkeleton, SummarySkeleton } from "./loading-state";
@@ -23,6 +25,7 @@ const noSavedAddresses: SavedAddress[] = [];
 export function CheckoutContent() {
   const { t, name, label, priceLabel, quantityLabel, slotLabel } = useI18n();
   const { state, hydrated, clearCart, removeItem } = useCart();
+  const legacy = hasLegacyCartItems(state);
   const router = useRouter();
   const customer = useCustomer();
   const customerId = customer.user?.id;
@@ -124,7 +127,7 @@ export function CheckoutContent() {
   }, [draftReady, savedAddresses]);
   useEffect(() => {
     const input = JSON.parse(inputKey) as CheckoutInput;
-    if (!hydrated || !input.items.length || !input.deliverySlotId) return;
+    if (!hydrated || legacy || !input.items.length || !input.deliverySlotId) return;
     let cancelled = false;
     setPending(true);
     setAccepted(false);
@@ -135,13 +138,13 @@ export function CheckoutContent() {
       if (!cancelled) { setQuotedInput(""); setError(error instanceof CheckoutError ? error.message : "Не удалось проверить заказ. Попробуйте ещё раз."); }
     }).finally(() => { if (!cancelled) setPending(false); });
     return () => { cancelled = true; };
-  }, [hydrated, inputKey, retry]);
+  }, [hydrated, inputKey, retry, legacy]);
 
   const currentQuote = quotedInput === inputKey ? quote : null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (sendingRef.current || pending || !currentQuote?.valid || !accepted) return;
+    if (legacy || sendingRef.current || pending || !currentQuote?.valid || !accepted) return;
     if (customer.loading) return;
     if (customer.status.requiredForCheckout && !customer.user) { customer.login(); return; }
     sendingRef.current = true;
@@ -186,6 +189,7 @@ export function CheckoutContent() {
   </>;
   if (!hydrated) return <>{heading}<CheckoutSkeleton /></>;
   if (completed) return <>{heading}<p role="status">{t("Заказ оформлен. Открываем подтверждение...")}</p></>;
+  if (legacy) return <>{heading}<LegacyCartNotice checkout /></>;
   if (!state.items.length) return <div className="empty-cart"><h1>{t("Корзина пока пустая")}</h1><p>{t("Добавьте свежие продукты из каталога.")}</p><Link className="primary-link" href="/catalog">{t("Перейти в каталог")}</Link></div>;
 
   return <>

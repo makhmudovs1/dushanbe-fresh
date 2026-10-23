@@ -6,6 +6,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { mapAdminProduct, mapCategory, mapPublicProduct } from "./catalog.mappers";
 import { assertCatalogImage } from "./catalog.image";
 import { parseGallery, type GalleryInput } from "./catalog.gallery";
+import { assertNoQualityOptions } from "./catalog.validation";
 import {
   CategoryInput,
   ProductFilters,
@@ -279,11 +280,14 @@ export class CatalogService {
   }
 
   private toCreateProductData(input: ProductInput): Prisma.ProductCreateInput {
+    assertNoQualityOptions(input.qualityOptions);
     return {
       category: { connect: { id: input.categoryId } },
       name: input.name,
+      nameTj: input.nameTj,
       slug: input.slug,
       description: input.description,
+      descriptionTj: input.descriptionTj,
       imageUrl: input.image,
       unit: input.unit,
       currentSalePrice: new Prisma.Decimal(input.sellingPrice),
@@ -293,26 +297,20 @@ export class CatalogService {
       quantityStep: new Prisma.Decimal(input.quantityStep),
       isActive: input.isActive ?? true,
       isAvailableToday: input.isAvailableToday ?? true,
-      sortOrder: input.sortOrder ?? 0,
-      qualityOptions: input.qualityOptions
-        ? {
-            create: input.qualityOptions.map((option) => ({
-              label: option.label,
-              sortOrder: option.sortOrder ?? 0,
-              isActive: option.isActive ?? true
-            }))
-          }
-        : undefined
+      sortOrder: input.sortOrder ?? 0
     };
   }
 
   private toUpdateProductData(input: ProductUpdateInput): Prisma.ProductUpdateInput {
+    assertNoQualityOptions(input.qualityOptions);
     const data: Prisma.ProductUpdateInput = {};
 
     if (input.categoryId !== undefined) data.category = { connect: { id: input.categoryId } };
     if (input.name !== undefined) data.name = input.name;
+    if (input.nameTj !== undefined) data.nameTj = input.nameTj;
     if (input.slug !== undefined) data.slug = input.slug;
     if (input.description !== undefined) data.description = input.description;
+    if (input.descriptionTj !== undefined) data.descriptionTj = input.descriptionTj;
     if (input.image !== undefined) data.imageUrl = input.image;
     if (input.unit !== undefined) data.unit = input.unit;
     if (input.sellingPrice !== undefined) data.currentSalePrice = new Prisma.Decimal(input.sellingPrice);
@@ -325,16 +323,6 @@ export class CatalogService {
     if (input.isActive !== undefined) data.isActive = input.isActive;
     if (input.isAvailableToday !== undefined) data.isAvailableToday = input.isAvailableToday;
     if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
-    if (input.qualityOptions !== undefined) {
-      data.qualityOptions = {
-        deleteMany: {},
-        create: input.qualityOptions.map((option) => ({
-          label: option.label,
-          sortOrder: option.sortOrder ?? 0,
-          isActive: option.isActive ?? true
-        }))
-      };
-    }
 
     return data;
   }

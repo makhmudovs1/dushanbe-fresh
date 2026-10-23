@@ -95,7 +95,7 @@ describe("cart", () => {
     expect(formatMoneyFromMinor(calculateCartSubtotalMinor(state))).toBe("15.75");
   });
   it("refreshes saved quantity rules without silently changing weight, price, variants or missing products", () => {
-    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.75", qualityOptionId: "ripe" });
+    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.75", qualityOptionId: null });
     const another = createCartItem({ product: cilantro, quantity: "2", qualityOptionId: null });
     const refreshed = cartReducer({ items: [old, another] }, { type: "refresh-quantity-rules", products: [{ ...tomatoes, sellingPrice: "99" }] });
     expect(refreshed.items[0]).toEqual({ ...old, quantityStep: "0.5" });
@@ -112,9 +112,9 @@ describe("cart", () => {
     const item = createCartItem({ product: cilantro, quantity: "1", qualityOptionId: null });
     expect(cartReducer({ items: [item] }, { type: "increment", key: getCartItemKey(item) }).items[0].quantity).toBe("2");
   });
-  it("uses fresh rules when adding to a saved line while preserving its price and option", () => {
-    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.5", qualityOptionId: "ripe" });
-    const fresh = createCartItem({ product: { ...tomatoes, sellingPrice: "99" }, quantity: "0.5", qualityOptionId: "ripe" });
+  it("uses fresh rules when adding to a saved product while preserving its price", () => {
+    const old = createCartItem({ product: { ...tomatoes, quantityStep: "0.25" }, quantity: "0.5" });
+    const fresh = createCartItem({ product: { ...tomatoes, sellingPrice: "99" }, quantity: "0.5" });
     const state = cartReducer({ items: [old] }, { type: "add", item: fresh });
     expect(state.items[0]).toEqual({ ...old, quantity: "1", quantityStep: "0.5" });
     const storage = new MemoryStorage();
@@ -129,15 +129,15 @@ describe("cart", () => {
     expect(result.items[0]).toMatchObject({ sellingPrice: "12.25", quantity: "1.5", minQuantity: "1", qualityOptionId: null });
     expect(result.items[1]).toEqual(another);
   });
-  it("explicit null adds without a quality preference while old explicit options remain intact", () => {
+  it("blocks new additions until a legacy line of that product is explicitly resolved", () => {
     const plain = createCartItem({ product: tomatoes, quantity: "0.5", qualityOptionId: null });
     expect(plain.qualityOptionId).toBeNull();
     expect(plain.qualityOptionLabel).toBeNull();
     const saved = createCartItem({ product: tomatoes, quantity: "1.5", qualityOptionId: "ripe" });
     const state = cartReducer({ items: [saved] }, { type: "add", item: plain });
-    expect(state.items).toHaveLength(2);
+    expect(state.items).toHaveLength(1);
     expect(state.items[0]).toEqual(saved);
-    expect(sumCartQuantities(state.items)).toBe("2");
+    expect(sumCartQuantities(state.items)).toBe("1.5");
   });
   it("sums saved variant quantities exactly without merging or rewriting them", () => {
     const items = [{ quantity: "0.1" }, { quantity: "0.2" }, { quantity: "0.375" }];
@@ -149,20 +149,20 @@ describe("cart", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
 
     expect(state.items).toHaveLength(1);
     expect(state.items[0]?.name).toBe("Помидоры");
-    expect(state.items[0]?.qualityOptionLabel).toBe("спелые");
+    expect(state.items[0]?.qualityOptionLabel).toBeNull();
   });
 
-  it("repeated add increases quantity for the same quality option", () => {
+  it("repeated add increases quantity for the same product", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const firstState = cartReducer(emptyCartState, { type: "add", item });
     const secondState = cartReducer(firstState, { type: "add", item });
@@ -171,16 +171,14 @@ describe("cart", () => {
     expect(secondState.items[0]?.quantity).toBe("1");
   });
 
-  it("keeps different quality options as separate lines", () => {
+  it("keeps two potato varieties with different Product IDs separate", () => {
     const ripeItem = createCartItem({
-      product: tomatoes,
-      quantity: "0.5",
-      qualityOptionId: "ripe"
+      product: { ...tomatoes, id: "white", slug: "white-potato", name: "Картофель белый" },
+      quantity: "1"
     });
     const firmItem = createCartItem({
-      product: tomatoes,
-      quantity: "0.5",
-      qualityOptionId: "firm"
+      product: { ...tomatoes, id: "red", slug: "red-potato", name: "Картофель красный" },
+      quantity: "2"
     });
     const state = cartReducer(cartReducer(emptyCartState, { type: "add", item: ripeItem }), {
       type: "add",
@@ -188,13 +186,14 @@ describe("cart", () => {
     });
 
     expect(state.items).toHaveLength(2);
+    expect(state.items.map(item => [item.productId, item.quantity])).toEqual([["white", "1"], ["red", "2"]]);
   });
 
   it("decreases quantity", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "1.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
     const nextState = cartReducer(state, {
@@ -209,7 +208,7 @@ describe("cart", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
     const nextState = cartReducer(state, {
@@ -224,7 +223,7 @@ describe("cart", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
     const nextState = cartReducer(state, {
@@ -240,7 +239,7 @@ describe("cart", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
 
@@ -253,7 +252,7 @@ describe("cart", () => {
     const tomatoItem = createCartItem({
       product: tomatoes,
       quantity: "1.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const cilantroItem = createCartItem({
       product: cilantro,
@@ -271,10 +270,25 @@ describe("cart", () => {
     const item = createCartItem({
       product: tomatoes,
       quantity: "0.5",
-      qualityOptionId: "ripe"
+      qualityOptionId: null
     });
     const state = cartReducer(emptyCartState, { type: "add", item });
 
     expect(hasWeightedItems(state)).toBe(true);
+  });
+  it("never defaults to the first preference, even for a missing historical ID", () => {
+    expect(createCartItem({ product: tomatoes, quantity: "1" }).qualityOptionId).toBeNull();
+    expect(createCartItem({ product: tomatoes, quantity: "1", qualityOptionId: "archived" }).qualityOptionId).toBe("archived");
+  });
+  it("preserves every legacy line on hydration, rule refresh and quantity taps; only explicit deletion removes one", () => {
+    const items = ["ripe", "firm"].map(qualityOptionId => createCartItem({ product: tomatoes, quantity: "1", qualityOptionId }));
+    const state = cartReducer(emptyCartState, { type: "hydrate", state: { items } });
+    for (const item of items) for (const type of ["increment", "decrement"] as const) {
+      expect(cartReducer(state, { type, key: getCartItemKey(item) })).toEqual(state);
+    }
+    expect(cartReducer(state, { type: "refresh-quantity-rules", products: [{ ...tomatoes, minQuantity: "2", quantityStep: "2" }] })).toEqual(state);
+    const storage = new MemoryStorage(); saveCart(storage, state);
+    expect(loadCart(storage)).toEqual(state);
+    expect(cartReducer(state, { type: "remove", key: getCartItemKey(items[0]) }).items).toEqual([items[1]]);
   });
 });

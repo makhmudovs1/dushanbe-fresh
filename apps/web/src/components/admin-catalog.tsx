@@ -30,19 +30,20 @@ const emptyCategory = { name: "", nameTj: "", slug: "", sortOrder: 0, imageUrl: 
 const emptyProduct = {
   categoryId: "",
   name: "",
+  nameTj: "",
   slug: "",
   description: "",
+  descriptionTj: "",
   image: "",
   unit: "kg",
   sellingPrice: "0.00",
   purchasePrice: "0.00",
   isWeighted: true,
   minQuantity: "0.500",
-  quantityStep: "0.250",
+  quantityStep: "0.500",
   isActive: true,
   isAvailableToday: true,
-  sortOrder: 0,
-  qualityOptionsText: ""
+  sortOrder: 0
 };
 
 export function AdminCatalog() {
@@ -97,8 +98,10 @@ export function AdminCatalog() {
     setForm({
       categoryId: product.category.id,
       name: product.name,
+      nameTj: product.nameTj ?? "",
       slug: product.slug,
       description: product.description ?? "",
+      descriptionTj: product.descriptionTj ?? "",
       image: product.image ?? "",
       unit: product.unit,
       sellingPrice: product.sellingPrice,
@@ -108,8 +111,7 @@ export function AdminCatalog() {
       quantityStep: product.quantityStep,
       isActive: product.isActive ?? true,
       isAvailableToday: product.isAvailableToday ?? true,
-      sortOrder: product.sortOrder ?? 0,
-      qualityOptionsText: product.qualityOptions.map((option) => option.label).join("\n")
+      sortOrder: product.sortOrder ?? 0
     });
   }
 
@@ -129,11 +131,7 @@ export function AdminCatalog() {
 
     const payload = {
       ...form,
-      images: photos,
-      qualityOptions: selectedProduct && form.qualityOptionsText === selectedProduct.qualityOptions.map(option => option.label).join("\n") ? undefined : form.qualityOptionsText
-        .split("\n")
-        .map((label, index) => ({ label: label.trim(), sortOrder: index * 10 }))
-        .filter((option) => option.label.length > 0)
+      images: photos
     };
 
     try {
@@ -332,6 +330,10 @@ export function AdminCatalog() {
             />
           </label>
           <label>
+            Название на таджикском
+            <input value={form.nameTj} onChange={event => setForm({ ...form, nameTj: event.target.value })} />
+          </label>
+          <label>
             Адрес в каталоге
             <input
               required
@@ -346,6 +348,9 @@ export function AdminCatalog() {
               value={form.description}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
             />
+          </label>
+          <label>Описание на таджикском
+            <textarea value={form.descriptionTj} onChange={event => setForm({ ...form, descriptionTj: event.target.value })} />
           </label>
           </section>
           <section className="catalog-form-section"><h3>Фото</h3>
@@ -406,15 +411,6 @@ export function AdminCatalog() {
               />
             </label>
           </div>
-          </section>
-          <section className="catalog-form-section"><h3>Качество</h3>
-          <label>
-            Предпочтения по качеству, по одному на строку
-            <textarea
-              value={form.qualityOptionsText}
-              onChange={(event) => setForm({ ...form, qualityOptionsText: event.target.value })}
-            />
-          </label>
           </section>
           <section className="catalog-form-section"><h3>Доступность</h3>
           <div className="checkbox-row">

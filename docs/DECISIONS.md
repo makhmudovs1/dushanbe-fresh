@@ -901,3 +901,16 @@
   API, data, price/step or auth changes. Production rollout requires the owner's
   explicit authorization, received on 2026-10-23 for this Web-only release.
 - Evidence and files: [UNIFIED_PRODUCT_UI.md](UNIFIED_PRODUCT_UI.md).
+
+## 2026-10-23: Varieties Are Separate Products
+
+- Each sellable variety is a separate Product; no SKU layer or automatic catalog
+  conversion. This supersedes earlier preference/default/combined-counter rules.
+- Preference writes are disabled in admin/API/import. Empty arrays are no-ops,
+  never deletions. Keep historical IDs, labels and snapshots readable.
+- New checkout rejects preference IDs. Old cart rows stay visible and immutable
+  until explicitly removed/reselected; never merge or guess a replacement.
+- Reuse existing Product-based procurement and per-OrderItem actual weights and
+  Decimal recalculation. Product translations use existing columns; no migration.
+- Account/SMS code is kept in a separate branch, not in this production release.
+- Evidence and admin guide: [PRODUCT_VARIETIES.md](PRODUCT_VARIETIES.md).

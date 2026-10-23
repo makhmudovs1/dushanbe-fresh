@@ -82,25 +82,24 @@ describe("mobile product sheet", () => {
     expect(html).not.toContain("Добавить в корзину");
   });
 
-  it("sums legacy lines and adjusts the null-quality line first", () => {
+  it("requires explicit resolution of legacy lines instead of adjusting a random line", () => {
     const legacy = createCartItem({ product, quantity: "1.5", qualityOptionId: "ripe" });
     const current = createCartItem({ product, quantity: "0.5", qualityOptionId: null });
     cart.state.items = [legacy, current];
-    expect(control().quantity).toBe("2");
-    control().onIncrease();
-    control().onDecrease();
-    expect(cart.incrementItem).toHaveBeenCalledWith(current);
-    expect(cart.removeItem).toHaveBeenCalledWith(current);
+    const html = renderToStaticMarkup(<MobileProductSheetCart product={product} ready />);
+    expect(html).toContain("Уточнить корзину");
+    expect(html).not.toContain("<output");
+    expect(cart.incrementItem).not.toHaveBeenCalled();
+    expect(cart.removeItem).not.toHaveBeenCalled();
     expect(cart.state.items[0].qualityOptionId).toBe("ripe");
     expect(cart.addProduct).not.toHaveBeenCalled();
   });
 
-  it("decrements an existing legacy line without inventing a new selection", () => {
+  it("does not offer quantity edits for a sole legacy line", () => {
     const legacy = createCartItem({ product, quantity: "1.5", qualityOptionId: "ripe" });
     cart.state.items = [legacy];
-    control().onDecrease();
-    expect(cart.decrementItem).toHaveBeenCalledWith(legacy);
+    expect(renderToStaticMarkup(<MobileProductSheetCart product={product} ready />)).toContain('href="/cart"');
+    expect(cart.decrementItem).not.toHaveBeenCalled();
     expect(cart.addProduct).not.toHaveBeenCalled();
-    expect(control(false).disabled).toBe(true);
   });
 });

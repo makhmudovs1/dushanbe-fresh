@@ -11,7 +11,7 @@ const fieldLabels: Record<string, string> = {
   image: "Фотография", unit: "Единица измерения", sellingPrice: "Цена для клиента",
   purchasePrice: "Ориентир закупки", minQuantity: "Минимальное количество", quantityStep: "Шаг количества",
   sortOrder: "Порядок", isActive: "Включён", isAvailableToday: "Доступен сегодня", isWeighted: "Весовой товар",
-  nameTj: "Название на таджикском", imageUrl: "Фото категории", isVisible: "Показывать на сайте",
+  nameTj: "Название на таджикском", descriptionTj: "Описание на таджикском", imageUrl: "Фото категории", isVisible: "Показывать на сайте",
   iconUrl: "Иконка категории", parentId: "Родительская категория"
 };
 const fieldLabel = (field: string) => fieldLabels[field] ?? "Предпочтения по качеству";
@@ -115,11 +115,14 @@ export function parseCategoryUpdateInput(
 }
 
 export function parseProductInput(body: Record<string, unknown>): ProductInput {
+  assertNoQualityOptions(body.qualityOptions);
   return {
     categoryId: assertString(body.categoryId, "categoryId"),
     name: assertString(body.name, "name"),
+    nameTj: body.nameTj === undefined ? undefined : optionalString(body.nameTj, "nameTj"),
     slug: assertString(body.slug, "slug"),
     description: optionalString(body.description, "description"),
+    descriptionTj: body.descriptionTj === undefined ? undefined : optionalString(body.descriptionTj, "descriptionTj"),
     image: optionalString(body.image, "image"),
     images: body.images === undefined ? undefined : parseGallery(body.images),
     unit: assertString(body.unit, "unit"),
@@ -130,20 +133,22 @@ export function parseProductInput(body: Record<string, unknown>): ProductInput {
     quantityStep: quantity(body.quantityStep, "quantityStep"),
     isActive: optionalBoolean(body.isActive, "isActive"),
     isAvailableToday: optionalBoolean(body.isAvailableToday, "isAvailableToday"),
-    sortOrder: optionalNumber(body.sortOrder, "sortOrder"),
-    qualityOptions: parseQualityOptions(body.qualityOptions)
+    sortOrder: optionalNumber(body.sortOrder, "sortOrder")
   };
 }
 
 export function parseProductUpdateInput(
   body: Record<string, unknown>
 ): ProductUpdateInput {
+  assertNoQualityOptions(body.qualityOptions);
   const parsed: ProductUpdateInput = {};
 
   if (body.categoryId !== undefined) parsed.categoryId = assertString(body.categoryId, "categoryId");
   if (body.name !== undefined) parsed.name = assertString(body.name, "name");
+  if (body.nameTj !== undefined) parsed.nameTj = optionalString(body.nameTj, "nameTj");
   if (body.slug !== undefined) parsed.slug = assertString(body.slug, "slug");
   if (body.description !== undefined) parsed.description = optionalString(body.description, "description");
+  if (body.descriptionTj !== undefined) parsed.descriptionTj = optionalString(body.descriptionTj, "descriptionTj");
   if (body.image !== undefined) parsed.image = optionalString(body.image, "image");
   if (body.images !== undefined) parsed.images = parseGallery(body.images);
   if (body.unit !== undefined) parsed.unit = assertString(body.unit, "unit");
@@ -157,32 +162,12 @@ export function parseProductUpdateInput(
     parsed.isAvailableToday = optionalBoolean(body.isAvailableToday, "isAvailableToday");
   }
   if (body.sortOrder !== undefined) parsed.sortOrder = optionalNumber(body.sortOrder, "sortOrder");
-  if (body.qualityOptions !== undefined) parsed.qualityOptions = parseQualityOptions(body.qualityOptions);
 
   return parsed;
 }
 
-function parseQualityOptions(value: unknown): ProductInput["qualityOptions"] {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Array.isArray(value)) {
-    throw new BadRequestException("Предпочтения по качеству должны быть списком.");
-  }
-
-  return value.map((option, index) => {
-    if (typeof option !== "object" || option === null) {
-      throw new BadRequestException(`Проверьте предпочтение по качеству №${index + 1}.`);
-    }
-
-    const record = option as Record<string, unknown>;
-
-    return {
-      id: record.id === undefined ? undefined : assertString(record.id, `qualityOptions.${index}.id`),
-      label: assertString(record.label, `qualityOptions.${index}.label`),
-      sortOrder: optionalNumber(record.sortOrder, `qualityOptions.${index}.sortOrder`),
-      isActive: optionalBoolean(record.isActive, `qualityOptions.${index}.isActive`)
-    };
-  });
+export function assertNoQualityOptions(value: unknown) {
+  // Old clients may send an empty list. It is a no-op, never a deletion.
+  if (value === undefined || (Array.isArray(value) && value.length === 0)) return;
+  throw new BadRequestException("Предпочтения больше не редактируются. Создайте разновидность отдельным товаром.");
 }

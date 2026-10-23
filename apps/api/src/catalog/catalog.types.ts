@@ -78,8 +78,10 @@ export type CategoryInput = {
 export type ProductInput = {
   categoryId: string;
   name: string;
+  nameTj?: string | null;
   slug: string;
   description?: string | null;
+  descriptionTj?: string | null;
   image?: string | null;
   images?: GalleryInput[];
   unit: string;

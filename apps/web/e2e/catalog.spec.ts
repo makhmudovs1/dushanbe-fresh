@@ -66,22 +66,25 @@ test("products with legacy qualities add directly without selecting an arbitrary
   await expect(page.locator(".cart-item").filter({ hasText: product.name })).toHaveCount(1);
 });
 
-test("old cart preferences survive and appear as one catalog counter", async ({ page }) => {
+test("old cart preferences stay separate and require explicit resolution", async ({ page }) => {
   const product = (await products(page)).find(p => p.qualityOptions.length >= 2)!;
   const items = product.qualityOptions.slice(0, 2).map(option => createCartItem({ product, quantity: initialCatalogQuantity(product), qualityOptionId: option.id }));
   await page.addInitScript(items => localStorage.setItem("dushanbe-fresh.cart.v1", JSON.stringify({ items })), items);
   await page.goto("/catalog");
-  await expect(card(page, product).locator("output")).toHaveCount(1);
+  await expect(card(page, product).locator("output")).toHaveCount(0);
+  await expect(card(page, product).locator(".product-card__legacy")).toBeVisible();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dushanbe-fresh.cart.v1")!).items)).toEqual(items);
   await page.locator(".cart-link").click();
   await expect(page.locator(".cart-item").filter({ hasText: product.name })).toHaveCount(2);
+  await expect(page.locator(".legacy-cart-notice")).toBeVisible();
+  for (const button of await page.locator(".cart-item .quantity-stepper button").all()) await expect(button).toBeDisabled();
 });
 
 for (const width of [375, 768, 1440]) {
   test(`catalog and filled cart fit ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
     const selected = (await products(page)).slice(0, 3);
-    const items = selected.map(product => createCartItem({ product, quantity: initialCatalogQuantity(product), qualityOptionId: product.qualityOptions[0]?.id }));
+    const items = selected.map(product => createCartItem({ product, quantity: initialCatalogQuantity(product), qualityOptionId: null }));
     await page.addInitScript(items => localStorage.setItem("dushanbe-fresh.cart.v1", JSON.stringify({ items })), items);
     await page.goto("/catalog");
     await expect(card(page, selected[0]).locator("output")).toBeVisible();

@@ -8,7 +8,7 @@ import { parseCheckout, parseCreateOrder } from "./checkout.validation";
 import { slotDto } from "../delivery-slots/delivery-slots.service";
 
 const D = Prisma.Decimal;
-const input: CheckoutInput = { deliverySlotId: "slot", items: [{ productId: "product", quantity: "12", qualityOptionId: "quality", observedPrice: "10.50" }] };
+const input: CheckoutInput = { deliverySlotId: "slot", items: [{ productId: "product", quantity: "12", qualityOptionId: null, observedPrice: "10.50" }] };
 const address = { street: "Рудаки", building: "10", apartment: "2", entrance: "1", floor: "3", instructions: "Позвонить" };
 
 function fixture() {
@@ -87,6 +87,16 @@ describe("checkout validation", () => {
     const { service } = fixture();
     expect((await service.validate({ ...input, items: [{ ...input.items[0], qualityOptionId: "other" }] })).valid).toBe(false);
   });
+  it("rejects a previously valid preference without converting it to a plain product", async () => {
+    const { service, tx, orderInput } = fixture();
+    const legacy = { ...input, items: [{ ...input.items[0], qualityOptionId: "quality" }] };
+    const quote = await service.validate(legacy);
+    expect(quote.valid).toBe(false);
+    expect(quote.items[0].qualityOption?.id).toBe("quality");
+    expect(quote.items[0].errors.join()).toContain("старое предпочтение");
+    await expect(service.createOrder({ ...await orderInput(), ...legacy, reviewToken: quote.reviewToken })).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.order.create).not.toHaveBeenCalled();
+  });
   it("checks the minimum on items only, excluding delivery", async () => {
     const { service } = fixture();
     const quote = await service.validate({ ...input, items: [{ ...input.items[0], quantity: "10" }] });
@@ -148,7 +158,7 @@ describe("order creation", () => {
     const result = await service.createOrder(await orderInput());
     const data = tx.order.create.mock.calls[0][0].data;
     expect(data.deliveryAddressSnapshot).toEqual({ ...address, city: "Душанбе", recipientName: "Фарид", phone: "+992900000000" });
-    expect(data.items.create[0]).toMatchObject({ productId: "product", productNameSnapshot: "Помидоры", unit: "kg", qualityOptionLabelSnapshot: "спелые", finalQuantity: null, finalTotal: null });
+    expect(data.items.create[0]).toMatchObject({ productId: "product", productNameSnapshot: "Помидоры", unit: "kg", qualityOptionId: null, qualityOptionLabelSnapshot: null, finalQuantity: null, finalTotal: null });
     expect(data.items.create[0].productNameTjSnapshot).toBe("Помидор");
     expect(data.items.create[0].saleUnitPriceSnapshot.toString()).toBe("10.5");
     expect(data.items.create[0].requestedQuantity).toBeInstanceOf(D);
@@ -178,7 +188,7 @@ describe("order creation", () => {
     product.isAvailableToday = true; product.quantityStep = new D("7");
     await expect(service.createOrder(order)).rejects.toBeInstanceOf(ConflictException);
     product.quantityStep = new D("0.25"); product.qualityOptions = [];
-    await expect(service.createOrder(order)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.createOrder({ ...order, items: [{ ...order.items[0], qualityOptionId: "quality" }] })).rejects.toBeInstanceOf(ConflictException);
     product.qualityOptions = [{ id: "quality", label: "спелые" }]; settings[0].value = "200.00";
     await expect(service.createOrder(order)).rejects.toBeInstanceOf(ConflictException);
     expect(tx.order.create).not.toHaveBeenCalled();

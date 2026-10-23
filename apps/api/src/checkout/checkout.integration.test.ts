@@ -46,7 +46,7 @@ describe.skipIf(!url)("checkout PostgreSQL transactions", () => {
     const date = new Date(); date.setUTCDate(date.getUTCDate() + 1);
     await prisma.deliverySlot.create({ data: { id, date,
       startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: capacity } });
-    const input: CheckoutInput = { deliverySlotId: id, items: [{ productId: marker, quantity: "12", qualityOptionId: marker }] };
+    const input: CheckoutInput = { deliverySlotId: id, items: [{ productId: marker, quantity: "12", qualityOptionId: null }] };
     const quote = await service.validate(input);
     return { ...input, reviewToken: quote.reviewToken, requestId: randomUUID(), name: "Тест", phone,
       substitutionPolicy: "contact_me" as const,

@@ -15,6 +15,7 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
   const marker = `ops-test-${randomUUID()}`;
   const slots: string[] = [];
   const phones: string[] = [];
+  const varieties: string[] = [];
   const pickerId = `${marker}-picker`, courierId = `${marker}-courier`;
 
   beforeAll(async () => {
@@ -36,8 +37,9 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
     await db.order.deleteMany({ where: { deliverySlotId: { in: slots } } });
     await db.customer.deleteMany({ where: { phoneNormalized: { in: phones } } });
     await db.deliverySlot.deleteMany({ where: { id: { in: slots } } });
-    await db.product.deleteMany({ where: { id: { in: [marker, `${marker}-replacement`] } } });
+    await db.product.deleteMany({ where: { id: { in: [marker, `${marker}-replacement`, ...varieties] } } });
     await db.category.deleteMany({ where: { id: marker } });
+    await db.operationalAudit.deleteMany({ where: { userId: { in: [pickerId, courierId] } } });
     await db.user.deleteMany({ where: { OR: [{ id: { in: [pickerId, courierId] } }, { phone: { in: phones } }] } });
     await db.$disconnect();
   });
@@ -48,7 +50,7 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
     const orders = [];
     for (let i = 0; i < count; i++) {
       const phone = `+992${(Date.now() + phones.length).toString().slice(-9)}`; phones.push(phone);
-      const input = { deliverySlotId: slotId, items: [{ productId: marker, quantity, qualityOptionId: `${marker}-${i === 1 ? "firm" : "ripe"}` }] };
+      const input = { deliverySlotId: slotId, items: [{ productId: marker, quantity, qualityOptionId: null }] };
       const quote = await checkout.validate(input);
       const receipt = await checkout.createOrder({ ...input, name: "Тест", phone, address: { street: "Рудаки", building: "1", apartment: "", entrance: "", floor: "", instructions: "" }, substitutionPolicy: "contact_me", reviewToken: quote.reviewToken, requestId: randomUUID() });
       const order = await db.order.findUniqueOrThrow({ where: { orderNumber: receipt.orderNumber } });
@@ -72,6 +74,59 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
       estimatedTotal: original.saleUnitPriceSnapshot.mul(quantity), finalQuantity: null, finalUnitPrice: null, finalTotal: null,
       pickerNote: null, replacementProductId: null } });
   }
+
+  it("keeps white/red potatoes separate through checkout, procurement and actual-weight packing", async () => {
+    const catalog = new CatalogService(db as never);
+    for (const [suffix, name, nameTj, price] of [["white", "Картофель белый", "Картошкаи сафед", "7"], ["red", "Картофель красный", "Картошкаи сурх", "8"]]) {
+      const p = await catalog.createAdminProduct({ categoryId: marker, slug: `${marker}-${suffix}`, name, nameTj,
+        unit: "kg", isWeighted: true, sellingPrice: price, purchasePrice: "4", minQuantity: "0.5", quantityStep: "0.5" });
+      varieties.push(p.id);
+    }
+    const slotId = randomUUID(); slots.push(slotId);
+    await db.deliverySlot.create({ data: { id: slotId, date: new Date("2099-01-01"), startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 10 } });
+    const phone = `+992${(Date.now() + phones.length).toString().slice(-9)}`; phones.push(phone);
+    await db.appSetting.update({ where: { key: "minimum_order_amount" }, data: { value: "0" } });
+    try {
+      const input = { deliverySlotId: slotId, items: varieties.map((productId, index) => ({ productId, quantity: String(index + 1), qualityOptionId: null })) };
+      const quote = await checkout.validate(input);
+      expect(quote.valid).toBe(true);
+      expect(quote.items.map(item => [item.name, item.nameTj, item.requestedQuantity])).toEqual([["Картофель белый", "Картошкаи сафед", "1"], ["Картофель красный", "Картошкаи сурх", "2"]]);
+      expect(quote.itemsSubtotal).toBe("23.00");
+      const receipt = await checkout.createOrder({ ...input, name: "Тест", phone, address: { street: "Тест", building: "1", apartment: "", entrance: "", floor: "", instructions: "" }, substitutionPolicy: "contact_me", reviewToken: quote.reviewToken, requestId: randomUUID() });
+      const order = await db.order.findUniqueOrThrow({ where: { orderNumber: receipt.orderNumber } });
+      let wave = await ops.formWave({ deliverySlotId: slotId });
+      await ops.assign(wave.id, { pickerUserId: pickerId });
+      await ops.waveStatus(wave.id, { status: "picking" });
+      expect(wave.pickingList).toHaveLength(2);
+      const actor = { id: pickerId, email: "picker@test.invalid", name: "Сборщик", roles: ["picker" as const] };
+      for (const row of wave.pickingList) await ops.purchase(wave.id, row.id, { purchasedQuantity: row.productId === varieties[0] ? "1.1" : "2.1", purchaseUnitPrice: "4" }, actor);
+      const before = await ops.order(order.id, actor);
+      expect(before.items).toHaveLength(2);
+      for (const item of before.items) await ops.distribute(order.id, item.id, { status: "picked", finalQuantity: item.productId === varieties[0] ? "0.98" : "2.03" }, actor);
+      const packed = await ops.order(order.id, actor);
+      expect(packed.items.find(item => item.productId === varieties[0])).toMatchObject({ requestedQuantity: "1", finalQuantity: "0.98", finalUnitPrice: "7.00", finalTotal: "6.86" });
+      expect(packed.items.find(item => item.productId === varieties[1])).toMatchObject({ requestedQuantity: "2", finalQuantity: "2.03", finalUnitPrice: "8.00", finalTotal: "16.24" });
+      expect(packed.totalFinal).toBe("43.10");
+      wave = await ops.wave(wave.id, actor);
+      expect(wave.pickingList.find(item => item.productId === varieties[0])?.remainingQuantity).toBe("0.12");
+      expect(wave.pickingList.find(item => item.productId === varieties[1])?.remainingQuantity).toBe("0.07");
+    } finally {
+      await db.appSetting.update({ where: { key: "minimum_order_amount" }, data: { value: "120.00" } });
+    }
+  });
+
+  it("preserves historical preference IDs and order snapshots after ordinary catalog edits", async () => {
+    const { orders: [order] } = await setup(1);
+    const oldId = `${marker}-ripe`;
+    await db.orderItem.update({ where: { id: order.items[0].id }, data: { qualityOptionId: oldId, qualityOptionLabelSnapshot: "спелые" } });
+    const before = await db.productQualityOption.findUniqueOrThrow({ where: { id: oldId } });
+    const catalog = new CatalogService(db as never);
+    await catalog.updateAdminProduct(marker, { description: "Обновлено", qualityOptions: [] });
+    expect(await db.productQualityOption.findUniqueOrThrow({ where: { id: oldId } })).toEqual(before);
+    expect((await ops.order(order.id)).items[0]).toMatchObject({ qualityPreference: "спелые", requestedQuantity: "2", estimatedPrice: "68.00" });
+    await expect(catalog.updateAdminProduct(marker, { qualityOptions: [{ label: "новое" }] })).rejects.toThrow("отдельным товаром");
+    expect(await db.productQualityOption.findUniqueOrThrow({ where: { id: oldId } })).toEqual(before);
+  });
 
   it("packs requested quantities at snapshot prices and leaves extra purchase with the company", async () => {
     const { slotId, orders: [order] } = await setup(1, "15");
@@ -157,13 +212,13 @@ describe.skipIf(!url)("operations PostgreSQL flow", () => {
     await expect(ops.packOrder(order.id)).rejects.toThrow();
   });
 
-  it("forms one wave concurrently, attaches each order once and preserves quality quantities", async () => {
+  it("forms one wave concurrently and attaches each order once", async () => {
     const { slotId, orders } = await setup();
     const [a, b] = await Promise.all([ops.formWave({ deliverySlotId: slotId }), ops.formWave({ deliverySlotId: slotId })]);
     expect(a.id).toBe(b.id);
     expect(await db.deliveryWave.count({ where: { deliverySlotId: slotId } })).toBe(1);
     expect(a.pickingList[0]).toMatchObject({ requestedQuantityTotal: "6", orderCount: 3 });
-    expect(a.pickingList[0].qualityPreferences).toEqual(expect.arrayContaining([{ label: "спелые", quantity: "4" }, { label: "твёрдые", quantity: "2" }]));
+    expect(a.pickingList[0].qualityPreferences).toEqual([{ label: "Без предпочтения", quantity: "6" }]);
     for (const order of orders) expect((await ops.order(order.id)).deliveryWaveId).toBe(a.id);
   });
 

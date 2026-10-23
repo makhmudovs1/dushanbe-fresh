@@ -46,18 +46,27 @@ export const emptyCartState: CartState = {
   items: []
 };
 
+export function isLegacyCartItem(item: Pick<CartItem, "qualityOptionId" | "qualityOptionLabel" | "qualityOptionLabelTj">) {
+  return !!(item.qualityOptionId || item.qualityOptionLabel || item.qualityOptionLabelTj);
+}
+
+export function hasLegacyCartItems(state: CartState) {
+  return state.items.some(isLegacyCartItem);
+}
+
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "refresh-quantity-rules": {
       const products = new Map(action.products.map(product => [product.id, product]));
       return { items: state.items.map(item => {
         const product = products.get(item.productId);
-        return product ? { ...item, minQuantity: product.minQuantity, quantityStep: product.quantityStep } : item;
+        return product && !isLegacyCartItem(item) ? { ...item, minQuantity: product.minQuantity, quantityStep: product.quantityStep } : item;
       }) };
     }
     case "repeat":
       return action.items.reduce((current, fresh) => {
         const existing = current.items.find(item => getCartItemKey(item) === getCartItemKey(fresh));
+        if (isLegacyCartItem(fresh)) return existing ? current : { items: [...current.items, fresh] };
         const item = { ...fresh, quantity: normalizeQuantity(existing ? addQuantity(existing.quantity, fresh.quantity) : fresh.quantity, fresh.minQuantity, fresh.quantityStep) };
         return { items: existing ? current.items.map(old => getCartItemKey(old) === getCartItemKey(item) ? item : old) : [...current.items, item] };
       }, state);
@@ -85,12 +94,6 @@ export function createCartItem(input: AddToCartInput): CartItem {
     ? input.product.qualityOptions.find((option) => option.id === input.qualityOptionId)
     : null;
 
-  const fallbackOption =
-    input.product.qualityOptions.find((option) =>
-      option.label.toLowerCase().includes("выбор сборщика")
-    ) ?? input.product.qualityOptions[0];
-
-  const qualityOption = input.qualityOptionId === null ? null : selectedOption ?? fallbackOption ?? null;
   const quantity = normalizeQuantity(
     input.quantity,
     input.product.minQuantity,
@@ -109,13 +112,15 @@ export function createCartItem(input: AddToCartInput): CartItem {
     quantity,
     minQuantity: input.product.minQuantity,
     quantityStep: input.product.quantityStep,
-    qualityOptionId: qualityOption?.id ?? null,
-    qualityOptionLabel: qualityOption?.label ?? null,
-    qualityOptionLabelTj: qualityOption?.labelTj ?? null
+    // Explicit legacy IDs are preserved for review, never replaced by a default.
+    qualityOptionId: input.qualityOptionId || null,
+    qualityOptionLabel: selectedOption?.label ?? null,
+    qualityOptionLabelTj: selectedOption?.labelTj ?? null
   };
 }
 
 export function addCartItem(state: CartState, nextItem: CartItem): CartState {
+  if (isLegacyCartItem(nextItem) || state.items.some(item => item.productId === nextItem.productId && isLegacyCartItem(item))) return state;
   const nextKey = getCartItemKey(nextItem);
   const existingItem = state.items.find((item) => getCartItemKey(item) === nextKey);
 
@@ -171,6 +176,7 @@ export function adjustQuantity(
 
 export function hasInvalidCartQuantity(state: CartState) {
   return state.items.some(item => {
+    if (isLegacyCartItem(item)) return false;
     const quantity = parseQuantity(item.quantity);
     const min = parseQuantity(item.minQuantity);
     const step = parseQuantity(item.quantityStep);
@@ -255,6 +261,8 @@ function updateCartItemQuantity(
       if (getCartItemKey(item) !== key) {
         return item;
       }
+
+      if (isLegacyCartItem(item)) return item;
 
       return {
         ...item,

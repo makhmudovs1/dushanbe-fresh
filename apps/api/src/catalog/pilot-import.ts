@@ -73,6 +73,9 @@ export function pilotProductData(product: Product, image: string | null) {
 }
 
 export async function importPilotCatalog(db: PrismaClient, data: PilotCatalog, apply = false) {
+  if (apply && data.products.some(product => product.qualityOptions?.length)) {
+    throw new Error("Quality preferences are read-only. Create varieties as separate products.");
+  }
   return db.$transaction(async tx => {
     // Serialize imports. Serializable isolation also rejects concurrent catalog edits.
     if (apply) await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412053)`;
@@ -99,17 +102,7 @@ export async function importPilotCatalog(db: PrismaClient, data: PilotCatalog, a
         const old = products.find(row => row.slug === p.slug);
         const values = { ...pilotProductData(p, old?.imageUrl ?? null), categoryId: categoryIds.get(p.categorySlug)! };
         // imageUrl, descriptions, IDs and historical order snapshots are intentionally untouched.
-        const product = await tx.product.upsert({ where: { slug: p.slug }, create: { ...values, slug: p.slug }, update: values });
-        if (p.qualityOptions !== undefined) {
-          const existing = await tx.productQualityOption.findMany({ where: { productId: product.id } });
-          await tx.productQualityOption.updateMany({ where: { productId: product.id }, data: { isActive: false } });
-          for (const [index, option] of p.qualityOptions.entries()) {
-            const match = existing.find(row => row.label === option.label);
-            const optionData = { label: option.label, labelTj: option.labelTj, sortOrder: option.sortOrder ?? index, isActive: true };
-            if (match) await tx.productQualityOption.update({ where: { id: match.id }, data: optionData });
-            else await tx.productQualityOption.create({ data: { ...optionData, productId: product.id } });
-          }
-        }
+        await tx.product.upsert({ where: { slug: p.slug }, create: { ...values, slug: p.slug }, update: values });
       }
       // Keep IDs, photos and all historical references, including for unreferenced variants.
       if (cleanup.length) await tx.product.updateMany({

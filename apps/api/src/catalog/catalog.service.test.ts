@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
 
 import { CatalogService } from "./catalog.service";
+import { parseProductUpdateInput } from "./catalog.validation";
 
 const category = {
   id: "cat-1",
@@ -71,6 +72,12 @@ function createService() {
 }
 
 describe("CatalogService", () => {
+  it("accepts translated product edits without exposing a preference write path", () => {
+    expect(parseProductUpdateInput({ nameTj: "Картошкаи сафед", descriptionTj: "Маҳсулоти тару тоза", qualityOptions: [] }))
+      .toEqual({ nameTj: "Картошкаи сафед", descriptionTj: "Маҳсулоти тару тоза" });
+    expect(parseProductUpdateInput({ nameTj: "", descriptionTj: "" })).toEqual({ nameTj: null, descriptionTj: null });
+    expect(() => parseProductUpdateInput({ qualityOptions: [{ label: "спелый" }] })).toThrow("отдельным товаром");
+  });
   it("soft-deletes products without deleting their relations", async () => {
     const { prisma, service } = createService();
     expect(await service.deleteAdminProduct(product.id)).toEqual({ deleted: true });
@@ -220,6 +227,7 @@ describe("CatalogService", () => {
     await service.createAdminProduct({
       categoryId: category.id,
       name: "Огурцы",
+      nameTj: "Бодиринг",
       slug: "cucumbers",
       description: "Хрустящие",
       image: "/api/v1/media/00000000-0000-4000-8000-000000000002.webp",
@@ -231,8 +239,7 @@ describe("CatalogService", () => {
       isWeighted: true,
       isActive: true,
       isAvailableToday: true,
-      sortOrder: 20,
-      qualityOptions: [{ label: "мелкие", sortOrder: 10 }]
+      sortOrder: 20
     });
 
     const data = prisma.product.create.mock.calls[0]?.[0].data;
@@ -242,6 +249,17 @@ describe("CatalogService", () => {
     expect(data.currentPurchasePrice).toBeInstanceOf(Prisma.Decimal);
     expect(data.minQuantity.toString()).toBe("0.5");
     expect(data.quantityStep.toString()).toBe("0.25");
+    expect(data.nameTj).toBe("Бодиринг");
+    expect(data).not.toHaveProperty("qualityOptions");
+  });
+  it("rejects new preferences and treats an old empty options payload as a non-destructive no-op", async () => {
+    const { prisma, service } = createService();
+    await expect(service.updateAdminProduct(product.id, { qualityOptions: [{ label: "новый сорт" }] })).rejects.toThrow("отдельным товаром");
+    expect(prisma.product.update).not.toHaveBeenCalled();
+    await service.updateAdminProduct(product.id, { nameTj: "Помидор", qualityOptions: [] });
+    const data = prisma.product.update.mock.calls[0][0].data;
+    expect(data.nameTj).toBe("Помидор");
+    expect(data).not.toHaveProperty("qualityOptions");
   });
 
   it("updates products through admin service", async () => {
