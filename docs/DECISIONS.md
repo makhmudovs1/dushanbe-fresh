@@ -887,6 +887,17 @@
   normal catalog grids remain two columns. Optional failures omit suggestions.
 - Review and release evidence: [MOBILE_NAVIGATION_REVIEW.md](MOBILE_NAVIGATION_REVIEW.md).
 
+## 2026-10-22: Payom SMS Preparation
+
+- Keep OTP, customer/session ownership and rate limits unchanged. Only the SMS
+  gateway delegates its transport to Payom's documented request adapter.
+- Payom's public API page does not specify response acceptance. Keep the isolated
+  response contract unconfirmed and sending/login disabled, even with ENV filled,
+  until the provider supplies exact success/error examples. Never guess from 2xx.
+- Positive receipts exist only in mocked tests and the guarded loopback browser
+  fixture. No application ENV bypass, real SMS, new migration or deployment.
+- Setup and remaining prerequisites: [PAYOM_SMS.md](PAYOM_SMS.md).
+
 ## 2026-10-22: Unified Public Product UI
 
 - The latest request supersedes mobile-only graphite styling and hidden product
@@ -904,13 +915,23 @@
 
 ## 2026-10-23: Varieties Are Separate Products
 
-- Each sellable variety is a separate Product; no SKU layer or automatic catalog
-  conversion. This supersedes earlier preference/default/combined-counter rules.
-- Preference writes are disabled in admin/API/import. Empty arrays are no-ops,
-  never deletions. Keep historical IDs, labels and snapshots readable.
-- New checkout rejects preference IDs. Old cart rows stay visible and immutable
-  until explicitly removed/reselected; never merge or guess a replacement.
-- Reuse existing Product-based procurement and per-OrderItem actual weights and
-  Decimal recalculation. Product translations use existing columns; no migration.
-- Account/SMS code is kept in a separate branch, not in this production release.
-- Evidence and admin guide: [PRODUCT_VARIETIES.md](PRODUCT_VARIETIES.md).
+- The owner's explicit decision supersedes earlier preference selection, automatic
+  defaults and combined counters: each sellable variety is a separate `Product`.
+  No SKU layer, automatic splitting, restoration of deleted products or catalog
+  data conversion. Administrators create new varieties deliberately.
+- Stop preference writes in admin, catalog API and pilot import. An old empty
+  `qualityOptions` array is a no-op, never nested deletion. Keep existing option
+  IDs, labels and historical order snapshots readable; no migration or cleanup.
+- New checkout rejects any preference ID. Persisted legacy cart rows remain
+  visible with their exact weights, labels and prices. Freeze their counters and
+  checkout until the customer explicitly removes/reselects them. Never choose a
+  random row, merge preferences or map a legacy row to a guessed new Product.
+- Repeat-order skips retired preference rows (also label-only snapshots) with
+  the existing unavailable-items notice; it never guesses a replacement variety.
+- Reuse current Product-based procurement and per-OrderItem actual weights and
+  Decimal recalculation. Separate varieties are never aggregated by category/name.
+  Procurement remainder is informational, not warehouse inventory.
+- RU/TJ product names/descriptions are editable using existing columns. New
+  weighted-product form defaults to a 0.5 kg step; existing configured values stay.
+- Local-only verification and admin guide: [PRODUCT_VARIETIES.md](PRODUCT_VARIETIES.md).
+  No production data changes or deployment authorized for this task.

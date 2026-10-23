@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { ConflictException, Inject, Injectable, ServiceUnavailableException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { CheckoutInput, CheckoutLine, CheckoutQuote, CreateOrderInput, OrderReceipt } from "@dushanbe-fresh/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -99,7 +99,7 @@ export class CheckoutService {
       deliverySlot, ...values, errors, reviewToken };
   }
 
-  async createOrder(input: CreateOrderInput): Promise<OrderReceipt> {
+  async createOrder(input: CreateOrderInput, accountUserId?: string): Promise<OrderReceipt> {
     input = { ...input, phone: normalizePhone(input.phone) };
     const requestHash = hash(input);
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -109,7 +109,7 @@ export class CheckoutService {
             where: { checkoutRequestId: input.requestId }, include: { deliverySlot: true }
           });
           if (existing) {
-            if (existing.checkoutRequestHash !== requestHash) throw new ConflictException("Эта отправка уже использована. Проверьте заказ ещё раз.");
+            if (existing.checkoutRequestHash !== requestHash || (existing.accountUserId ?? undefined) !== accountUserId) throw new ConflictException("Эта отправка уже использована. Проверьте заказ ещё раз.");
             return this.receipt(existing);
           }
           // Serialize bookings of the same slot. Serializable retries refresh the snapshot
@@ -123,6 +123,10 @@ export class CheckoutService {
             where: { phoneNormalized: input.phone }, update: { displayName: input.name },
             create: { phoneNormalized: input.phone, displayName: input.name }
           });
+          if (accountUserId) {
+            const updated = await tx.user.updateMany({ where: { id: accountUserId, phone: input.phone, phoneVerifiedAt: { not: null }, status: "active", role: "customer", roles: { isEmpty: true } }, data: { name: input.name } });
+            if (!updated.count) throw new UnauthorizedException("Войдите по номеру телефона.");
+          }
           const needsReview = !customer.isActive || customer.codPolicy !== "allowed" || customer.riskStatus === "restricted";
           const address = { ...input.address, city: "Душанбе", recipientName: input.name, phone: input.phone };
           const order = await tx.order.create({
@@ -130,7 +134,7 @@ export class CheckoutService {
               orderNumber: `DF-${randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`,
               publicTrackingToken: randomBytes(32).toString("hex"),
               checkoutRequestId: input.requestId, checkoutRequestHash: requestHash,
-              customerId: customer.id, deliveryAddressSnapshot: address, deliverySlotId: input.deliverySlotId,
+              customerId: customer.id, accountUserId, deliveryAddressSnapshot: address, deliverySlotId: input.deliverySlotId,
               substitutionPolicy: input.substitutionPolicy, status: needsReview ? "pending_review" : "confirmed",
               paymentMethod: "cash_on_delivery", paymentStatus: "pending",
               itemsSubtotal: new D(quote.itemsSubtotal), deliveryFee: new D(quote.deliveryFee),

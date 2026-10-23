@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import type { CheckoutInput, CreateOrderInput, SubstitutionPolicy } from "@dushanbe-fresh/shared";
 import { normalizePhone } from "../customers/phone";
+import { parseAddress } from "../customer-account/customer-address.validation";
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -58,12 +59,6 @@ export function parseCreateOrder(value: unknown): CreateOrderInput {
   return {
     ...checkout, phone, name: text(body.name, "Имя", 100), reviewToken, requestId,
     substitutionPolicy: body.substitutionPolicy as SubstitutionPolicy,
-    address: {
-      street: text(address.street, "Улица"), building: text(address.building, "Дом", 30),
-      apartment: text(address.apartment, "Квартира", 30, true),
-      entrance: text(address.entrance, "Подъезд", 30, true),
-      floor: text(address.floor, "Этаж", 30, true),
-      instructions: text(address.instructions, "Комментарий курьеру", 500, true)
-    }
+    address: parseAddress(address)
   };
 }

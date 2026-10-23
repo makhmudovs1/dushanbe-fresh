@@ -6,7 +6,8 @@ Account backend is preserved on GitHub in `feature/customer-accounts`, not deplo
 It was saved separately at the owner's request on 2026-10-22; it is not merged
 into the production branch. The Web-only release plan is
 recorded in `WEB_RELEASE_20261022.md`; it does not activate customer accounts.
-No SMS provider has been selected. Login and
+Payom.tj request integration is prepared locally; its response contract and API
+access are still pending. See [PAYOM_SMS.md](PAYOM_SMS.md). Login and
 mandatory verification are disabled by default; guest checkout remains available.
 A configured provider's outage is an error, not simulated success or a login bypass.
 
@@ -26,8 +27,9 @@ Existing order snapshots, risk, pricing and financial data are not rewritten.
 Addresses reuse `CustomerAddress`, with house/apartment, coordinate pair and soft
 deletion. Default-address changes serialize under a user row lock. Repeat order
 uses current public catalog data and min/step rules; unavailable products/options
-are skipped with a notice. Explicit old variants are preserved, never chosen
-arbitrarily. Existing cart lines remain; checkout revalidates every item and price.
+are skipped with a notice. After retiring quality preferences, old preference
+lines are also skipped with a notice, never converted to an arbitrary Product.
+Existing cart lines remain; checkout revalidates every item and price.
 
 Checkout drafts (contact/address/window/substitution) live in sessionStorage for
 at most 24 hours. No OTP/session tokens are stored there. Successful checkout
@@ -42,15 +44,19 @@ the account's default address and allows choosing/editing another.
 CUSTOMER_AUTH_ENABLED=false
 CUSTOMER_REQUIRE_PHONE=false
 # CUSTOMER_OTP_SECRET=<independent random secret, >=32 bytes>
-# CUSTOMER_SMS_URL=<HTTPS URL without credentials/query parameters>
-# CUSTOMER_SMS_API_KEY=<gateway key>
+# CUSTOMER_SMS_URL=https://HOST/api/message
+# CUSTOMER_SMS_API_KEY=<Payom Bearer token>
+# CUSTOMER_SMS_SENDER=<Payom-approved sender>
 ```
 
-The adapter sends `POST {to, text, requestId}` with `Authorization: Bearer <key>`.
-Acceptance MUST return a successful HTTP status AND JSON `{ "accepted": true }`.
-Translate/adapt the chosen provider's API to this contract before enabling it.
-A 2xx alone is not acceptance. Redirects are refused, timeout is ten seconds.
-Codes, keys and raw provider responses/errors are never logged or sent to the UI.
+The adapter sends Payom's `POST {telephone, text, senderName, type: "SMS"}` with
+`Authorization: Bearer <key>`. The official page does not specify an acceptance
+response; the isolated response verifier is deliberately unconfirmed. Until Payom
+confirms it and tests pass, sending/login remain disabled even with ENV filled.
+A 2xx alone is not acceptance. Redirects are refused, timeout is ten seconds,
+and uncertain requests are not automatically retried. Codes, keys and raw
+provider responses/errors are never logged or sent to the UI. Connection checklist
+and the remaining response-verification step: [PAYOM_SMS.md](PAYOM_SMS.md).
 
 Only +992 plus nine national digits are accepted. Codes are random six-digit,
 HMAC-bound to challenge ID and phone, expire after five minutes, allow five
