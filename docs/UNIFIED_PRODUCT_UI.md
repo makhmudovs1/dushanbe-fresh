@@ -113,3 +113,32 @@ RUN_INTERFACE_UI=1 UI_BASE_URL=http://localhost:3118 PLAYWRIGHT_BROWSER=webkit \
 
 Use `PLAYWRIGHT_BROWSER=chromium` for Chrome. Do not run mutating fixtures or
 browser checkout submissions against production.
+
+## Production Rollout, 2026-10-23
+
+- Runtime `7790b5397660d09b0beb8e037dd2038af4908315` pushed to GitHub main and
+  activated at `2026-10-23T17:18:34Z`. Build ID: `dzjGBln9ycvIXvbVCS15X`.
+- Rechecked the exact committed release in an isolated archive: Web lint and
+  typecheck, Shared 6 and Web 211 unit tests, and production Web build passed.
+  Source/e2e files match the earlier production preview with 35 WebKit and
+  35 Chrome passing cases. Its only extra source directory was empty.
+- Next's local build needed permission for its IPC socket; after that
+  environment-only retry it passed. The independent server build also passed.
+- Full PostgreSQL backup verified with `pg_restore --list`, 83,416 bytes,
+  SHA-256 `1f49cb1a8bcb299b486d1bf3c0f4bfc0ced7cbb0de7dfe8acd893624666214ab`.
+  Backup/previous Web build/runtime link are retained at
+  `/home/deploy/backups/dushanbe-fresh/unified-ui-20261023-7790b53`.
+  Old static chunks were retained for already-open clients.
+- Only Web restarted, PID 325793, zero automatic restarts. API PID 3604550 and
+  its compiled-code hash stayed unchanged. No migrations, seeds, account/SMS
+  activation, settings edits or catalog writes. All 24 public-table hashes/counts
+  matched before/after build, activation and the final live browser checks.
+- Live read-only flows passed without page errors: WebKit RU at 375/390/430/768px,
+  Chrome RU at 1280/1440px and Chrome TJ at 390px. API writes were blocked and
+  none were attempted. Checked product media/thumbnails, graphite purchases/red
+  hearts, rapid 0.5kg increments, recommendations, viewport rotation, bottom
+  navigation, cart persistence across routes and navigation to guest checkout.
+- Live screenshots/results: `/tmp/df-unified-live-7790b53-20261023`.
+  Real checkout submission/payment/SMS were deliberately not exercised. The
+  existing unset minimum/delivery/service pricing settings were not replaced
+  with invented values. Physical iPhone Safari remains a real-device check.
