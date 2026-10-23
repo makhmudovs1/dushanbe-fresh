@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ComponentProps, type MouseEvent, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Product } from "@/lib/api";
 import { MobileProductSheet } from "./mobile-product-sheet";
 
@@ -31,6 +31,7 @@ export function shouldOpenMobileProductSheet(event: Pick<MouseEvent<HTMLAnchorEl
 
 export function MobileProductSheetProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const owner = useId();
   const sequence = useRef(0);
   const entry = useRef<{ id: string; href: string } | null>(null);
@@ -49,6 +50,12 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
       window.history.back();
     } else dismiss();
   }, [dismiss]);
+  const navigate = useCallback((href: string) => {
+    const ownedEntry = entry.current && ownsProductSheetHistory(window.history.state, entry.current.id);
+    dismiss();
+    if (ownedEntry) router.replace(href);
+    else router.push(href);
+  }, [dismiss, router]);
   const open = useCallback((product: Product | string) => {
     if (closing.current) return;
     const id = `${owner}:${++sequence.current}`;
@@ -84,7 +91,7 @@ export function MobileProductSheetProvider({ children }: { children: ReactNode }
     {children}
     {selection && selection.pathname === pathname ?
       <MobileProductSheet key={typeof selection.product === "string" ? selection.product : selection.product.slug}
-        initialProduct={selection.product} onClose={close} /> : null}
+        initialProduct={selection.product} onClose={close} onNavigate={navigate} /> : null}
   </OpenContext.Provider></Context.Provider>;
 }
 

@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Heart, Plus, RotateCw, Share2 } from "lucide-react";
-import { useCart } from "@/cart/cart-context";
-import { sumCartQuantities } from "@/cart/cart";
-import { initialCatalogQuantity, isMinimumQuantity } from "@/cart/catalog-selection";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowUp, Heart, RotateCw, Share2 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import { getProduct, type Product } from "@/lib/api";
 import { CatalogDialog } from "./catalog-dialog";
 import { FavoriteButton } from "./favorite-button";
 import { ProductGallery } from "./product-gallery";
-import { ProductPrice } from "./product-price";
-import { QuantityStepper } from "./quantity-stepper";
+import { ProductPrice, ProductDiscountBadge } from "./product-price";
+import { ProductPurchaseActions } from "./product-purchase-actions";
+import { ProductInformation } from "./product-information";
+import { priceUnitLabel } from "@/lib/format";
+import { MobileNavigationSlot } from "./mobile-navigation-dock";
 import { ProductSheetSelection } from "./mobile-product-sheet-provider";
 import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
 import styles from "./mobile-product-sheet.module.css";
@@ -21,31 +21,20 @@ export function isProductSheetDismissal(dx: number, dy: number) {
 }
 
 export function MobileProductSheetCart({ product, ready }: { product: Product; ready: boolean }) {
-  const { t, name } = useI18n();
-  const { state, hydrated, addProduct, incrementItem, decrementItem, removeItem } = useCart();
-  const items = state.items.filter(item => item.productId === product.id);
-  const current = items.find(item => !item.qualityOptionId) ?? items[items.length - 1];
-  const unavailable = product.isActive === false || product.isAvailableToday === false;
-  const disabled = !ready || !hydrated || unavailable;
-
   return <footer className={styles.footer}>
     <ProductPrice product={product} />
-    {!hydrated ? <span role="status" className={styles.cartPending}>{t("Загружаем количество в корзине")}</span> :
-      unavailable ? <span role="status">{t("Товар больше недоступен.")}</span> :
-        current ? <QuantityStepper name={name(product)} quantity={sumCartQuantities(items)} unit={product.unit}
-          disabled={disabled} onIncrease={() => incrementItem(current)}
-          onDecrease={() => isMinimumQuantity(current) ? removeItem(current) : decrementItem(current)} /> :
-          <button className={styles.add} type="button" disabled={disabled}
-            onClick={() => addProduct({ product, quantity: initialCatalogQuantity(product), qualityOptionId: null })}>
-            <Plus size={20} aria-hidden="true" /><span>{t("В корзину")}</span>
-          </button>}
+    <ProductPurchaseActions product={product} ready={ready} />
   </footer>;
 }
 
-export function MobileProductSheet({ initialProduct, onClose }: {
-  initialProduct: Product | string; onClose: () => void;
+export function MobileProductSheet({ initialProduct, onClose, onNavigate }: {
+  initialProduct: Product | string; onClose: () => void; onNavigate?: (href: string) => void;
 }) {
-  const { t, name, description } = useI18n();
+  const { t, name, locale } = useI18n();
+  const navigate = useCallback((href: string) => {
+    if (onNavigate) onNavigate(href);
+    else { onClose(); window.location.assign(href); }
+  }, [onNavigate, onClose]);
   const [selection, setSelection] = useState(initialProduct);
   const slug = typeof selection === "string" ? selection : selection.slug;
   const [product, setProduct] = useState<Product | null>(typeof initialProduct === "string" ? null : initialProduct);
@@ -115,6 +104,7 @@ export function MobileProductSheet({ initialProduct, onClose }: {
   return <CatalogDialog title={product ? name(product) : t("Товар")} busy={closing} onClose={requestClose} fitVisualViewport
     closeLabel={t("Закрыть товар")} className={`${styles.viewport}${closing ? ` ${styles.closing}` : ""}`}
     surfaceClassName={styles.sheet}>
+    <div className={styles.actionsBackdrop} aria-hidden="true" hidden={!showTop} />
     <div className={styles.toolbar}>
       <button className={styles.icon} type="button" onClick={() => void share()} disabled={sharing}
         aria-label={t("Поделиться товаром")} title={t("Поделиться товаром")}><Share2 size={21} aria-hidden="true" /></button>
@@ -155,13 +145,11 @@ export function MobileProductSheet({ initialProduct, onClose }: {
     <p role="status" aria-live="polite" className={styles.shareNotice} hidden={!shareNotice}>{shareNotice ? t(shareNotice) : null}</p>
     <div className={styles.scrollArea}>
     <div className={styles.content} ref={contentRef} onScroll={event => setShowTop(event.currentTarget.scrollTop > 320)}>
-      {product ? <ProductGallery product={product} eager /> : null}
+      {product ? <ProductGallery product={product} eager><ProductDiscountBadge product={product} /></ProductGallery> : null}
       <div className={styles.details}>
         {product ? <>
-          <h2>{name(product)}</h2>
-          <p className={styles.category}>{name(product.category)}</p>
-          <p className={styles.description}>{description(product)}</p>
-          {product.isWeighted ? <p>{t("Для продуктов на вес итоговая сумма может немного измениться после сборки.")}</p> : null}
+          <h1>{name(product)} <span className={styles.unit}>{priceUnitLabel(product.unit, locale, product.slug)}</span></h1>
+          <ProductInformation product={product} />
         </> : <h2>{t("Товар")}</h2>}
         {status === "loading" ? <p role="status">{t("Загружаем карточку товара")}</p> : null}
         {status === "error" ? <div role="alert">
@@ -182,5 +170,6 @@ export function MobileProductSheet({ initialProduct, onClose }: {
       <ArrowUp size={22} aria-hidden="true" /></button> : null}
     </div>
     {product ? <MobileProductSheetCart product={product} ready={status === "ready"} /> : null}
+    <MobileNavigationSlot onNavigate={navigate} />
   </CatalogDialog>;
 }

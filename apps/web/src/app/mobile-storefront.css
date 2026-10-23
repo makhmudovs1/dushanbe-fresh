@@ -37,8 +37,6 @@
   .mobile-navigation__count { position: absolute; top: -3px; right: -7px; min-width: 17px; height: 17px; border: 2px solid white; border-radius: 20px; padding-inline: 2px; background: var(--color-primary); color: white; font-size: 9px; line-height: 13px; text-align: center; }
   .mobile-navigation-space { display: block; height: calc(var(--mobile-nav-height) + var(--mobile-safe-bottom)); flex-shrink: 0; }
   .mobile-navigation-space--cart { height: calc(var(--mobile-nav-height) + var(--mobile-safe-bottom) + 80px); }
-  /* The software keyboard needs the search results, not a floating navigation bar. */
-  body:has(.header-search input:focus) .mobile-navigation { visibility: hidden; pointer-events: none; }
   .storefront-page { padding-top: 14px; }
   .shop-shell { padding-inline: 0; }
   .home-promotions { display: flex; gap: 12px; min-height: 0; aspect-ratio: auto; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: 16px; }

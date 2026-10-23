@@ -21,9 +21,7 @@ import { ProductImage } from "./product-image";
 import { QuantityStepper } from "./quantity-stepper";
 import { type Product } from "@/lib/api";
 import { CartMobileHeader } from "./cart-mobile-header";
-import { ProductCard } from "./product-card";
 import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
-import { useMobileViewport } from "./use-mobile-viewport";
 import styles from "./cart-enhancements.module.css";
 
 export function CartPageContent() {
@@ -36,7 +34,7 @@ export function CartPageContent() {
 }
 
 export function selectCartRecommendations(products: Product[], cartIds: Set<string>) {
-  return selectRecommendations(products, cartIds, 4);
+  return selectRecommendations(products, cartIds, 12);
 }
 
 function CartBrowseAll() {
@@ -47,15 +45,12 @@ function CartBrowseAll() {
 function CartRecommendations() {
   const { t } = useI18n();
   const { state, hydrated } = useCart();
-  const mobile = useMobileViewport();
   const products = useRecommendationProducts();
-  const recommendations = selectRecommendations(products, new Set(state.items.map(item => item.productId)), mobile ? 12 : 4);
+  const recommendations = selectCartRecommendations(products, new Set(state.items.map(item => item.productId)));
   if (!hydrated || !recommendations.length) return null;
   return <section className={styles.recommendations} aria-labelledby="cart-recommendations-title">
     <h2 id="cart-recommendations-title">{t("Подобрали для вас")}</h2>
-    {mobile ? <RecommendationGrid products={recommendations} /> : <div className={styles.recommendationGrid}>
-      {recommendations.map(product => <ProductCard key={product.id} product={product} />)}
-    </div>}
+    <RecommendationGrid products={recommendations} />
   </section>;
 }
 

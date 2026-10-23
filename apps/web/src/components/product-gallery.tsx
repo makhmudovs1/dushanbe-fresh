@@ -10,8 +10,8 @@ import { useI18n } from "@/i18n/provider";
 import { ProductImage } from "./product-image";
 import { useMobileProductLink } from "./mobile-product-sheet-provider";
 
-export function ProductGallery({ product, href, eager = false, children }: {
-  product: Product; href?: string; eager?: boolean; children?: ReactNode;
+export function ProductGallery({ product, href, eager = false, thumbnails = false, children }: {
+  product: Product; href?: string; eager?: boolean; thumbnails?: boolean; children?: ReactNode;
 }) {
   const { name, t, locale } = useI18n();
   const openProduct = useMobileProductLink(product);
@@ -55,9 +55,11 @@ export function ProductGallery({ product, href, eager = false, children }: {
         <button type="button" aria-label={t("Следующее фото")} title={t("Следующее фото")} onClick={() => move(1)}><ChevronRight size={18} /></button>
       </div> : null}
     </div>
-    {photos.length > 1 ? <div className="product-gallery__dots" role="group" aria-label={`${t("Фотографии товара")}: ${name(product)}`}>
+    {photos.length > 1 ? <div className={thumbnails ? "product-gallery__thumbnails" : "product-gallery__dots"} role="group" aria-label={`${t("Фотографии товара")}: ${name(product)}`}>
       {photos.map((photo, position) => <button key={photo.url} type="button" aria-label={`${t("Фото")} ${position + 1}: ${name(product)}`}
-        aria-pressed={position === active} onClick={() => setIndex(position)}><span /></button>)}
+        aria-pressed={position === active} onClick={() => setIndex(position)}>
+        {thumbnails ? <ProductImage src={photo.url} name={name(product)} /> : <span />}
+      </button>)}
     </div> : null}
   </div>;
 }

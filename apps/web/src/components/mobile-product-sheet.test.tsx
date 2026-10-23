@@ -5,6 +5,7 @@ import { createCartItem, type CartState } from "@/cart/cart";
 import type { Product } from "@/lib/api";
 import { MobileProductSheet, MobileProductSheetCart, isProductSheetDismissal } from "./mobile-product-sheet";
 import { shouldOpenMobileProductSheet } from "./mobile-product-sheet-provider";
+import { ProductPurchaseActions } from "./product-purchase-actions";
 
 const cart = vi.hoisted(() => ({ hydrated: true, state: { items: [] } as CartState,
   addProduct: vi.fn(), incrementItem: vi.fn(), decrementItem: vi.fn(), removeItem: vi.fn() }));
@@ -21,7 +22,7 @@ const product: Product = { id: "banana", slug: "banana", name: "Бананы", d
 
 type ControlProps = { onClick: () => void; onIncrease: () => void; onDecrease: () => void; quantity: string; disabled: boolean };
 function control(ready = true) {
-  return (MobileProductSheetCart({ product, ready }).props.children[1] as ReactElement<ControlProps>).props;
+  return (ProductPurchaseActions({ product, ready }) as ReactElement<ControlProps>).props;
 }
 
 describe("mobile product links", () => {

@@ -65,11 +65,11 @@ describe("cart enhancements", () => {
     expect(text).not.toContain("≈");
   });
 
-  it("excludes every cart product ID, omits unavailable products and caps real recommendations at four", () => {
-    const products = Array.from({ length: 8 }, (_, i) => ({ ...product, id: String(i) }));
+  it("excludes every cart product ID, omits unavailable products and caps real recommendations at twelve", () => {
+    const products = Array.from({ length: 18 }, (_, i) => ({ ...product, id: String(i) }));
     products[0].isActive = false;
     products[1].isAvailableToday = false;
-    expect(selectCartRecommendations(products, new Set(["2"])).map(p => p.id)).toEqual(["3", "4", "5", "6"]);
+    expect(selectCartRecommendations(products, new Set(["2"])).map(p => p.id)).toEqual(Array.from({ length: 12 }, (_, i) => String(i + 3)));
     expect(selectCartRecommendations(products, new Set(products.map(p => p.id)))).toEqual([]);
     expect(selectCartRecommendations([], new Set())).toEqual([]);
   });

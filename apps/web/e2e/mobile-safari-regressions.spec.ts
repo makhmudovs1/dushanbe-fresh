@@ -41,7 +41,10 @@ for (const width of [375, 390, 430]) {
       for (const height of [560, 744, 610]) {
         await page.setViewportSize({ width, height });
         await content.evaluate(el => { el.scrollTop = el.scrollHeight; });
-        await expect.poll(async () => Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height)).toBe(height);
+        await expect.poll(async () => {
+          const r = (await footer.boundingBox())!;
+          return Math.round(r.y + r.height + (await sheet.locator(".mobile-navigation").boundingBox())!.height);
+        }).toBe(height);
         expect(await footer.evaluate(el => {
           const button = el.querySelector("button:last-child")!;
           const r = button.getBoundingClientRect();
@@ -113,12 +116,15 @@ for (const width of [375, 390, 430]) {
         visualViewport!.dispatchEvent(new Event("resize"));
         visualViewport!.dispatchEvent(new Event("scroll"));
       }, { height, top });
-      await expect.poll(async () => Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height)).toBe(height + top);
+      await expect.poll(async () => {
+        const r = (await footer.boundingBox())!;
+        return Math.round(r.y + r.height + (await sheet.locator(".mobile-navigation").boundingBox())!.height);
+      }).toBe(height + top);
       const button = (await buy.boundingBox())!;
       expect(button.y).toBeGreaterThanOrEqual(top);
       expect(button.y + button.height).toBeLessThanOrEqual(top + height - 10);
       await sheet.locator('[class*="content"]').evaluate(el => { el.scrollTop = el.scrollHeight; });
-      expect(Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height)).toBe(height + top);
+      expect(Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height + (await sheet.locator(".mobile-navigation").boundingBox())!.height)).toBe(height + top);
     }
     await page.evaluate(() => {
       Reflect.deleteProperty(visualViewport!, "height");
@@ -127,12 +133,16 @@ for (const width of [375, 390, 430]) {
     });
     for (const viewport of [{ width: 844, height: width }, { width, height: 664 }, { width, height: 844 }]) {
       await page.setViewportSize(viewport);
-      await expect.poll(async () => Math.round((await footer.boundingBox())!.y + (await footer.boundingBox())!.height)).toBe(viewport.height);
+      await expect.poll(async () => {
+        const r = (await footer.boundingBox())!;
+        return Math.round(r.y + r.height + (await sheet.locator(".mobile-navigation").boundingBox())!.height);
+      }).toBe(viewport.height);
       await expect(buy).toBeInViewport();
     }
     await sheet.evaluate(el => el.style.setProperty("--sheet-safe-bottom", "34px"));
-    await expect(footer).toHaveCSS("padding-bottom", "46px");
-    expect((await buy.boundingBox())!.y + (await buy.boundingBox())!.height).toBeLessThanOrEqual(844 - 34);
+    await expect(footer).toHaveCSS("padding-bottom", "12px");
+    await expect(sheet.locator(".mobile-navigation")).toHaveCSS("height", "90px");
+    expect((await buy.boundingBox())!.y + (await buy.boundingBox())!.height).toBeLessThanOrEqual(844 - 90);
     await page.screenshot({ path: info.outputPath(`sheet-${width}.png`) });
     for (let n = 0; n < 3; n++) {
       await sheet.getByRole("button", { name: "Закрыть товар", exact: true }).first().click();

@@ -886,3 +886,18 @@
 - Three-column real-catalog suggestions belong to mobile products and carts;
   normal catalog grids remain two columns. Optional failures omit suggestions.
 - Review and release evidence: [MOBILE_NAVIGATION_REVIEW.md](MOBILE_NAVIGATION_REVIEW.md).
+
+## 2026-10-22: Unified Public Product UI
+
+- The latest request supersedes mobile-only graphite styling and hidden product
+  navigation: public desktop/mobile share the mobile palette; staff keeps its own.
+- Desktop follows breadcrumbs/title, square gallery/thumbnails and right-hand
+  purchase/details composition. Show actual sale units, not inferred pack weights;
+  absent nutrition/storage data must not be fabricated.
+- A single icon-only mobile navigation remains mounted on public routes. While
+  a native product modal is open, portal it into the modal's non-scrolling bottom
+  slot; purchase controls sit above it and safe-bottom padding is counted once.
+- Both product/cart recommendation grids use real available catalog data. No
+  API, data, price/step or auth changes. Production rollout requires the owner's
+  explicit authorization, received on 2026-10-23 for this Web-only release.
+- Evidence and files: [UNIFIED_PRODUCT_UI.md](UNIFIED_PRODUCT_UI.md).

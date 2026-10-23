@@ -34,6 +34,17 @@ export function RecommendationGrid({ products }: { products: Product[] }) {
   </div>;
 }
 
+export function ProductRecommendations({ product }: { product: Product }) {
+  const { t } = useI18n();
+  const products = useRecommendationProducts();
+  const recommendations = selectRecommendations(products, new Set([product.id]), 12);
+  if (!recommendations.length) return null;
+  return <section className="product-recommendations" aria-labelledby="desktop-product-recommendations">
+    <h2 id="desktop-product-recommendations">{t("Может, ещё кое-что?")}</h2>
+    <RecommendationGrid products={recommendations} />
+  </section>;
+}
+
 export function BrowseAll({ className = "" }: { className?: string }) {
   const { t } = useI18n();
   return <Link className={`${styles.browseAll} ${className}`} href="/catalog">{t("Посмотреть всё")}</Link>;

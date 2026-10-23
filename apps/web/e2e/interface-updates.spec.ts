@@ -75,7 +75,7 @@ for (const width of [375, 390, 430, 768]) {
     await page.getByRole("link", { name: "Оформить заказ", exact: true }).click();
     await expect(page.getByLabel("Улица", { exact: true })).toHaveValue("Рудаки");
     await expect(page.getByLabel("Дом", { exact: true })).toHaveValue("15");
-    await expect(page.locator(".mobile-navigation")).toHaveCount(0);
+    await expect(page.locator(".mobile-navigation")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.goto("/catalog?focusSearch=1");
     await expect(page.getByRole("textbox", { name: "Поиск товаров", exact: true })).toBeFocused();

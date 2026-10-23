@@ -1,35 +1,36 @@
 "use client";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
-
-
-import { useEffect, useState } from "react";
-
-import { adjustQuantity } from "@/cart/cart";
 import { useCart } from "@/cart/cart-context";
 import { getProduct, Product } from "@/lib/api";
-
-import { isMinimumQuantity } from "@/cart/catalog-selection";
-import { QuantityStepper } from "./quantity-stepper";
+import { priceUnitLabel } from "@/lib/format";
 import { ProductDetailSkeleton } from "./loading-state";
 import { ProductGallery } from "./product-gallery";
 import { FavoriteButton } from "./favorite-button";
 import { useMobileViewport } from "./use-mobile-viewport";
 import { MobileProductSheet } from "./mobile-product-sheet";
 import { useRouter } from "next/navigation";
+import { ProductPrice, ProductDiscountBadge } from "./product-price";
+import { ProductPurchaseActions } from "./product-purchase-actions";
+import { ProductInformation } from "./product-information";
+import { ProductRecommendations } from "./product-recommendations";
+import styles from "./product-detail.module.css";
 
 function MobileProductRoute({ initialProduct }: { initialProduct: Product | string }) {
   const router = useRouter();
-  return <MobileProductSheet initialProduct={initialProduct} onClose={() => router.replace("/catalog")} />;
+  const close = useCallback(() => router.replace("/catalog"), [router]);
+  const navigate = useCallback((href: string) => router.push(href), [router]);
+  return <MobileProductSheet initialProduct={initialProduct} onClose={close} onNavigate={navigate} />;
 }
 
 export function ProductDetail({ slug, initialProduct }: { slug: string; initialProduct?: Product | null }) {
-  const { t, name, description, priceLabel } = useI18n();
-  const { addProduct, hydrated } = useCart();
+  const { t, name, locale } = useI18n();
+  const { state } = useCart();
   const mobile = useMobileViewport();
   const [product, setProduct] = useState<Product | null>(initialProduct ?? null);
-  const [quantity, setQuantity] = useState(initialProduct?.minQuantity ?? "1.000");
   const [error, setError] = useState<string | null>(initialProduct === null ? "Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения." : null);
-  const [notice, setNotice] = useState("");
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
@@ -37,12 +38,10 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
     let cancelled = false;
     setProduct(null);
     setError(null);
-    setNotice("");
     void getProduct(slug)
       .then((nextProduct) => {
         if (cancelled) return;
         setProduct(nextProduct);
-        setQuantity(nextProduct.minQuantity);
       })
       .catch(() => { if (!cancelled) setError("Не удалось загрузить товар. Он может быть недоступен, либо возникла ошибка соединения."); });
     return () => { cancelled = true; };
@@ -60,41 +59,29 @@ export function ProductDetail({ slug, initialProduct }: { slug: string; initialP
     return <ProductDetailSkeleton />;
   }
 
-  return (
-    <article className="product-detail">
-      <ProductGallery product={product} eager><FavoriteButton product={product} /></ProductGallery>
-      <div className="product-detail__content">
-        <p className="eyebrow">{name(product.category)}</p>
-        <h1>{name(product)}</h1>
-        <strong className="price">
-          {priceLabel(product.sellingPrice, product.unit, product.slug)}
-        </strong>
-        <p>{description(product)}</p>
-
-        <div className="field">
-          <span>{t("Количество")}</span>
-          <QuantityStepper name={name(product)} quantity={quantity} unit={product.unit}
-            decreaseDisabled={isMinimumQuantity({ ...product, quantity })}
-            onDecrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "decrement"))}
-            onIncrease={() => setQuantity(adjustQuantity(quantity, product.minQuantity, product.quantityStep, "increment"))} />
+  const inCart = state.items.some(item => item.productId === product.id);
+  return <article className={`product-detail ${styles.page}`}>
+    <nav className="catalog-breadcrumbs" aria-label={t("Хлебные крошки")}><ol>
+      <li><Link href="/">{t("Главная")}</Link></li>
+      <li><ChevronRight size={13} aria-hidden="true" /><Link href={`/catalog?category=${encodeURIComponent(product.category.slug)}`}>{name(product.category)}</Link></li>
+      <li><ChevronRight size={13} aria-hidden="true" /><span aria-current="page">{name(product)}</span></li>
+    </ol></nav>
+    <header className={styles.heading}>
+      <h1>{name(product)} <span>{priceUnitLabel(product.unit, locale, product.slug)}</span></h1>
+      <FavoriteButton product={product} />
+    </header>
+    <div className={styles.layout}>
+      <ProductGallery product={product} eager thumbnails><ProductDiscountBadge product={product} /></ProductGallery>
+      <div className={styles.information}>
+        <div className={styles.purchase}>
+          <ProductPrice product={product} />
+          <div className={styles.actions}><ProductPurchaseActions product={product} />
+            {inCart ? <Link href="/cart" className="primary-link">{t("Корзина")}<ArrowRight size={20} aria-hidden="true" /></Link> : null}
+          </div>
         </div>
-
-        {notice ? <p className="notice">{t(notice)}</p> : null}
-
-        <button
-          className="primary-action"
-          disabled={!hydrated}
-          onClick={() => {
-            addProduct({
-              product,
-              quantity,
-              qualityOptionId: null
-            });
-            setNotice("Добавлено в корзину.");
-          }}
-          type="button"
-        >{t(" Добавить в корзину ")}</button>
+        <ProductInformation product={product} />
       </div>
-    </article>
-  );
+    </div>
+    <ProductRecommendations product={product} />
+  </article>;
 }

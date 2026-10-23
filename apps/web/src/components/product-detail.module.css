@@ -1,0 +1,23 @@
+article.page { display: block; min-width: 0; }
+.heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin: 24px 0 32px; }
+.heading h1 { margin: 0; font-size: 40px; line-height: 48px; font-weight: 750; overflow-wrap: anywhere; }
+.heading h1 span { color: var(--color-muted); font-weight: 650; white-space: nowrap; }
+.heading :global(.favorite-button) { position: static; flex-shrink: 0; width: 48px; height: 48px; background: #fff; box-shadow: 0 3px 14px rgb(0 0 0 / 7%); }
+.layout { display: grid; grid-template-columns: minmax(0, 464px) minmax(0, 1fr); gap: 40px; align-items: start; }
+.layout :global(.product-gallery__media) { aspect-ratio: 1; min-height: 0; border-radius: 32px; background: var(--color-surface-muted); }
+.layout :global(.product-gallery__media > .product-image) { height: 100%; object-fit: contain; }
+.layout :global(.product-gallery__dots) { display: none; }
+.information { min-width: 0; }
+.purchase { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 0 0 22px; border-bottom: 1px solid var(--color-border); }
+.purchase :global(.product-price) { flex: 1 1 112px; min-height: 52px; }
+.purchase :global(.product-price__current strong) { font-size: 32px; line-height: 38px; font-weight: 700; }
+.purchase :global(.product-price__current > span) { font-size: 12px; }
+.purchase :global(.product-price__previous del) { font-size: 18px; }
+.purchase :global(.product-price__trend), .purchase :global(.product-price__discount) { display: none; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: 2 1 240px; min-width: 0; }
+.actions :global(.product-purchase-add) { width: auto; flex: 1; min-width: 176px; }
+.actions :global(.quantity-stepper) { flex: 1 1 146px; width: auto; min-width: 146px; height: 52px; border: 0; border-radius: 24px; grid-template-columns: 44px minmax(0, 1fr) 44px; }
+.actions :global(.quantity-stepper button) { width: 44px; height: 52px; }
+.actions :global(.primary-link) { flex: 1 1 106px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: 24px; }
+@media (max-width: 1100px) { .layout { gap: 28px; } }
+@media (max-width: 1023px) { article.page { display: none; } }

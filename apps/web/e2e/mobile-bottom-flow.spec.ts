@@ -45,7 +45,7 @@ for (const width of [375, 390, 430, 768]) {
     }
     const search = page.locator(".header-search input");
     await search.focus();
-    await expect(nav).toBeHidden();
+    await expect(nav).toBeVisible();
     await search.blur();
     await expect(nav).toBeVisible();
     await page.screenshot({ path: info.outputPath(`navigation-${width}.png`) });
@@ -55,7 +55,8 @@ for (const width of [375, 390, 430, 768]) {
     const sheet = page.getByRole("dialog");
     await expect(sheet.locator("footer button")).toBeEnabled();
     await expect(sheet.locator("[data-product-sheet-surface]")).toHaveCSS("transform", "none");
-    await expect(nav).toHaveCount(0);
+    await expect(nav).toHaveCount(1);
+    await expect(sheet.locator(".mobile-navigation")).toBeVisible();
     await expect(page.locator("body")).toHaveAttribute("data-product-sheet-open", "true");
     const topIcons = sheet.locator('[class*="toolbar"]').first();
     const before = await topIcons.boundingBox();
@@ -98,7 +99,8 @@ for (const width of [375, 390, 430, 768]) {
     await expect(page.locator(".cart-checkout-bar")).toBeVisible();
     await page.locator(".cart-item h3 a").first().click();
     await expect(page.getByRole("dialog").locator("footer")).toBeVisible();
-    await expect(nav).toHaveCount(0);
+    await expect(nav).toHaveCount(1);
+    await expect(page.getByRole("dialog").locator(".mobile-navigation")).toBeVisible();
     await expect(page.locator(".cart-checkout-bar")).toBeHidden();
     await page.getByRole("dialog").locator(".catalog-dialog__header button").click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -128,7 +130,8 @@ test("direct mobile product link uses the same screen and hides all background p
   await page.goto(href!);
   const sheet = page.getByRole("dialog");
   await expect(sheet.locator("footer button")).toBeEnabled();
-  await expect(page.locator(".mobile-navigation")).toHaveCount(0);
+  await expect(sheet.locator(".mobile-navigation")).toBeVisible();
+  await expect(page.locator(".mobile-navigation")).toHaveCount(1);
   await expect(sheet.getByRole("heading", { name: "Может, ещё кое-что?", exact: true })).toBeAttached();
   await sheet.locator(".catalog-dialog__header button").click();
   await expect(page).toHaveURL(/\/catalog$/);
@@ -177,7 +180,8 @@ for (const status of [503, 200]) test(`optional invalid recommendations (${statu
   await expect(sheet.locator("[data-recommendation-grid]")).toHaveCount(0);
   await add.click();
   await expect(sheet.locator("footer output")).toBeVisible();
-  await expect(page.locator(".mobile-navigation")).toHaveCount(0);
+  await expect(sheet.locator(".mobile-navigation")).toBeVisible();
+  await expect(page.locator(".mobile-navigation")).toHaveCount(1);
 });
 
 test("category loading chips cannot expand the mobile document", async ({ page }) => {

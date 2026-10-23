@@ -15,6 +15,8 @@ import { CustomerProvider } from "@/customer/customer-context";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { DeliveryAddressProvider } from "@/customer/delivery-address-context";
 import { MobileProductSheetProvider } from "@/components/mobile-product-sheet-provider";
+import { MobileNavigationDockProvider } from "@/components/mobile-navigation-dock";
+import { StorefrontFrame } from "@/components/storefront-frame";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -35,13 +37,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang={locale}>
       <body>
         <LanguageProvider initialLocale={locale}>
-        <FavoritesProvider><CartProvider><CustomerProvider><DeliveryAddressProvider><MobileProductSheetProvider>
+        <FavoritesProvider><CartProvider><CustomerProvider><DeliveryAddressProvider><StorefrontFrame><MobileNavigationDockProvider><MobileProductSheetProvider>
           <SiteHeader />
           {children}
           <SiteFooter />
           <Suspense fallback={null}><MobileNavigation /></Suspense>
           <ScrollToTop />
-        </MobileProductSheetProvider></DeliveryAddressProvider></CustomerProvider></CartProvider></FavoritesProvider>
+        </MobileProductSheetProvider></MobileNavigationDockProvider></StorefrontFrame></DeliveryAddressProvider></CustomerProvider></CartProvider></FavoritesProvider>
         </LanguageProvider>
       </body>
     </html>

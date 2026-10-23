@@ -8,7 +8,7 @@ import { decimalLabel, priceUnitLabel } from "@/lib/format";
 export function ProductPrice({ product }: { product: Product }) {
   const { t, priceLabel, locale } = useI18n();
   const price = decimalLabel(product.sellingPrice);
-  return <div className="product-price">
+  return <div className={`product-price${product.priceDrop ? " product-price--sale" : ""}`}>
     <div className="product-price__group">
       <span className="product-price__current" aria-label={priceLabel(product.sellingPrice, product.unit, product.slug)}>
         <strong>{price}</strong><span> {locale === "tg" ? "сомонӣ" : "сомони"}</span>
@@ -23,4 +23,8 @@ export function ProductPrice({ product }: { product: Product }) {
       {product.priceDrop ? <small className="product-price__trend"><TrendingDown size={13} aria-hidden="true" />{t("Стало дешевле")}</small> : null}
     </div>
   </div>;
+}
+
+export function ProductDiscountBadge({ product }: { product: Product }) {
+  return product.priceDrop ? <span className="product-discount-badge">−{product.priceDrop.discountPercent}%</span> : null;
 }
