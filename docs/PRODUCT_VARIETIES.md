@@ -1,5 +1,8 @@
 # Разновидности товаров
 
+Production-выкладка и точная приёмка 25.20 сомони:
+[PRODUCT_VARIETIES_ROLLOUT.md](PRODUCT_VARIETIES_ROLLOUT.md).
+
 ## Решение
 
 Каждая продаваемая разновидность — отдельный существующий `Product`, не SKU
