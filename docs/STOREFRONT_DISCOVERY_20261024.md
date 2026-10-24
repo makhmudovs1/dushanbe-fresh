@@ -57,3 +57,24 @@ The temporary snapshot/server is outside the repository and production build.
 
 Deployment is Web-only, with prior runtime/static chunks retained, public asset
 backups and bounded healthchecks. No migration, API restart or ENV changes.
+
+## Release Evidence
+
+- Application commit `b565241ac37ac2e7643304a4b2df2c905b5285fa`, pushed to main.
+- Activated `2026-10-24T18:12:18Z`; build `aRZ48YNJCI0K30UtqUpAC`.
+- Chromium 134: 11/11 passed, exit 0. WebKit: 11/11 passed, exit 0.
+  The separately installed newer Chrome passed the 11 UI cases but hung during
+  runner teardown; its run is not claimed as a successful suite. The suite completed
+  cleanly with the binary matching the pinned Playwright; the system Chrome
+  shutdown hang's cause remains unverified. Neither application dependencies nor
+  assertions were changed to bypass it. Repeat with `PLAYWRIGHT_CHANNEL=chromium`
+  after `corepack pnpm --filter @dushanbe-fresh/web exec playwright install chromium`.
+- Production read-only smoke: Chromium and WebKit at 390/1440px, all four cases
+  passed; RU and switch to TJ, fresh icon URLs/PNG sizes, home/categories,
+  favorites and modal geometry/focus. No forbidden requests or browser errors.
+- Production report/screenshots: ignored `test-results/discovery-production-20261024`.
+- Both services active, `NRestarts=0`; API PID stayed `553105`. Source checkout
+  was clean. API runtime paths/entry hash and ENV hash matched the saved baseline.
+- Backup: `/home/deploy/backups/dushanbe-fresh/discovery-web-20261024-b565241`.
+  Prior runtime: `/opt/dushanbe-fresh/dist/web-releases/discovery-20261024-b565241/rollback`.
+- Temporary local preview and public snapshot were stopped after verification.
