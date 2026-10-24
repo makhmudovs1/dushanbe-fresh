@@ -21,6 +21,11 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
     const carousel = page.locator(".promotion-carousel");
     const track = carousel.locator(".promotion-carousel__track");
     const next = carousel.getByRole("button", { name: t("Продукты с заботой"), exact: true });
+    await expect(carousel.locator(".promotion-carousel__controls button")).toHaveCount(2);
+    await expect(carousel.locator(".lucide-pause, .lucide-play")).toHaveCount(0);
+    const originalAction = carousel.locator('.promotion-carousel__slide[aria-hidden="false"] a');
+    await expect(originalAction).toHaveCSS("background-color", "rgb(31, 31, 31)");
+    await expect(originalAction).toHaveCSS("color", "rgb(255, 255, 255)");
     await expect(page.locator(".home-promotions > article")).toHaveCount(3);
     await next.click();
     await expect(next).toHaveAttribute("aria-pressed", "true");
@@ -31,6 +36,10 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
     await expect(slide.getByRole("heading")).toHaveText(t("Продукты с заботой"));
     await expect(slide.locator("p")).toHaveText(t("Доставляем свежесть по Душанбе"));
     await expect(slide.getByRole("link", { name: t("Перейти") })).toHaveAttribute("href", "/catalog");
+    for (const action of await page.locator(".home-promotions a:visible").all()) {
+      await expect(action).toHaveCSS("background-color", "rgb(31, 31, 31)");
+      await expect(action).toHaveCSS("color", "rgb(255, 255, 255)");
+    }
     await expect(slide.locator("img")).toHaveJSProperty("complete", true);
     await expect.poll(() => slide.locator("img").evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     for (const selector of ["h2", "p", "a"]) {
@@ -74,10 +83,14 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
   });
 }
 
-test("automatic rotation and reduced-motion opt out", async ({ page }) => {
+test("automatic rotation resumes after manual selection; reduced-motion opts out", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".home-available-products .product-card").first()).toBeVisible();
   const next = page.locator(".promotion-carousel").getByRole("button", { name: "Продукты с заботой", exact: true });
+  await expect(next).toHaveAttribute("aria-pressed", "true", { timeout: 15000 });
+  await page.locator(".promotion-carousel").getByRole("button", { name: "Овощи и зелень", exact: true }).click();
+  await expect(next).toHaveAttribute("aria-pressed", "false");
+  await page.locator(".home-available-products .storefront-section-heading").click();
   await expect(next).toHaveAttribute("aria-pressed", "true", { timeout: 15000 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();

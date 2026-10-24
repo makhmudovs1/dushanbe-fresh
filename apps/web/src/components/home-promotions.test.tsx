@@ -20,5 +20,7 @@ describe("home promotion layout", () => {
     expect(html).toContain("Доставляем свежесть по Душанбе");
     expect(html).toMatch(/<a(?=[^>]*href="\/catalog")(?=[^>]*tabindex="-1")[^>]*>/i);
     expect(html.match(/class="promotion-banner promotion-banner--/g)).toHaveLength(3);
+    expect(html).not.toMatch(/lucide-(pause|play)|смену баннеров/);
+    expect(html.match(/aria-pressed="(?:true|false)"/g)).toHaveLength(2);
   });
 });

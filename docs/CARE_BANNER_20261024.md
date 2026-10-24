@@ -83,3 +83,17 @@
   Chromium home screenshots after activation.
 - Final local servers used for testing were stopped. Only test/report follow-up
   changes after `e23d502` are committed separately; they require no Web rebuild.
+
+## Banner Controls Follow-up
+
+- Removed play/pause UI, persistent paused state and unused RU/TJ control labels.
+  Only two slide selectors remain. Manual selection no longer permanently stops
+  auto-rotation; hover, keyboard focus and active touch are temporary guards.
+  Background-tab and reduced-motion protections remain.
+- Unified all banner CTAs on existing graphite/white action tokens for desktop,
+  mobile, hover and pressed states. No yellow CTA declaration was found in the
+  existing storefront; semantic warning backgrounds and photographs are unchanged.
+- Passed workspace lint, typecheck, 505 tests (127 DB-dependent tests skipped)
+  and an isolated full build. Updated browser coverage passed 11/11 in Chromium
+  and 11/11 in WebKit at 375/390/430/768/1440px for RU/TJ, including automatic
+  rotation after manual selection, no pause icon, and computed button colors.

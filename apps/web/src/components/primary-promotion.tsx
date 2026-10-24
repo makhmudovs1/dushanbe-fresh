@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Pause, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 
 type Promotion = { image: string; alt: string; title: string; text?: string; action: string; href?: string | null };
@@ -12,7 +12,6 @@ export function PrimaryPromotion({ banner, available }: { banner: Promotion; ava
   const { t } = useI18n();
   const track = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const slides: Promotion[] = [banner, {
     image: "/storefront/home/care-v1.webp", alt: "Пакет Dushanbe Fresh со свежими продуктами",
@@ -24,14 +23,18 @@ export function PrimaryPromotion({ banner, available }: { banner: Promotion; ava
     if (element) element.scrollTo({ left: index * element.clientWidth, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
 
+  function updateInteraction(element: HTMLElement) {
+    setInteracting((matchMedia("(hover: hover)").matches && element.matches(":hover")) || Boolean(element.querySelector(":focus-visible")));
+  }
+
   useEffect(() => {
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
-    if (paused || interacting) return;
+    if (interacting) return;
     const timer = window.setInterval(() => {
       if (!document.hidden && !motion.matches) goTo((slide + 1) % 2);
     }, 6000);
     return () => window.clearInterval(timer);
-  }, [slide, paused, interacting]);
+  }, [slide, interacting]);
 
   // Keep the selected slide aligned after rotation/resizing, without a second scroll animation.
   useEffect(() => {
@@ -50,9 +53,10 @@ export function PrimaryPromotion({ banner, available }: { banner: Promotion; ava
 
   return <article id="promotion-vegetables" className="promotion-banner promotion-banner--primary promotion-carousel"
     aria-roledescription={t("Карусель")} aria-label={t("Баннеры")}
-    onMouseEnter={() => setInteracting(true)} onMouseLeave={event => setInteracting(event.currentTarget.contains(document.activeElement))}
-    onFocusCapture={() => setInteracting(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false); }}>
-    <div ref={track} className="promotion-carousel__track" onPointerDown={() => setPaused(true)}
+    onPointerEnter={event => updateInteraction(event.currentTarget)} onPointerLeave={event => updateInteraction(event.currentTarget)}
+    onFocusCapture={event => updateInteraction(event.currentTarget)} onBlurCapture={event => updateInteraction(event.currentTarget)}
+    onTouchStart={() => setInteracting(true)} onTouchEnd={event => updateInteraction(event.currentTarget)} onTouchCancel={event => updateInteraction(event.currentTarget)}>
+    <div ref={track} className="promotion-carousel__track"
       onScroll={event => {
         const element = event.currentTarget;
         if (element.clientWidth) setSlide(Math.round(element.scrollLeft / element.clientWidth));
@@ -69,12 +73,8 @@ export function PrimaryPromotion({ banner, available }: { banner: Promotion; ava
       </div>)}
     </div>
     <div className="promotion-carousel__controls">
-      <button type="button" aria-label={t(paused ? "Продолжить смену баннеров" : "Приостановить смену баннеров")}
-        title={t(paused ? "Продолжить смену баннеров" : "Приостановить смену баннеров")} onClick={() => setPaused(!paused)}>
-        {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
-      </button>
       {slides.map((item, index) => <button key={item.image} type="button" aria-label={t(item.title)} aria-pressed={slide === index}
-        onClick={() => { setPaused(true); goTo(index); }}><span /></button>)}
+        onClick={() => goTo(index)}><span /></button>)}
     </div>
   </article>;
 }

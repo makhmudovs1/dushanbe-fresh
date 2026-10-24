@@ -1025,3 +1025,13 @@
   16px; Safari's existing UI preferences and OS icon cache cannot be forced.
 - Ship Web only. No API/auth enablement, migrations, catalog writes, checkout
   submissions, SMS sends or production environment edits are required.
+
+## 2026-10-24: Banner Controls Follow-up
+
+- Remove the visible play/pause control and persistent paused state. Keep only
+  the two slide selectors and native swiping. Manual selection no longer disables
+  subsequent automatic rotation. Hover, keyboard focus, active touch and reduced
+  motion still prevent unwanted movement while interacting.
+- Banner CTA buttons use the existing graphite action tokens at every breakpoint,
+  including hover/pressed states. Brand greens, white quantity controls, warning
+  surfaces and product photography retain their separate semantic roles.

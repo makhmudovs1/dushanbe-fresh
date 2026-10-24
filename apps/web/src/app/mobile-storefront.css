@@ -45,7 +45,7 @@
   .home-promotions .promotion-banner__content { width: 58%; padding: 16px; gap: 6px; }
   .home-promotions .promotion-banner h1, .home-promotions .promotion-banner h2 { font-size: 22px; line-height: 26px; }
   .home-promotions .promotion-banner p { font-size: 13px; line-height: 17px; }
-  .home-promotions .promotion-banner a { padding: 8px 10px; background: white; color: var(--color-primary); margin-top: 4px; font-size: 13px; }
+  .home-promotions .promotion-banner a { padding: 8px 10px; background: var(--color-action, #1f1f1f); color: var(--color-action-contrast, #fff); margin-top: 4px; font-size: 13px; }
   .home-promotion-dots { display: flex; align-items: center; justify-content: center; height: 30px; margin-top: -2px; }
   .home-promotion-dots button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; }
   .home-promotion-dots button span { width: 5px; height: 5px; border-radius: 50%; background: #cdd5cf; transition: background-color 180ms ease; }

@@ -20,7 +20,7 @@
   .home-promotions .promotion-banner p { font-size: 12px; line-height: 16px; max-width: 115px; }
   .home-promotions .promotion-banner--primary > img { object-position: 67% center; }
   .home-promotions .promotion-banner--secondary > img { object-position: 60% center; }
-  .home-promotions .promotion-banner a { align-self: flex-start; margin-top: auto; padding: 8px 10px; min-height: 36px; gap: 5px; border-radius: 18px; color: #1b1b1b; background: #fff; font-size: 12px; line-height: 16px; }
+  .home-promotions .promotion-banner a { align-self: flex-start; margin-top: auto; padding: 8px 10px; min-height: 36px; gap: 5px; border-radius: 18px; color: var(--color-action-contrast, #fff); background: var(--color-action, #1f1f1f); font-size: 12px; line-height: 16px; }
   .home-promotions .promotion-banner a svg { width: 15px; height: 15px; }
   .home-promotions .promotion-banner__soon { margin-top: auto; padding: 5px 0; color: #555; font-size: 11px; line-height: 14px; }
   .home-promotion-dots { display: none; }
