@@ -49,5 +49,30 @@ screen shortcuts can retain an OS-managed icon cache outside the site's control.
   were skipped without `TEST_DATABASE_URL`; no API/schema/business logic changed.
   Production was not used as a mutating test fixture.
 - Web production build passed in an independent temporary snapshot, preserving
-  the user's running development cache. Browser/release results are recorded
-  after their completion.
+  the user's running development cache; the server build passed independently.
+- Focused read-only responsive/live-search suite: WebKit 15/15; Chromium 14/15
+  initially, with the remaining RU360 case passing on retry without source changes
+  after a catalog network timeout. Widths: 360, 375, 390, 430, 768, 1024, 1440;
+  RU/TJ, compact scrolling, language, address, real catalog search and metadata.
+  Five additional logo/metadata/fallback tests passed on each engine.
+
+## Production
+
+- Released commit: `bd2d0f29a28c2d737453eeab7a8bf004300fefef`.
+- Activated: `2026-10-24T14:37:18Z`; Web build `U7pQKl6yeuU7X0sU2ckD2`.
+- Source was fast-forwarded; only Web was restarted. API PID remained `553105`;
+  both services were active with `NRestarts=0`, and source checkout was clean.
+- Backup: `/home/deploy/backups/dushanbe-fresh/brand-web-20261024-bd2d0f2`.
+  Prior runtime: `/opt/dushanbe-fresh/dist/web-releases/brand-20261024-bd2d0f2/rollback`.
+- Previous/new static chunks were retained. Loopback/public HTTPS pages, disabled
+  auth status and checksums of every changed branding asset passed. API runtime
+  paths, API entry hash and the environment-file hash remained unchanged.
+- The first activation attempt stopped before changes because an extra bundle
+  path marker was absent from the earlier prepare version. The script was made
+  compatible with the explicitly supplied, checksum-verified bundle. The second
+  activation completed successfully; no database commands or rollback were run.
+- Public post-deploy smoke passed: Chrome 4/4 and WebKit 4/4, RU/TJ at desktop
+  1440/mobile 390. New logo, control order, ICO/PNG/Apple/OG metadata, language and
+  address dialogs were verified with zero forbidden requests or browser errors.
+  Report and 24 screenshots: ignored `test-results/header-brand-production-20261024`.
+  Physical Safari browser-chrome/home-screen cache behavior is not emulated.
