@@ -73,7 +73,7 @@ test("Tajik bunch units, branded placeholder and error/empty states", async ({ p
   await page.reload();
   await expect(page.locator("output")).toHaveText("2 баста");
   const img = page.locator(".cart-item img");
-  await expect(img).toHaveAttribute("src", /\/brand\/icon-v2\.png$/);
+  await expect(img).toHaveAttribute("src", /\/brand\/icon-v3\.png$/);
   await expect(img).toHaveJSProperty("complete", true);
   expect(await img.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await page.route("**/api/v1/delivery-slots", route => route.fulfill({ status: 503, json: {} }));

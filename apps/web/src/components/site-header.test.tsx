@@ -19,14 +19,16 @@ describe("customer branding", () => {
     expect(account).toContain('aria-label="Профиль"');
     expect(account).not.toContain("<span>Профиль</span>");
   });
-  it("keeps a separate text wordmark and the provided mark with only F accented", () => {
+  it("uses the supplied full wordmark and keeps language, cart and profile in order", () => {
     route.path = "/catalog";
     const html = renderToStaticMarkup(<SiteHeader />);
     expect(html).toContain('class="site-logo brand-logo"');
     expect(html).toContain('href="/"');
-    expect(html).toContain('width="40" height="40"');
-    expect(html).toContain("mark-v2.webp");
-    expect(html).toContain('Dushanbe <span class="brand-logo__initial">F</span>resh');
+    expect(html).toContain('width="600" height="210"');
+    expect(html).toContain("wordmark-v3.webp");
+    expect(html).not.toContain("brand-logo__wordmark");
+    expect(html.indexOf('class="language-switcher')).toBeLessThan(html.indexOf('class="cart-link"'));
+    expect(html.indexOf('class="cart-link"')).toBeLessThan(html.indexOf('class="header-account"'));
     expect(html).not.toContain('href="/favorites"');
     expect(html).not.toContain("theme-switcher");
     expect(html).toContain("Корзина, позиций: 2");

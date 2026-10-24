@@ -135,14 +135,14 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
 }
 
 // Optional drop-in header control; no header/layout edits are required by this module.
-export function DeliveryAddressTrigger({ className = "" }: { className?: string }) {
+export function DeliveryAddressTrigger({ className = "", eyebrow = "Душанбе" }: { className?: string; eyebrow?: string }) {
   const delivery = useDeliveryAddress();
   const { t } = useI18n();
   if (!delivery) return null;
   const label = delivery.addressLabel || t("Указать адрес доставки");
   return <button type="button" className={`delivery-address-trigger ${className}`} disabled={!delivery.ready}
     aria-haspopup="dialog" aria-label={`${t("Адрес доставки")}: ${label}`} title={label} onClick={() => delivery.openAddress()}>
-    <MapPin size={18} aria-hidden="true" /><span className="delivery-address-trigger__text"><span className="delivery-address-trigger__city">{t("Душанбе")}</span><span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
+    <MapPin size={18} aria-hidden="true" /><span className="delivery-address-trigger__text"><span className="delivery-address-trigger__city">{t(eyebrow)}</span><span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
   </button>;
 }
 

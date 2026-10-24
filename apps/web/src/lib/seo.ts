@@ -6,14 +6,14 @@ export const SITE_DESCRIPTION = "Свежие овощи, фрукты, зеле
 
 export function publicMetadata(path: string, title: string, description: string): Metadata {
   const url = new URL(path, SITE_URL).href;
-  const image = { url: `${SITE_URL}/brand/icon-v2.png`, width: 512, height: 512, alt: "Dushanbe Fresh" };
+  const image = { url: `${SITE_URL}/brand/og-v3.png`, width: 1200, height: 630, alt: "Dushanbe Fresh" };
   return {
     title,
     description,
     alternates: { canonical: url },
     robots: { index: true, follow: true },
     openGraph: { type: "website", locale: "ru_RU", siteName: "Dushanbe Fresh", title, description, url, images: [image] },
-    twitter: { card: "summary", title, description, images: [image.url] }
+    twitter: { card: "summary_large_image", title, description, images: [image.url] }
   };
 }
 

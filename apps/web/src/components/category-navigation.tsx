@@ -13,7 +13,7 @@ export function CategoryImage({ category }: { category: Category }) {
   const { name } = useI18n();
   const artwork = categoryArtwork(category);
   const [failed, setFailed] = useState<string | null>(null);
-  const source = failed === artwork.image ? "/brand/icon-v2.png" : artwork.image;
+  const source = failed === artwork.image ? "/brand/icon-v3.png" : artwork.image;
   return <Image src={source} width={640} height={480} alt={name(category)}
     sizes="(max-width: 767px) 50vw, (max-width: 1023px) 25vw, 280px"
     className={source.includes("/brand/") ? "category-image category-image--placeholder" : "category-image"}

@@ -15,8 +15,8 @@ describe("public SEO", () => {
     expect(meta.title).toBe("Dushanbe Fresh — доставка свежих продуктов в Душанбе");
     expect(meta.alternates?.canonical).toBe(`${SITE_URL}/`);
     expect(meta.robots).toEqual({ index: true, follow: true });
-    expect(meta.openGraph).toMatchObject({ url: `${SITE_URL}/`, locale: "ru_RU", title: HOME_TITLE, images: [{ url: `${SITE_URL}/brand/icon-v2.png`, width: 512, height: 512 }] });
-    expect(meta.twitter).toMatchObject({ card: "summary" });
+    expect(meta.openGraph).toMatchObject({ url: `${SITE_URL}/`, locale: "ru_RU", title: HOME_TITLE, images: [{ url: `${SITE_URL}/brand/og-v3.png`, width: 1200, height: 630 }] });
+    expect(meta.twitter).toMatchObject({ card: "summary_large_image" });
   });
 
   it("keeps private pages noindex without canonical or order-specific social data", () => {

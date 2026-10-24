@@ -18,7 +18,14 @@ test("public pages emit Russian metadata, canonical and social previews", async 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", title);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", origin + canonical);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", origin + "/brand/icon-v2.png");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", origin + "/brand/og-v3.png");
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", origin + "/brand/og-v3.png");
+    await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
+    await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
+    const brandReferences = await page.locator('head link[href*="/brand/"], head meta[content*="/brand/"]').evaluateAll(elements => elements.map(element => element.getAttribute("href") || element.getAttribute("content")));
+    expect(brandReferences.some(value => value?.includes("-v2."))).toBe(false);
     expect(await page.locator('meta[name="description"]').getAttribute("content")).toMatch(/[А-Яа-я]/);
   }
   const products = await (await page.request.get("/api/v1/products")).json();
@@ -26,7 +33,12 @@ test("public pages emit Russian metadata, canonical and social previews", async 
   await page.goto(`/products/${encodeURIComponent(products[0].slug)}`);
   await expect(page).toHaveTitle(`${products[0].name} с доставкой в Душанбе | Dushanbe Fresh`);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${origin}/products/${encodeURIComponent(products[0].slug)}`);
-  expect((await page.request.get("/brand/icon-v2.png")).status()).toBe(200);
+  const preview = await page.request.get("/brand/og-v3.png");
+  expect(preview.status()).toBe(200);
+  const bytes = await preview.body();
+  expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  expect(bytes.readUInt32BE(16)).toBe(1200);
+  expect(bytes.readUInt32BE(20)).toBe(630);
   expect(errors).toEqual([]);
 });
 

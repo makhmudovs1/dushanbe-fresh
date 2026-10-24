@@ -48,7 +48,7 @@ describe("initial loading markup", () => {
   it("loads the main product photo eagerly and keeps a fallback when no URL exists", () => {
     expect(renderToStaticMarkup(createElement(ProductImage, { src: '/test.jpg', name: 'Помидоры', eager: true }))).toContain('loading="eager"');
     const fallback = renderToStaticMarkup(createElement(ProductImage, { src: null, name: 'Помидоры' }));
-    expect(fallback).toContain('/brand/icon-v2.png');
+    expect(fallback).toContain('/brand/icon-v3.png');
     expect(fallback).toContain('фото пока нет');
     expect(fallback).not.toContain('П</span>');
   });

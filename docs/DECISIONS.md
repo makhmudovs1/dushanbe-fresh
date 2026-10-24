@@ -965,3 +965,20 @@
   weighted-product form defaults to a 0.5 kg step; existing configured values stay.
 - Local-only verification and admin guide: [PRODUCT_VARIETIES.md](PRODUCT_VARIETIES.md).
   No production data changes or deployment authorized for this task.
+
+## 2026-10-24: Supplied Script Logo And Header
+
+- Use the owner's `14.png` bitmap from `14.png.zip`, not a generated replacement.
+  Full script wordmark in the desktop header; isolate its capital letter and
+  heart for compact icons. Preserve the source's shapes, proportions and colors.
+- Desktop order: wordmark, live search, real delivery address, language, cart,
+  icon-only profile. Keep the optional active-order link and existing address,
+  locale, cart and login behavior. No fabricated Rudaki address.
+- The existing mobile address/search layout and bottom navigation remain; its
+  compact scrolling mark uses the new branding. No duplicate profile/cart above.
+- Versioned v3 metadata/icon URLs refresh browser caches; old public aliases stay
+  available with the new artwork for older clients. Root favicon/Apple fallbacks
+  are updated too. There is no existing PWA manifest/service worker to migrate.
+- This is a Web-only deployment, without API restart, migrations, auth activation,
+  environment changes, catalog writes or production checkout/SMS tests.
+- Asset recipe and rollout evidence: [HEADER_BRAND_20261024.md](HEADER_BRAND_20261024.md).

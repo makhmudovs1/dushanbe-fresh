@@ -64,47 +64,57 @@ test("only light mode is used, including with a stale saved dark preference", as
 test("brand metadata uses the supplied multi-resolution favicon and Apple icon", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Dushanbe Fresh — доставка свежих продуктов в Душанбе");
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/brand/favicon-v2.ico");
-  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v2.png");
-  const icon = await page.request.get("/brand/favicon-v2.ico");
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
+  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
+  const icon = await page.request.get("/brand/favicon-v3.ico");
   expect(icon.ok()).toBeTruthy();
   const bytes = await icon.body();
   expect(bytes.readUInt16LE(2)).toBe(1);
-  expect(bytes.readUInt16LE(4)).toBe(6);
-  for (const path of ["apple-touch-icon-v2.png", "icon-v2.png", "mark-v2.webp"]) {
+  expect(bytes.readUInt16LE(4)).toBeGreaterThan(1);
+  for (const path of ["icon-v3.png", "apple-touch-icon-v3.png", "og-v3.png", "mark-v3.webp", "wordmark-v3.webp"]) {
     expect((await page.request.get("/brand/" + path)).ok()).toBeTruthy();
   }
 });
 
 test("failed logo falls back to accessible brand text without a taller header", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 900 });
-  await page.route("**/_next/image?*", route => {
-    if (new URL(route.request().url()).searchParams.get("url") === "/brand/mark-v2.webp") return route.abort();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route(/\/(?:_next\/image\?|brand\/wordmark-v3\.webp)/, route => {
+    const url = new URL(route.request().url());
+    if ((url.searchParams.get("url") || url.pathname) === "/brand/wordmark-v3.webp") return route.abort();
     return route.continue();
   });
   await page.goto("/about");
-  await expect(page.locator(".brand-logo__wordmark")).toHaveText("Dushanbe Fresh");
+  await expect(page.locator(".brand-logo__fallback")).toHaveText("Dushanbe Fresh");
+  await expect(page.locator(".brand-logo__image")).toHaveCount(0);
   await expect(page.locator(".site-logo")).toHaveAttribute("href", "/");
-  expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(114);
+  await expect(page.locator(".site-logo")).toHaveAttribute("aria-label", "Dushanbe Fresh");
+  expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(104);
   await noOverflow(page);
 });
 
 test("loading the logo does not move header navigation", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 900 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   let release!: () => void;
   const pending = new Promise<void>(resolve => { release = resolve; });
-  await page.route("**/_next/image?*", async route => {
-    if (new URL(route.request().url()).searchParams.get("url") === "/brand/mark-v2.webp") await pending;
+  await page.route(/\/(?:_next\/image\?|brand\/wordmark-v3\.webp)/, async route => {
+    const url = new URL(route.request().url());
+    if ((url.searchParams.get("url") || url.pathname) === "/brand/wordmark-v3.webp") await pending;
     await route.continue();
   });
-  await page.goto("/about", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: "Корзина, позиций: 0" })).toBeVisible();
-  const headerBefore = await page.locator(".site-header").boundingBox();
-  const navBefore = await page.locator(".site-nav").boundingBox();
-  release();
-  await expect(page.locator(".site-logo img")).toHaveJSProperty("complete", true);
-  expect(await page.locator(".site-header").boundingBox()).toEqual(headerBefore);
-  expect(await page.locator(".site-nav").boundingBox()).toEqual(navBefore);
+  try {
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("link", { name: "Корзина, позиций: 0" })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.fonts.status)).toBe("loaded");
+    await expect(page.locator(".site-logo img")).toHaveJSProperty("complete", false);
+    const headerBefore = await page.locator(".site-header").boundingBox();
+    const navBefore = await page.locator(".site-nav").boundingBox();
+    release();
+    await expect(page.locator(".site-logo img")).toHaveJSProperty("complete", true);
+    await expect.poll(() => page.locator(".site-logo img").evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    expect(await page.locator(".site-header").boundingBox()).toEqual(headerBefore);
+    expect(await page.locator(".site-nav").boundingBox()).toEqual(navBefore);
+  } finally { release(); }
 });
 
 for (const width of [375, 768, 1440]) {
@@ -131,10 +141,13 @@ for (const width of [375, 768, 1440]) {
         const logo = page.locator(".site-logo img");
         await expect(logo).toHaveJSProperty("complete", true);
         expect(await logo.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
-        const logoBox = (await page.locator(".site-logo").boundingBox())!;
-        const navBox = (await page.locator(".site-nav").boundingBox())!;
-        expect(navBox.x).toBeGreaterThanOrEqual(logoBox.x + logoBox.width);
-        expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 1024 ? 114 : 65);
+        if (width >= 1024) {
+          const logoBox = (await page.locator(".site-logo").boundingBox())!;
+          const navBox = (await page.locator(".site-nav").boundingBox())!;
+          expect(navBox.x).toBeGreaterThanOrEqual(logoBox.x + logoBox.width);
+        }
+        if (width < 1024 && route === "/cart") await expect(page.locator(".site-header")).toBeHidden();
+        else expect((await page.locator(".site-header").boundingBox())!.height).toBeLessThanOrEqual(width < 1024 ? 114 : 104);
         expect(await background(page)).toBe("rgb(248, 250, 248)");
         await page.screenshot({ path: info.outputPath(`${index}-light-${width}.png`), fullPage: true });
       }

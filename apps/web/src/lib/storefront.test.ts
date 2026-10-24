@@ -44,7 +44,7 @@ describe("storefront configuration", () => {
   it("prefers an admin upload, restores standard artwork after removal and handles unknown categories", () => {
     expect(categoryArtwork({ slug: "greens", imageUrl: "/api/v1/media/new.webp" }).image).toBe("/api/v1/media/new.webp");
     expect(categoryArtwork({ slug: "greens", imageUrl: null }).image).toBe("/storefront/v2/greens.webp");
-    expect(categoryArtwork({ slug: "new-category" }).image).toBe("/brand/icon-v2.png");
+    expect(categoryArtwork({ slug: "new-category" }).image).toBe("/brand/icon-v3.png");
   });
   it("localizes every banner field and points at real catalog filters", () => {
     for (const banner of homeBanners) {

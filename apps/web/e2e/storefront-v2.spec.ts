@@ -5,18 +5,21 @@ import { localCatalogFixtures } from "./catalog-fixtures";
 
 test.beforeEach(({ baseURL }) => { expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL!).hostname); });
 
-test("wordmark, transparent mark, favicon and bounded products after thematic sections", async ({ page }) => {
+test("v3 bitmap wordmark, transparent artwork, favicon and bounded products after thematic sections", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".brand-logo__wordmark")).toHaveText("Dushanbe Fresh");
-  await expect(page.locator(".brand-logo__initial")).toHaveText("F");
-  expect(await page.locator(".brand-logo__wordmark").evaluate(element => getComputedStyle(element).color)).toBe("rgb(21, 30, 34)");
-  expect(await page.locator(".brand-logo__initial").evaluate(element => getComputedStyle(element).color)).toBe("rgb(35, 130, 61)");
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/brand/favicon-v2.ico");
-  const icon = await (await page.request.get("/brand/favicon-v2.ico")).body();
-  expect(icon.readUInt16LE(4)).toBe(6);
-  const apple = await (await page.request.get("/brand/apple-touch-icon-v2.png")).body();
+  await expect(page.locator(".site-logo")).toHaveAttribute("aria-label", "Dushanbe Fresh");
+  await expect(page.locator(".brand-logo__initial")).toHaveCount(0);
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
+  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
+  const icon = await (await page.request.get("/brand/favicon-v3.ico")).body();
+  expect(icon.readUInt16LE(0)).toBe(0);
+  expect(icon.readUInt16LE(2)).toBe(1);
+  expect(icon.readUInt16LE(4)).toBeGreaterThan(1);
+  const apple = await (await page.request.get("/brand/apple-touch-icon-v3.png")).body();
+  expect(apple.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
   expect(apple.readUInt32BE(16)).toBe(180); expect(apple.readUInt32BE(20)).toBe(180);
-  const image = page.locator(".brand-logo__mark");
+  const image = page.locator(".site-logo img");
+  await expect(image).toHaveAttribute("src", /wordmark-v3\.webp/);
   await image.evaluate(element => (element as HTMLImageElement).decode());
   expect(await image.evaluate(element => {
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 128;
@@ -56,7 +59,8 @@ for (const width of [375, 768, 1440]) test(`guest favorites stay synchronized an
   await expect(heart).toHaveAttribute("aria-pressed", "true");
   await card.locator("h3 a").click();
   await expect(page.locator(".product-detail .favorite-button")).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
+  await page.getByRole("button", { name: "Язык / Забон", exact: true }).click();
+  await page.getByRole("dialog", { name: "Язык / Забон", exact: true }).getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
   await expect(page.locator(".product-detail .favorite-button")).toHaveAttribute("aria-pressed", "true");
   await page.goto("/favorites");
   await expect(page).toHaveURL(/\/favorites$/);
@@ -118,7 +122,8 @@ test("one live search preserves category, RU/TJ and browser Back/Forward", async
   await page.getByRole("button", { name: "Очистить поиск" }).click();
   await expect(page).toHaveURL(/\/catalog\?category=vegetables$/);
   expect(await page.locator(".product-card").count()).toBeGreaterThan(1);
-  await page.getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
+  await page.getByRole("button", { name: "Язык / Забон", exact: true }).click();
+  await page.getByRole("dialog", { name: "Язык / Забон", exact: true }).getByRole("button", { name: "Тоҷикӣ", exact: true }).click();
   await input.fill("Сабзӣ");
   await expect(page.locator(".product-card")).toHaveCount(1);
   await expect(page.locator(".product-card h3")).toHaveText("Сабзӣ");

@@ -25,9 +25,12 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   icons: {
-    icon: { url: "/brand/favicon-v2.ico", type: "image/x-icon" },
-    shortcut: "/brand/favicon-v2.ico",
-    apple: { url: "/brand/apple-touch-icon-v2.png", sizes: "180x180", type: "image/png" }
+    icon: [
+      { url: "/brand/favicon-v3.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
+      { url: "/brand/icon-v3.png", type: "image/png", sizes: "512x512" }
+    ],
+    shortcut: "/brand/favicon-v3.ico",
+    apple: { url: "/brand/apple-touch-icon-v3.png", sizes: "180x180", type: "image/png" }
   }
 };
 

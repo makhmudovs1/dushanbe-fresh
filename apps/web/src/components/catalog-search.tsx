@@ -59,7 +59,7 @@ export function CatalogSearch() {
 
   return <form className="header-search" action="/catalog" role="search" onSubmit={submit}>
     <span className="header-search__icon">{pending ? <LoaderCircle className="is-spinning" size={20} aria-hidden="true" /> : <Search size={20} aria-hidden="true" />}</span>
-    <input ref={inputRef} name="search" maxLength={120} autoComplete="off" aria-label={t("Поиск товаров")} placeholder={t("Поиск товаров")}
+    <input ref={inputRef} name="search" maxLength={120} autoComplete="off" aria-label={t("Поиск товаров")} placeholder={t("Поиск продуктов")}
       aria-busy={pending} value={value} onChange={event => change(event.target.value)} />
     <button className={!value ? "header-search__clear is-empty" : "header-search__clear"} type="button" disabled={!value}
       aria-label={t("Очистить поиск")} title={t("Очистить поиск")} onClick={() => change("")}><X size={18} aria-hidden="true" /></button>

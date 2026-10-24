@@ -63,7 +63,7 @@ const artwork: Record<string, { image: string; position: string; tone: string }>
 };
 
 export function categoryArtwork(category: Pick<Category, "slug" | "imageUrl">) {
-  return { image: category.imageUrl || artwork[category.slug]?.image || "/brand/icon-v2.png",
+  return { image: category.imageUrl || artwork[category.slug]?.image || "/brand/icon-v3.png",
     position: category.imageUrl ? "center" : artwork[category.slug]?.position || "center",
     tone: artwork[category.slug]?.tone || "blue" };
 }

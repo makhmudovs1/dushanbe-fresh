@@ -120,7 +120,15 @@ async function expectHeader(page: Page, width: number, locale: Locale, authentic
     await expect(account).toHaveAttribute("title", t(authenticated ? "Профиль" : "Войти"));
     await expect(account.locator("svg")).toBeVisible();
     await expect.poll(async () => (await account.innerText()).trim()).toBe("");
-    await expect(location.locator(".delivery-address-trigger__city")).toBeHidden();
+    await expect(location.getByText(t("Доставка в"), { exact: true })).toBeVisible();
+    const controls = [header.locator(".site-logo"), header.locator(".header-search"), location,
+      header.locator(".language-switcher > button"), header.locator(".cart-link"), account];
+    const boxes = await Promise.all(controls.map(control => control.boundingBox()));
+    for (let index = 1; index < boxes.length; index++) {
+      expect(boxes[index - 1]).not.toBeNull();
+      expect(boxes[index]).not.toBeNull();
+      expect(boxes[index - 1]!.x + boxes[index - 1]!.width).toBeLessThanOrEqual(boxes[index]!.x + 1);
+    }
     if (authenticated) await expect(account).toHaveAttribute("href", "/account");
   }
 }
