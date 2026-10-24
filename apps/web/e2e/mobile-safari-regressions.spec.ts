@@ -72,6 +72,9 @@ for (const width of [375, 390, 430]) {
     const mediaBefore = await first.locator(".product-gallery__media").boundingBox();
     await page.screenshot({ path: info.outputPath(`before-${width}.png`) });
     await plus.tap();
+    const addressPrompt = page.getByRole("dialog", { name: "Укажите ваш адрес", exact: true });
+    await addressPrompt.getByRole("button", { name: "Да, я просто посмотрю", exact: true }).click();
+    await expect(addressPrompt).toHaveCount(0);
     expect(await original!.evaluate(el => el.isConnected)).toBe(true);
     const control = first.locator(".quantity-stepper");
     const initialQuantity = await control.locator("output").getAttribute("aria-label");

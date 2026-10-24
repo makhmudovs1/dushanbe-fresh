@@ -51,3 +51,35 @@
   fractional grid widths legitimately round `clientWidth` and max scroll offset
   apart by exactly one pixel. The regression allows that one pixel, still waits
   for the native scroll to settle, and verifies copy/photo/CTA containment.
+
+## Production Result
+
+- Application commit `e23d502101f2639915980065f5fd89cd6acb9185` was pushed to
+  GitHub and activated at `2026-10-24T20:37:39Z`.
+- Production Web build: `A-hwsrwUsG_fotMfrTn1e`; Web PID `717869`, active,
+  NRestarts=0. API PID remains `553105`, active, NRestarts=0. API runtime and ENV
+  checksums unchanged; auth/phone requirement remain off. No database commands.
+- Prepare and activation exited 0. Public and loopback pages, old/new static
+  chunks and changed public-asset checksums passed. Prior runtime/asset backups
+  are retained under `care-20261024-e23d502/rollback` and
+  `/home/deploy/backups/dushanbe-fresh/care-web-20261024-e23d502` on the server.
+- Extra touch regression run: 6/6 WebKit scenarios passed at 375/390/430px,
+  covering rapid weighted counters, independent products, persisted cart,
+  product footer, visual viewport, rotation and safe-area spacing. The old
+  counter test was updated to explicitly dismiss the existing first-add address
+  invitation; the application behavior was not changed to satisfy that test.
+- Read-only live-domain smoke: Chromium and WebKit at 390/1440px, 4/4 passed,
+  zero attempted mutating requests and zero runtime errors. Verified actual
+  product and banner photo decoding, v5 icons, compact logo/search geometry,
+  grouped categories, favorites, address dialog/focus and locale switching.
+- The initial Chromium mobile category transition exceeded the smoke script's
+  default 5-second assertion timeout. A repeated full run waits for the actual
+  category URL and content (15-second bound) and passed all four contexts. A
+  separate public category GET returned 200 in 5.50 seconds. No application or
+  server settings were changed for this retry; this does not claim to establish
+  the cause of the observed delay.
+- Live screenshots and JSON: `test-results/care-production-20261024/` (ignored
+  artifacts, not committed). Viewed mobile WebKit home/compact and desktop
+  Chromium home screenshots after activation.
+- Final local servers used for testing were stopped. Only test/report follow-up
+  changes after `e23d502` are committed separately; they require no Web rebuild.
