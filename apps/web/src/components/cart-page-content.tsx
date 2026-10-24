@@ -24,12 +24,14 @@ import { QuantityStepper } from "./quantity-stepper";
 import { type Product } from "@/lib/api";
 import { CartMobileHeader } from "./cart-mobile-header";
 import { LegacyCartNotice } from "./legacy-cart-notice";
+import { AccountCartNotice } from "./account-cart-notice";
 import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
 import styles from "./cart-enhancements.module.css";
 
 export function CartPageContent() {
   return <div className={styles.page}>
     <CartMobileHeader />
+    <AccountCartNotice />
     <CartContents />
     <CartRecommendations />
     <CartBrowseAll />
@@ -59,7 +61,7 @@ function CartRecommendations() {
 
 function CartContents() {
   const { t, name, label, priceLabel } = useI18n();
-  const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount } = useCart();
+  const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount, legacyConflicts = [] } = useCart();
   const subtotalMinor = calculateCartSubtotalMinor(state);
   const containsWeightedProducts = hasWeightedItems(state);
   const subtotalPrefix = containsWeightedProducts ? "≈ " : "";
@@ -93,6 +95,7 @@ function CartContents() {
       <div className="cart-items">
         {state.items.map((item) => {
           const itemKey = `${item.productId}:${item.qualityOptionId ?? "none"}`;
+          const conflicting = legacyConflicts.some(pair => pair.saved.productId === item.productId && (pair.saved.qualityOptionId ?? null) === (item.qualityOptionId ?? null));
           const itemSubtotal = formatMoneyFromMinor(calculateItemSubtotalMinor(item));
 
           return (
@@ -107,14 +110,14 @@ function CartContents() {
                 <p className="cart-item__mobile-price" title={priceLabel(item.sellingPrice, item.unit, item.slug)}><strong>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)} {t("сомони")}</strong></p>
               </div>
               <QuantityStepper name={`${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`}
-                quantity={item.quantity} unit={item.unit} disabled={isLegacyCartItem(item)} decreaseDisabled={isMinimumQuantity(item)}
+                quantity={item.quantity} unit={item.unit} disabled={isLegacyCartItem(item) || conflicting} decreaseDisabled={isMinimumQuantity(item)}
                 onDecrease={() => decrementItem(item)} onIncrease={() => incrementItem(item)} />
               <strong className="cart-item__total" title={t(`${item.isWeighted ? "≈ " : ""}${decimalLabel(itemSubtotal)} сомони`)}>
                 <span>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)}</span>
                 <small>{t("сомони")}</small>
               </strong>
-              <button className="catalog-icon-action cart-item__delete" onClick={() => removeItem(item)} type="button"
-                aria-label={`${t("Удалить:")} ${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`} title={t("Удалить из корзины")}>
+              <button className="catalog-icon-action cart-item__delete" disabled={conflicting} onClick={() => removeItem(item)} type="button"
+                aria-label={`${t("Удалить:")} ${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`} title={t(conflicting ? "Уточните старые позиции" : "Удалить из корзины")}>
                 <Trash2 size={18} aria-hidden="true" />
               </button>
             </article>

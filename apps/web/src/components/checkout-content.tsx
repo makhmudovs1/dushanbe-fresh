@@ -17,6 +17,8 @@ import { AddressFields, emptyAddress } from "./address-fields";
 import { useCart } from "@/cart/cart-context";
 import { hasLegacyCartItems } from "@/cart/cart";
 import { LegacyCartNotice } from "./legacy-cart-notice";
+import { AccountCartNotice } from "./account-cart-notice";
+import { CustomerDialog } from "./customer-dialog";
 import { CheckoutError, finishCheckout, getDeliverySlots, validateCheckout } from "@/lib/checkout";
 import { decimalLabel } from "@/lib/format";
 import { CheckoutSkeleton, DeliverySlotsSkeleton, SummarySkeleton } from "./loading-state";
@@ -24,11 +26,12 @@ const noSavedAddresses: SavedAddress[] = [];
 
 export function CheckoutContent() {
   const { t, name, label, priceLabel, quantityLabel, slotLabel } = useI18n();
-  const { state, hydrated, clearCart, removeItem } = useCart();
+  const { state, hydrated, clearCart, removeItem, syncError } = useCart();
   const legacy = hasLegacyCartItems(state);
   const router = useRouter();
   const customer = useCustomer();
   const customerId = customer.user?.id;
+  const accountSyncBlocked = !!customerId && !!syncError;
   const deliveryAddress = useDeliveryAddress();
   const hasDeliveryProvider = !!deliveryAddress;
   const [accountAddresses, setAccountAddresses] = useState<{ owner: string; values: SavedAddress[] } | null>(null);
@@ -39,6 +42,7 @@ export function CheckoutContent() {
   const appliedAddressRevision = useRef(deliveryAddress?.selection?.revision ?? 0);
   const [addressOwner, setAddressOwner] = useState<string | null>(customerId ?? null);
   const prompted = useRef(false);
+  const [loginInvitation, setLoginInvitation] = useState(false);
   const [slots, setSlots] = useState<DeliverySlotDto[]>([]);
   const [slotsError, setSlotsError] = useState("");
   const [slotsPending, setSlotsPending] = useState(true);
@@ -83,9 +87,11 @@ export function CheckoutContent() {
   }, [customer.loading, customerId, draftReady]);
   useEffect(() => {
     if (customer.loading || !draftReady || addressOwner === (customerId ?? null)) return;
-    if (addressOwner) { setAddress(emptyAddress); setSelectedAddress(""); setSaveAddress(false); }
+    // A newly verified guest keeps the address already being entered, even without browser storage.
+    if (!addressOwner && customerId && hasAddressDraft(address)) { setAddressOwner(customerId); return; }
+    setAddress(emptyAddress); setSelectedAddress(""); setSaveAddress(false); setContact({ name: "", phone: "" }); setDraftReady(false);
     setAddressOwner(customerId ?? null);
-  }, [customer.loading, customerId, addressOwner, draftReady]);
+  }, [customer.loading, customerId, addressOwner, draftReady, address]);
   useEffect(() => {
     if (draftReady && !completed && addressOwner === (customerId ?? null)) {
       try { saveCheckoutDraft(window.sessionStorage, { contact, address: currentAddress, deliverySlotId, policy }); } catch { /* Storage is optional. */ }
@@ -102,13 +108,13 @@ export function CheckoutContent() {
   const customerPhone = customer.user?.phone;
   const customerName = customer.user?.name;
   useEffect(() => {
-    if (hydrated && state.items.length && draftReady && !customer.loading && customer.status.requiredForCheckout && !customer.user && !prompted.current) {
-      prompted.current = true; customer.login();
+    if (hydrated && !legacy && state.items.length && draftReady && !customer.loading && customer.status.requiredForCheckout && !customer.user && !prompted.current) {
+      prompted.current = true; setLoginInvitation(true);
     }
-  }, [hydrated, state.items.length, draftReady, customer]);
+  }, [hydrated, legacy, state.items.length, draftReady, customer]);
   useEffect(() => {
     if (!draftReady || !customerId) { if (!customerId) { setAccountAddresses(null); setSelectedAddress(""); } return; }
-    setContact(current => ({ name: current.name || customerName || "", phone: customerPhone! }));
+    setContact(current => ({ name: customerName || current.name || "", phone: customerPhone! }));
     if (hasDeliveryProvider) return;
     const controller = new AbortController();
     void fetchSavedDeliveryAddresses(controller.signal).then(values => {
@@ -127,7 +133,7 @@ export function CheckoutContent() {
   }, [draftReady, savedAddresses]);
   useEffect(() => {
     const input = JSON.parse(inputKey) as CheckoutInput;
-    if (!hydrated || legacy || !input.items.length || !input.deliverySlotId) return;
+    if (!hydrated || legacy || accountSyncBlocked || !input.items.length || !input.deliverySlotId) return;
     let cancelled = false;
     setPending(true);
     setAccepted(false);
@@ -138,13 +144,13 @@ export function CheckoutContent() {
       if (!cancelled) { setQuotedInput(""); setError(error instanceof CheckoutError ? error.message : "Не удалось проверить заказ. Попробуйте ещё раз."); }
     }).finally(() => { if (!cancelled) setPending(false); });
     return () => { cancelled = true; };
-  }, [hydrated, inputKey, retry, legacy]);
+  }, [hydrated, inputKey, retry, legacy, accountSyncBlocked]);
 
   const currentQuote = quotedInput === inputKey ? quote : null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (legacy || sendingRef.current || pending || !currentQuote?.valid || !accepted) return;
+    if (legacy || accountSyncBlocked || sendingRef.current || pending || !currentQuote?.valid || !accepted) return;
     if (customer.loading) return;
     if (customer.status.requiredForCheckout && !customer.user) { customer.login(); return; }
     sendingRef.current = true;
@@ -189,30 +195,51 @@ export function CheckoutContent() {
   </>;
   if (!hydrated) return <>{heading}<CheckoutSkeleton /></>;
   if (completed) return <>{heading}<p role="status">{t("Заказ оформлен. Открываем подтверждение...")}</p></>;
-  if (legacy) return <>{heading}<LegacyCartNotice checkout /></>;
+  if (legacy) return <>{heading}<AccountCartNotice /><LegacyCartNotice checkout /></>;
+  if (customer.user && syncError) return <>{heading}<AccountCartNotice /></>;
   if (!state.items.length) return <div className="empty-cart"><h1>{t("Корзина пока пустая")}</h1><p>{t("Добавьте свежие продукты из каталога.")}</p><Link className="primary-link" href="/catalog">{t("Перейти в каталог")}</Link></div>;
+  if (!customer.loading && customer.status.requiredForCheckout && !customer.user) return <>{heading}
+    <section className="checkout-login-invitation"><h2>{t("Войдите, чтобы оформить заказ")}</h2><p>{t("Корзина и выбранный адрес сохранятся после входа")}</p>
+      <button type="button" className="primary-action" onClick={() => { setLoginInvitation(false); customer.login(); }}>{t("Войти по номеру телефона")}</button>
+    </section>
+    {loginInvitation ? <CustomerDialog title={t("Войдите, чтобы оформить заказ")} onClose={() => setLoginInvitation(false)}>
+      <p>{t("Корзина и выбранный адрес сохранятся после входа")}</p><div className="customer-prompt-actions">
+        <button type="button" className="primary-action" onClick={() => { setLoginInvitation(false); customer.login(); }}>{t("Войти по номеру телефона")}</button>
+      </div></CustomerDialog> : null}
+  </>;
 
   return <>
     {heading}
-    <form onSubmit={submit} className="checkout-layout">
+    <form onSubmit={submit} className={`checkout-layout${customer.user ? " checkout-layout--account" : ""}`}>
       <fieldset className="checkout-fields" disabled={sending}>
-        <section className="checkout-section">
+        {!customer.user ? <section className="checkout-section">
           <h2>{t("Контактные данные")}</h2>
           <div className="checkout-input-grid">
             <label className="field">{t("Имя")}<input autoComplete="name" required maxLength={100} value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} /></label>
             <label className="field">{t(customer.user ? "Подтверждённый телефон" : "Телефон")}<input type="tel" autoComplete="tel" required readOnly={!!customer.user} maxLength={32} placeholder="+992 900 00 00 00" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} /></label>
           </div>
           {customer.status.enabled && !customer.user ? <button type="button" className="secondary-link" onClick={customer.login}>{t("Подтвердить телефон и использовать сохранённые адреса")}</button> : null}
-        </section>
+        </section> : null}
         <section className="checkout-section">
           <h2>{t("Адрес доставки")}</h2>
+          {customer.user && deliveryAddress ? <div className="checkout-address-summary">
+            {parseDeliveryAddress(currentAddress) ? <><strong>{currentAddress.street}, {currentAddress.building}</strong>
+              <span>{[currentAddress.apartment && `${t("Квартира")} ${currentAddress.apartment}`, currentAddress.entrance && `${t("Подъезд")} ${currentAddress.entrance}`, currentAddress.floor && `${t("Этаж")} ${currentAddress.floor}`, currentAddress.intercom && `${t("Домофон")} ${currentAddress.intercom}`].filter(Boolean).join(" · ")}</span>
+              {currentAddress.instructions ? <p>{currentAddress.instructions}</p> : null}</> : <p>{t("Укажите адрес доставки")}</p>}
+            <button type="button" className="secondary-link" disabled={!deliveryAddress.ready} onClick={() => deliveryAddress.openAddress(currentAddress)}>{t(parseDeliveryAddress(currentAddress) ? "Изменить адрес" : "Указать адрес")}</button>
+          </div> : <>
           {deliveryAddress ? <button type="button" className="secondary-link" disabled={!deliveryAddress.ready} onClick={() => deliveryAddress.openAddress(currentAddress)}>{t("Выбрать адрес доставки")}</button> : null}
           {savedAddresses.length ? <label className="field">{t("Сохранённый адрес")}<select value={selectedAddress} onChange={event => {
             setSelectedAddress(event.target.value); const saved = savedAddresses.find(address => address.id === event.target.value); setAddress(parseDeliveryAddress(saved) ?? emptyAddress);
           }}><option value="">{t("Новый адрес")}</option>{savedAddresses.map(address => <option key={address.id} value={address.id}>{address.street}, {address.building}</option>)}</select></label> : null}
           <AddressFields value={currentAddress} onChange={value => { setSelectedAddress(""); setAddress(value); }} />
           {customer.user ? <label className="checkout-option"><input type="checkbox" checked={saveAddress} onChange={event => setSaveAddress(event.target.checked)} />{t("Сохранить адрес в личном кабинете")}</label> : null}
+          </>}
         </section>
+        {customer.user ? <section className="checkout-section"><h2>{t("Контактные данные")}</h2>
+          {customer.user.name ? <div className="checkout-contact-summary"><strong>{customer.user.name}</strong><span>{customer.user.phone}</span><Link href="/account">{t("Изменить")}</Link></div> :
+            <label className="field">{t("Имя")}<input autoComplete="name" required maxLength={100} value={contact.name} onChange={event => setContact({ ...contact, name: event.target.value })} /></label>}
+        </section> : null}
         <section className="checkout-section">
           <h2>{t("Окно доставки")}</h2>
           {slotsPending ? <DeliverySlotsSkeleton /> : null}
@@ -259,7 +286,7 @@ export function CheckoutContent() {
         {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
         {deliverySlotId ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
         <label className="checkout-option"><input type="checkbox" checked={accepted} disabled={!currentQuote?.valid || pending || sending} onChange={e => setAccepted(e.target.checked)} /><span>{t("Я проверил товары, стоимость и время доставки")}</span></label>
-        <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Подтвердить телефон и продолжить" : "Подтвердить заказ")}</button>
+        <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || !parseDeliveryAddress(currentAddress) || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Подтвердить телефон и продолжить" : "Подтвердить заказ")}</button>
       </aside>
     </form>
   </>;

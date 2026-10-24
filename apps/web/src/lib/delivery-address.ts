@@ -38,6 +38,10 @@ export function parseDeliveryAddress(value: unknown, complete = true): AddressIn
     if (typeof field !== "string" || field.length > limits[key] || (key !== "instructions" && hasAddressControlCharacters(field))) return null;
     address[key] = field.trim();
   }
+  if (data.intercom !== undefined) {
+    if (typeof data.intercom !== "string" || data.intercom.length > 30 || hasAddressControlCharacters(data.intercom)) return null;
+    address.intercom = data.intercom.trim();
+  }
   if (complete && (!address.street || !address.building)) return null;
   if (data.housingType !== undefined && data.housingType !== "house" && data.housingType !== "apartment") return null;
   address.housingType = data.housingType === "house" ? "house" : "apartment";
@@ -56,7 +60,7 @@ export function deliveryAddressLabel(address: AddressInput | null): string {
 
 export function hasAddressDraft(address: AddressInput): boolean {
   return Object.keys(limits).some(key => !!address[key as keyof typeof limits].trim())
-    || address.latitude != null || address.longitude != null || address.housingType === "house";
+    || !!address.intercom?.trim() || address.latitude != null || address.longitude != null || address.housingType === "house";
 }
 
 export function resolveDeliveryAddress(current: AddressInput, incoming: AddressInput | null, explicit: boolean): AddressInput {
@@ -99,10 +103,18 @@ export function saveGuestDeliveryAddress(storage: Pick<Storage, "setItem">, valu
 export function prepareDeliveryAddressStorage(storage: Pick<Storage, "getItem" | "setItem" | "removeItem">, account: string | null): void {
   try {
     const previous = storage.getItem(OWNER_KEY);
-    if (previous && previous !== account) storage.removeItem(CHECKOUT_DRAFT_KEY);
+    if (previous && previous !== account) {
+      const draft = storage.getItem(CHECKOUT_DRAFT_KEY);
+      if (draft && loadCheckoutDraft(storage)) storage.setItem(`${CHECKOUT_DRAFT_KEY}.user.${previous}`, draft);
+      storage.removeItem(CHECKOUT_DRAFT_KEY); storage.removeItem(DELIVERY_ADDRESS_KEY);
+    }
     if (account) {
-      storage.removeItem(DELIVERY_ADDRESS_KEY);
+      // Keep a guest address until the account API acknowledges its transfer.
       storage.setItem(OWNER_KEY, account);
+      if (!storage.getItem(CHECKOUT_DRAFT_KEY)) {
+        const cached = storage.getItem(`${CHECKOUT_DRAFT_KEY}.user.${account}`);
+        if (cached && loadCheckoutDraft({ getItem: () => cached })) storage.setItem(CHECKOUT_DRAFT_KEY, cached);
+      }
     } else if (previous) {
       storage.removeItem(DELIVERY_ADDRESS_KEY);
       storage.removeItem(OWNER_KEY);

@@ -4,7 +4,8 @@ import { DeliverySlotsController } from "../delivery-slots/delivery-slots.contro
 import { DeliverySlotsService } from "../delivery-slots/delivery-slots.service";
 import { CheckoutController } from "./checkout.controller";
 import { CheckoutService } from "./checkout.service";
+import { CustomerAccountModule } from "../customer-account/customer-account.module";
 
-@Module({ imports: [PrismaModule], controllers: [CheckoutController, DeliverySlotsController],
+@Module({ imports: [PrismaModule, CustomerAccountModule], controllers: [CheckoutController, DeliverySlotsController],
   providers: [CheckoutService, DeliverySlotsService] })
 export class CheckoutModule {}

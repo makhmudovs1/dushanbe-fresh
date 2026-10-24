@@ -24,4 +24,10 @@ describe("RU/TJ localization", () => {
     expect(translate("tg", "Мест больше нет")).toBe("Ҷой намондааст");
     expect(translate("tg", "Заказ принят")).toBe("Фармоиш қабул шуд");
   });
+  it("translates new account, address and cart recovery actions", () => {
+    for (const text of ["Повторить", "Изменить", "Указать адрес", "Сохраняем...", "Товар не найден.", "Войдите в аккаунт", "Оставить позицию аккаунта", "Удалить обе позиции", "В аккаунте", "На этом устройстве"]) {
+      expect(translate("tg", text)).not.toBe(text);
+      expect(translate("ru", text)).toBe(text);
+    }
+  });
 });

@@ -4,7 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useId, useRef, useSt
 import { ArrowLeft, ChevronDown, ChevronRight, MapPin, PencilLine, Search } from "lucide-react";
 import type { AddressInput, SavedAddress } from "@dushanbe-fresh/shared";
 import { AddressFields, AddressMap, emptyAddress } from "@/components/address-fields";
-import { CatalogDialog } from "@/components/catalog-dialog";
+import { CustomerDialog } from "@/components/customer-dialog";
+import { ShoppingAddressPrompt } from "@/components/shopping-address-prompt";
+import { CustomerError, customerRequest } from "@/lib/customer";
 import { useI18n } from "@/i18n/provider";
 import { loadCheckoutDraft } from "@/lib/checkout-draft";
 import { ADDRESS_QUERY_MAX, ADDRESS_QUERY_MIN, ADDRESS_SEARCH_LIMIT, deliveryAddressLabel, DUSHANBE_BOUNDS, fetchSavedDeliveryAddresses, filterSavedAddresses, isWithinDeliveryBounds, loadGuestDeliveryAddress, parseCityBounds, parseDeliveryAddress, prepareDeliveryAddressStorage, saveGuestDeliveryAddress, updateCheckoutDraftAddress, type CityBounds } from "@/lib/delivery-address";
@@ -20,6 +22,7 @@ type DeliveryAddressContextValue = {
   savedAddresses: SavedAddress[];
   savedStatus: SavedStatus;
   openAddress: (initial?: AddressInput) => void;
+  refreshAddresses: () => Promise<void>;
 };
 const Context = createContext<DeliveryAddressContextValue | null>(null);
 const noAddresses: SavedAddress[] = [];
@@ -31,8 +34,12 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
   const customer = useCustomer();
   const owner = customer.loading ? "pending" : customer.user?.id ?? "guest";
   const [state, setState] = useState<{ owner: string; selection: Selection | null; addresses: SavedAddress[]; status: SavedStatus }>({ owner: "pending", selection: null, addresses: [], status: "loading" });
+  const previousState = useRef(state); previousState.current = state;
   const [modal, setModal] = useState<{ owner: string; initial: AddressInput } | null>(null);
   const revision = useRef(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const ownerRef = useRef(owner); ownerRef.current = owner;
   const ready = owner !== "pending" && state.owner === owner;
   const selection = ready ? state.selection : null;
 
@@ -40,16 +47,24 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
     if (owner === "pending") return;
     const account = owner !== "guest";
     let initial: AddressInput | null = null;
+    let guest: AddressInput | null = account && previousState.current.owner === "guest" ? previousState.current.selection?.address ?? null : null;
     try {
       prepareDeliveryAddressStorage(window.sessionStorage, account ? owner : null);
+      guest = loadGuestDeliveryAddress(window.sessionStorage) ?? guest;
       const draft = loadCheckoutDraft(window.sessionStorage);
-      initial = parseDeliveryAddress(draft?.address) ?? (!account ? loadGuestDeliveryAddress(window.sessionStorage) : null);
+      initial = parseDeliveryAddress(draft?.address) ?? guest;
     } catch { /* Storage may be unavailable. */ }
-    setModal(null);
+    initial ??= guest;
+    setModal(null); setSaving(false); setSaveError("");
     setState({ owner, selection: initial ? { address: initial, revision: revision.current, explicit: false } : null, addresses: [], status: account ? "loading" : "ready" });
     if (!account) return;
     const controller = new AbortController();
-    void fetchSavedDeliveryAddresses(controller.signal).then(addresses => {
+    void fetchSavedDeliveryAddresses(controller.signal).then(async existing => {
+      let addresses = existing;
+      if (guest && !controller.signal.aborted && ownerRef.current === owner) {
+        addresses = await customerRequest<SavedAddress[]>("customer/addresses", "POST", { ...guest, label: "home", isDefault: !existing.length });
+        if (!controller.signal.aborted && ownerRef.current === owner) try { window.sessionStorage.removeItem("df.delivery.address.v1"); } catch { /* Exact server deduplication makes a later retry safe. */ }
+      }
       if (controller.signal.aborted) return;
       setState(current => {
         if (current.owner !== owner) return current;
@@ -69,10 +84,38 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
     setModal({ owner, initial: initial ?? draft ?? selection?.address ?? { ...emptyAddress } });
   }, [owner, ready, selection]);
 
-  function confirm(address: AddressInput) {
+  const refreshAddresses = useCallback(async () => {
+    if (owner === "guest" || owner === "pending") return;
+    const addresses = await fetchSavedDeliveryAddresses(new AbortController().signal);
+    if (ownerRef.current !== owner) return;
+    setState(current => {
+      if (current.owner !== owner) return current;
+      const selected = current.selection?.address;
+      const previous = selected && current.addresses.find(item => JSON.stringify(parseDeliveryAddress(item)) === JSON.stringify(selected));
+      if (!previous) return { ...current, addresses, status: "ready" };
+      const replacement = addresses.find(item => item.id === previous.id) ?? addresses.find(item => item.isDefault);
+      revision.current++;
+      return { ...current, addresses, status: "ready", selection: replacement ? { address: parseDeliveryAddress(replacement)!, revision: revision.current, explicit: true } : null };
+    });
+  }, [owner]);
+
+  async function confirm(address: AddressInput) {
     if (!ready || modal?.owner !== owner) return;
     const value = parseDeliveryAddress(address);
     if (!value) return;
+    setSaveError(""); setSaving(true);
+    const targetOwner = owner;
+    try {
+      const addresses = owner === "guest" ? state.addresses : await customerRequest<SavedAddress[]>("customer/addresses", "POST", { ...value, label: "home", isDefault: !state.addresses.length });
+      if (ownerRef.current !== targetOwner) return;
+      setState(current => current.owner === targetOwner ? { ...current, addresses } : current);
+    } catch (error) {
+      if (ownerRef.current === targetOwner) {
+        setSaveError("Не удалось сохранить адрес. Повторите попытку.");
+        if (error instanceof CustomerError && error.status === 401) void customer.refresh();
+      }
+      return;
+    } finally { if (ownerRef.current === targetOwner) setSaving(false); }
     revision.current += 1;
     setState(current => ({ ...current, selection: { address: value, revision: revision.current, explicit: true } }));
     try {
@@ -84,9 +127,10 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
 
   const addresses = ready ? state.addresses : noAddresses;
   return <Context.Provider value={{ selection, selectedAddress: selection?.address ?? null, addressLabel: deliveryAddressLabel(selection?.address ?? null),
-    ready, savedAddresses: addresses, savedStatus: ready ? state.status : "loading", openAddress }}>
+    ready, savedAddresses: addresses, savedStatus: ready ? state.status : "loading", openAddress, refreshAddresses }}>
     {children}
-    {ready && modal?.owner === owner ? <DeliveryAddressModal key={owner} initial={modal.initial} addresses={addresses} savedStatus={state.status} onClose={() => setModal(null)} onConfirm={confirm} /> : null}
+    <ShoppingAddressPrompt />
+    {ready && modal?.owner === owner ? <DeliveryAddressModal key={owner} initial={modal.initial} addresses={addresses} savedStatus={state.status} saving={saving} saveError={saveError} onClose={() => { setModal(null); setSaveError(""); }} onConfirm={confirm} /> : null}
   </Context.Provider>;
 }
 
@@ -104,14 +148,14 @@ export function DeliveryAddressTrigger({ className = "" }: { className?: string 
 
 type SearchStatus = "checking" | "configured" | "searching" | "available" | "unavailable";
 type MobileStage = "choose" | "map" | "street" | "details";
-function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConfirm }: {
+function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConfirm, saving, saveError }: {
   initial: AddressInput; addresses: SavedAddress[]; savedStatus: SavedStatus; onClose: () => void; onConfirm: (address: AddressInput) => void;
+  saving: boolean; saveError: string;
 }) {
   const { t } = useI18n();
   const statusId = useId();
   const [address, setAddress] = useState(initial);
   const [query, setQuery] = useState("");
-  const [mobile, setMobile] = useState<boolean | null>(null);
   const [stage, setStage] = useState<MobileStage>("choose");
   const [mapReturnStage, setMapReturnStage] = useState<MobileStage>("choose");
   const mobileBody = useRef<HTMLFormElement>(null);
@@ -124,21 +168,11 @@ function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConf
   const remoteItems = search.query === normalizedQuery ? search.items : [];
 
   useEffect(() => {
-    if (typeof window.matchMedia !== "function") { setMobile(false); return; }
-    const media = window.matchMedia("(max-width: 1023px)");
-    const update = () => setMobile(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (!mobile) return;
     const form = mobileBody.current;
     form?.closest(".catalog-dialog__body")?.scrollTo(0, 0);
     if (stage === "choose") form?.querySelector<HTMLInputElement>("input[type=search]")?.focus({ preventScroll: true });
     else form?.querySelector<HTMLElement>("[data-stage-heading]")?.focus({ preventScroll: true });
-  }, [mobile, stage]);
+  }, [stage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -191,9 +225,7 @@ function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConf
     setStage("map");
   }
 
-  // Resolve the viewport after hydration before mounting a dialog or its fields.
-  if (mobile === null) return null;
-  if (mobile) return <CatalogDialog title={t("Адрес доставки")} busy={false} onClose={onClose} closeLabel={t("Закрыть форму")} className="delivery-address-dialog delivery-address-mobile">
+  return <CustomerDialog title={t("Адрес доставки")} busy={saving} onClose={onClose} className="customer-address-flow">
     <form ref={mobileBody} className="delivery-address-form" data-address-stage={stage} onSubmit={event => {
       event.preventDefault();
       const value = parseDeliveryAddress(address);
@@ -252,44 +284,9 @@ function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConf
           {!validPoint ? <p className="checkout-error" role="alert">{t("Точка за пределами зоны выбора в Душанбе")}</p> : null}
         </section>
         <footer className="delivery-address-footer"><button type="submit" className="primary-action" data-testid={stage === "street" ? "address-next" : "address-confirm"}
-          disabled={!parseDeliveryAddress(address) || (stage === "details" && (!config || !validPoint))}>{t(stage === "street" ? "Далее" : "Доставить сюда")}</button></footer>
+          disabled={saving || !parseDeliveryAddress(address) || (stage === "details" && (!config || !validPoint))}>{t(saving ? "Сохраняем..." : stage === "street" ? "Далее" : "Доставить сюда")}</button></footer>
       </> : null}
+      {saveError ? <p className="checkout-error" role="alert">{t(saveError)}</p> : null}
     </form>
-  </CatalogDialog>;
-  return <CatalogDialog title={t("Адрес доставки")} busy={false} onClose={onClose} closeLabel={t("Закрыть форму")} className="delivery-address-dialog">
-    <form className="delivery-address-form" onSubmit={event => {
-      event.preventDefault();
-      const value = parseDeliveryAddress(address);
-      if (value && validPoint) onConfirm(value);
-    }}>
-      <p className="delivery-address-city"><MapPin size={18} aria-hidden="true" />{t("Доставка только по Душанбе")}</p>
-      <label className="field delivery-address-search">{t("Поиск адреса в Душанбе")}
-        <span><Search size={18} aria-hidden="true" /><input type="search" autoComplete="off" maxLength={ADDRESS_QUERY_MAX} value={query}
-          aria-describedby={statusId} onChange={event => setQuery(event.target.value)} /></span>
-      </label>
-      <p className="delivery-address-status" id={statusId} role="status">
-        {t(status === "checking" ? "Проверяем доступность поиска..." : status === "unavailable" ? "Поиск по городу пока недоступен" : status === "searching" ? "Ищем адрес..." : status === "configured" ? "Поиск по городу подключён" : remoteItems.length ? "Адреса в Душанбе" : "Адреса не найдены")}
-      </p>
-      {savedStatus === "loading" ? <p role="status">{t("Загружаем сохранённые адреса...")}</p> : null}
-      {savedStatus === "unavailable" ? <p role="status">{t("Не удалось загрузить сохранённые адреса")}</p> : null}
-      {addresses.length ? <section className="delivery-address-results" aria-label={t("Сохранённые адреса")}>
-        <h3>{t("Сохранённые адреса")}</h3>
-        {localMatches.length ? <ul>{localMatches.map(saved => <li key={saved.id}><button type="button" onClick={() => setAddress(parseDeliveryAddress(saved)!)}>
-          <MapPin size={18} aria-hidden="true" /><span>{deliveryAddressLabel(saved)}{saved.apartment ? <small>{t("Квартира")} {saved.apartment}</small> : null}</span>
-        </button></li>)}</ul> : <p>{t("Сохранённые адреса не найдены")}</p>}
-      </section> : null}
-      {remoteItems.length ? <section className="delivery-address-results" aria-label={t("Адреса в Душанбе")}>
-        <h3>{t("Адреса в Душанбе")}</h3><ul>{remoteItems.map((item, index) => <li key={index}><button type="button" onClick={() => setAddress(item)}>
-          <MapPin size={18} aria-hidden="true" /><span>{deliveryAddressLabel(item)}</span>
-        </button></li>)}</ul>
-      </section> : null}
-      <section className="delivery-address-manual" aria-label={t("Адрес вручную")}>
-        <h3>{t("Адрес вручную")}</h3>
-        <label className="field">{t("Город")}<input value={t("Душанбе")} readOnly autoComplete="address-level2" /></label>
-        <AddressFields value={address} onChange={setAddress} />
-        {!validPoint ? <p className="checkout-error" role="alert">{t("Точка за пределами зоны выбора в Душанбе")}</p> : null}
-      </section>
-      <footer className="delivery-address-footer"><button type="submit" className="primary-action" disabled={!config || !validPoint || !parseDeliveryAddress(address)}>{t("Доставить сюда")}</button></footer>
-    </form>
-  </CatalogDialog>;
+  </CustomerDialog>;
 }

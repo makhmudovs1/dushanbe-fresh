@@ -1,13 +1,24 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SiteHeader } from "./site-header";
 
 const route = vi.hoisted(() => ({ path: "/catalog" }));
+const auth = vi.hoisted(() => ({ status: { enabled: false }, user: null as { id: string } | null }));
 vi.mock("next/navigation", () => ({ usePathname: () => route.path, useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/cart/cart-context", () => ({ useCart: () => ({ lineCount: 2, hydrated: true }) }));
-vi.mock("@/customer/customer-context", () => ({ useCustomer: () => ({ status: { enabled: false }, user: null }) }));
+vi.mock("@/customer/customer-context", () => ({ useCustomer: () => auth }));
 
 describe("customer branding", () => {
+  beforeEach(() => { route.path = "/catalog"; auth.user = null; });
+  it("keeps accessible icon-only account entry for guests and signed-in customers", () => {
+    const guest = renderToStaticMarkup(<SiteHeader />);
+    expect(guest).toContain('aria-label="Войти"');
+    expect(guest).not.toContain("<span>Войти</span>");
+    auth.user = { id: "customer" };
+    const account = renderToStaticMarkup(<SiteHeader />);
+    expect(account).toContain('aria-label="Профиль"');
+    expect(account).not.toContain("<span>Профиль</span>");
+  });
   it("keeps a separate text wordmark and the provided mark with only F accented", () => {
     route.path = "/catalog";
     const html = renderToStaticMarkup(<SiteHeader />);

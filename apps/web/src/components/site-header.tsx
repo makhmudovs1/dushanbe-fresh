@@ -57,8 +57,8 @@ export function SiteHeader() {
       <Link href="/" className="header-scroll-brand" aria-label="Dushanbe Fresh"><Image src="/brand/mark-v2.webp" width={32} height={32} alt="" /></Link>
       <DeliveryLocation />
       <nav className="site-nav" aria-label={t("Основная навигация")}>
-        {customer.status.enabled ? customer.user ? <Link href="/account" className="header-account" title={t("Профиль")} aria-label={t("Профиль")}><UserRound size={21} /><span>{t("Профиль")}</span></Link>
-          : <button className="header-account" type="button" onClick={customer.login} title={t("Войти")} aria-label={t("Войти")}><UserRound size={21} /><span>{t("Войти")}</span></button> : null}
+        {customer.user ? <Link href="/account" className="header-account" title={t("Профиль")} aria-label={t("Профиль")}><UserRound size={21} aria-hidden="true" /></Link>
+          : <button className="header-account" type="button" onClick={customer.login} title={t("Войти")} aria-label={t("Войти")}><UserRound size={21} aria-hidden="true" /></button>}
         <LastOrderLink activeOnly />
         <Link className="cart-link" href="/cart" aria-current={pathname === "/cart" ? "page" : undefined} aria-label={t(hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
           <ShoppingCart size={22} aria-hidden="true" />

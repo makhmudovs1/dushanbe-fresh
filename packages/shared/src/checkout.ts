@@ -34,6 +34,7 @@ export type AddressInput = {
   building: string;
   apartment: string;
   entrance: string;
+  intercom?: string;
   floor: string;
   instructions: string;
 };

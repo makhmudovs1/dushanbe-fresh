@@ -4,6 +4,7 @@ dist
 coverage
 playwright-report
 test-results
+apps/web/test-results.zip
 .env
 .env.local
 .env.*.local

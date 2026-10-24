@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Heart, LayoutGrid, ShoppingCart } from "lucide-react";
+import { Home, Heart, LayoutGrid, ShoppingCart, UserRound } from "lucide-react";
 import { useCart } from "@/cart/cart-context";
 import { useI18n } from "@/i18n/provider";
 import { useMobileViewport } from "./use-mobile-viewport";
@@ -23,7 +23,8 @@ export function MobileNavigation() {
     { href: `/categories${category ? `?category=${encodeURIComponent(category)}` : ""}`, label: "Каталог", Icon: LayoutGrid,
       active: pathname === "/categories" || pathname === "/catalog" || pathname.startsWith("/products/") || !!dock },
     { href: "/favorites", label: "Избранное", Icon: Heart, active: pathname === "/favorites" && !dock },
-    { href: "/cart", label: "Корзина", Icon: ShoppingCart, active: (pathname === "/cart" || pathname === "/checkout") && !dock }
+    { href: "/cart", label: "Корзина", Icon: ShoppingCart, active: (pathname === "/cart" || pathname === "/checkout") && !dock },
+    { href: "/account", label: "Профиль", Icon: UserRound, active: pathname === "/account" && !dock }
   ];
   const navigation = mobile ? <nav className={`mobile-navigation${dock ? " mobile-navigation--docked" : ""}`} aria-label={t("Нижняя навигация")}>
     {links.map(({ href, label, Icon, active }) => <Link href={href} key={label} aria-label={t(label)} title={t(label)} aria-current={active ? "page" : undefined}

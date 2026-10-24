@@ -1,21 +1,29 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CustomerOrderSummary, SavedAddress, SavedAddressInput } from "@dushanbe-fresh/shared";
-import { Plus, Pencil, Trash2, LogOut } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Heart, Clock3, MapPin, Settings2, ChevronRight, ArrowLeft, LockKeyhole } from "lucide-react";
 import { useCustomer } from "@/customer/customer-context";
+import { useDeliveryAddress } from "@/customer/delivery-address-context";
 import { CustomerError, customerRequest } from "@/lib/customer";
 import { useCart } from "@/cart/cart-context";
 import { Product } from "@/lib/api";
 import { useI18n } from "@/i18n/provider";
 import { orderLabels } from "@/lib/operations";
 import { AddressFields, emptyAddress } from "./address-fields";
+import { CustomerDialog } from "./customer-dialog";
 
 export function CustomerAccount() {
+  const { user } = useCustomer();
+  return <CustomerAccountContent key={user?.id ?? "guest"} />;
+}
+function CustomerAccountContent() {
   const customer = useCustomer();
+  const delivery = useDeliveryAddress();
   const { t, name, locale } = useI18n();
   const cart = useCart();
-  const [tab, setTab] = useState<"orders" | "addresses" | "profile">("orders");
+  const [tab, setTab] = useState<"overview" | "orders" | "addresses" | "profile">("overview");
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [orders, setOrders] = useState<CustomerOrderSummary[]>([]);
   const [editor, setEditor] = useState<(SavedAddressInput & { id?: string }) | null>(null);
@@ -26,6 +34,7 @@ export function CustomerAccount() {
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [more, setMore] = useState(false);
+  const [addressStage, setAddressStage] = useState<"street" | "details">("street");
   const userId = customer.user?.id;
   const owner = useRef(userId);
   owner.current = userId;
@@ -51,12 +60,30 @@ export function CustomerAccount() {
     } finally { setBusy(false); }
   }
   if (customer.loading) return <p role="status">{t("Загрузка...")}</p>;
-  if (!customer.user) return <section className="account-empty"><h1>{t("Личный кабинет")}</h1><p>{t(customer.status.enabled ? "Войдите, чтобы видеть свои заказы и адреса." : "Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p>
-    {customer.status.enabled ? <button className="primary-action" onClick={customer.login}>{t("Войти")}</button> : null}<Link href="/catalog" className="secondary-link">{t("Перейти в каталог")}</Link></section>;
+  if (!customer.user) return <><header className="account-heading"><h1>{t("Профиль")}</h1></header><section className="account-welcome">
+    <div className="account-welcome__media"><Image src="/storefront/v2/fruits.webp" width={480} height={320} alt={t("Свежие продукты")} /></div>
+    <div className="account-welcome__content"><h2>{t("Войдите в аккаунт")}</h2><p>{t("Чтобы заказывать продукты и сохранять любимое")}</p>
+      <p className="account-welcome__privacy"><LockKeyhole size={20} aria-hidden="true" />{t("Корзина и выбранный адрес сохранятся после входа")}</p>
+      <button className="primary-action" type="button" onClick={customer.login}>{t("Войти")}</button>
+      {!customer.status.enabled ? <p role="status" className="customer-form__hint">{t("Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p> : null}
+    </div>
+  </section></>;
   const labels = { home: "Дом", work: "Работа", other: "Другой" };
   return <>
-    <header className="account-heading"><h1>{t("Личный кабинет")}</h1><button type="button" className="secondary-link" disabled={busy} onClick={() => void run(customer.logout)}><LogOut size={18} />{t("Выйти")}</button></header>
-    <nav className="account-tabs" aria-label={t("Личный кабинет")}>{([['orders', 'Мои заказы'], ['addresses', 'Мои адреса'], ['profile', 'Личные данные']] as const).map(([key, label]) => <button key={key} type="button" aria-current={tab === key ? "page" : undefined} onClick={() => { setTab(key); setError(""); setNotice(""); }}>{t(label)}</button>)}</nav>
+    <header className="account-heading">{tab !== "overview" ? <button type="button" className="catalog-icon-action" aria-label={t("Назад в профиль")} title={t("Назад в профиль")} onClick={() => setTab("overview")}><ArrowLeft size={22} /></button> : null}<h1>{t("Профиль")}</h1></header>
+    {tab === "overview" ? <>
+      <button className="account-identity" type="button" onClick={() => setTab("profile")}>
+        <span className="account-avatar" aria-hidden="true">{(customer.user.name ?? "DF").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("")}</span>
+        <span><strong>{customer.user.name || t("Личные данные")}</strong><small>{customer.user.phone}</small></span><ChevronRight size={22} aria-hidden="true" />
+      </button>
+      <nav className="account-menu" aria-label={t("Личный кабинет")}>
+        <Link href="/favorites"><Heart size={24} /><span>{t("Избранное")}</span><ChevronRight size={20} /></Link>
+        <button type="button" onClick={() => setTab("orders")}><Clock3 size={24} /><span>{t("История заказов")}</span><ChevronRight size={20} /></button>
+        <button type="button" onClick={() => setTab("addresses")}><MapPin size={24} /><span>{t("Адреса доставки")}</span><ChevronRight size={20} /></button>
+        <button type="button" onClick={() => setTab("profile")}><Settings2 size={24} /><span>{t("Настройки профиля")}</span><ChevronRight size={20} /></button>
+        <button type="button" disabled={busy} onClick={() => void run(customer.logout)}><LogOut size={24} /><span>{t("Выйти из аккаунта")}</span><ChevronRight size={20} /></button>
+      </nav>
+    </> : <nav className="account-tabs" aria-label={t("Личный кабинет")}>{([['orders', 'Мои заказы'], ['addresses', 'Мои адреса'], ['profile', 'Личные данные']] as const).map(([key, label]) => <button key={key} type="button" aria-current={tab === key ? "page" : undefined} onClick={() => { setTab(key); setError(""); setNotice(""); }}>{t(label)}</button>)}</nav>}
     {error ? <p className="checkout-error" role="alert">{t(error)}</p> : null}{notice ? <p className="notice" role="status">{notice}</p> : null}
     {!loaded && tab !== "profile" ? <p role="status">{t("Загрузка...")}</p> : null}
     {tab === "orders" ? <section className="account-section"><h2>{t("Мои заказы")}</h2>
@@ -86,19 +113,21 @@ export function CustomerAccount() {
     </section> : null}
     {tab === "addresses" ? <section className="account-section"><h2>{t("Мои адреса")}</h2>
       {addresses.map(address => <article className="account-address" key={address.id}><div><strong>{t(labels[address.label])}{address.isDefault ? ` · ${t("По умолчанию")}` : ""}</strong><p>{address.street}, {address.building}{address.apartment ? `, ${t("Квартира")} ${address.apartment}` : ""}</p><p>{address.instructions}</p></div><div className="address-tools">
-        {!address.isDefault ? <button type="button" className="secondary-link" disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "PATCH", { ...address, isDefault: true })); })}>{t("Сделать основным")}</button> : null}
-        <button className="catalog-icon-action" title={t("Изменить адрес")} aria-label={t("Изменить адрес")} disabled={busy} onClick={() => setEditor(address)}><Pencil size={18} /></button>
-        <button className="catalog-icon-action" title={t("Удалить адрес")} aria-label={t("Удалить адрес")} disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "DELETE")); })}><Trash2 size={18} /></button>
+        {!address.isDefault ? <button type="button" className="secondary-link" disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "PATCH", { ...address, isDefault: true })); await delivery?.refreshAddresses(); })}>{t("Сделать основным")}</button> : null}
+        <button className="catalog-icon-action" title={t("Изменить адрес")} aria-label={t("Изменить адрес")} disabled={busy} onClick={() => { setEditor(address); setAddressStage("street"); }}><Pencil size={18} /></button>
+        <button className="catalog-icon-action" title={t("Удалить адрес")} aria-label={t("Удалить адрес")} disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "DELETE")); await delivery?.refreshAddresses(); })}><Trash2 size={18} /></button>
       </div></article>)}
-      {!editor ? <button type="button" className="secondary-link" onClick={() => setEditor({ ...emptyAddress, label: "home", isDefault: !addresses.length })}><Plus size={18} />{t("Добавить адрес")}</button> :
-        <form className="customer-form address-editor" onSubmit={event => { event.preventDefault(); void run(async () => {
-          setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses${editor.id ? `/${editor.id}` : ""}`, editor.id ? "PATCH" : "POST", editor)); setEditor(null);
+      <button type="button" className="secondary-link" onClick={() => { setEditor({ ...emptyAddress, label: "home", isDefault: !addresses.length }); setAddressStage("street"); }}><Plus size={18} />{t("Добавить адрес")}</button>
+      {editor ? <CustomerDialog title={t(editor.id ? "Изменить адрес" : "Добавить адрес")} busy={busy} onClose={() => setEditor(null)}>
+        {error ? <p className="checkout-error" role="alert">{t(error)}</p> : null}
+        <form className="customer-form address-editor" onSubmit={event => { event.preventDefault(); if (addressStage === "street") { setAddressStage("details"); return; } void run(async () => {
+          setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses${editor.id ? `/${editor.id}` : ""}`, editor.id ? "PATCH" : "POST", editor)); setEditor(null); await delivery?.refreshAddresses();
         }); }}><h3>{t(editor.id ? "Изменить адрес" : "Добавить адрес")}</h3>
           <label className="field">{t("Название адреса")}<select value={editor.label} onChange={event => setEditor({ ...editor, label: event.target.value as SavedAddressInput["label"] })}>{Object.entries(labels).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>
-          <AddressFields value={editor} onChange={address => setEditor({ ...editor, ...address })} />
+          <AddressFields value={editor} onChange={address => setEditor({ ...editor, ...address })} fields={addressStage} />
           <label className="checkout-option"><input type="checkbox" checked={editor.isDefault} onChange={event => setEditor({ ...editor, isDefault: event.target.checked })} />{t("По умолчанию")}</label>
-          <div className="address-tools"><button className="primary-action" disabled={busy}>{t("Сохранить")}</button><button className="secondary-link" type="button" disabled={busy} onClick={() => setEditor(null)}>{t("Отмена")}</button></div>
-        </form>}
+          <div className="address-tools"><button className="primary-action" disabled={busy}>{t(addressStage === "street" ? "Далее" : "Сохранить")}</button><button className="secondary-link" type="button" disabled={busy} onClick={() => addressStage === "details" ? setAddressStage("street") : setEditor(null)}>{t(addressStage === "details" ? "Назад" : "Отмена")}</button></div>
+        </form></CustomerDialog> : null}
     </section> : null}
     {tab === "profile" ? <section className="account-section"><h2>{t("Личные данные")}</h2><form className="customer-form" onSubmit={event => { event.preventDefault(); void run(async () => { await customerRequest("customer/profile", "PATCH", { name: profileName }); await customer.refresh(); setNotice(t("Изменения сохранены.")); }); }}>
       <label className="field">{t("Имя")}<input autoComplete="name" value={profileName} required maxLength={100} onChange={event => setProfileName(event.target.value)} /></label>

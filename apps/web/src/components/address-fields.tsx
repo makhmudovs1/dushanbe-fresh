@@ -6,7 +6,7 @@ import type { Map as LeafletMap, Marker } from "leaflet";
 import { useI18n } from "@/i18n/provider";
 import { CatalogDialog } from "./catalog-dialog";
 
-export const emptyAddress: AddressInput = { housingType: "apartment", street: "", building: "", apartment: "", entrance: "", floor: "", instructions: "", latitude: null, longitude: null };
+export const emptyAddress: AddressInput = { housingType: "apartment", street: "", building: "", apartment: "", entrance: "", floor: "", intercom: "", instructions: "", latitude: null, longitude: null };
 
 export function AddressMap({ value, onChange }: { value: AddressInput; onChange: (point: { latitude: number; longitude: number }) => void }) {
   const element = useRef<HTMLDivElement>(null);
@@ -82,6 +82,7 @@ export function AddressFields({ value, onChange, fields = "all", onChooseMap }: 
         <label className="field">{t("Дом")}<input autoComplete="address-line2" required maxLength={30} value={value.building} onChange={event => onChange({ ...value, building: event.target.value })} /></label>
       </> : null}
       {fields !== "street" && value.housingType !== "house" ? ([['apartment', 'Квартира'], ['entrance', 'Подъезд'], ['floor', 'Этаж']] as const).map(([key, label]) => <label className="field" key={key}>{t(label)}<input maxLength={30} value={value[key]} onChange={event => onChange({ ...value, [key]: event.target.value })} /></label>) : null}
+      {fields !== "street" ? <label className="field">{t("Домофон")}<input maxLength={30} value={value.intercom ?? ""} onChange={event => onChange({ ...value, intercom: event.target.value })} /></label> : null}
     </div>
     {fields !== "street" ? <>
     <label className="field">{t("Комментарий / ориентир")}<textarea aria-label={t("Комментарий / ориентир")} rows={2} maxLength={500} value={value.instructions} onChange={event => onChange({ ...value, instructions: event.target.value })} /></label>

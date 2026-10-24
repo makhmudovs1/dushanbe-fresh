@@ -37,13 +37,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang={locale}>
       <body>
         <LanguageProvider initialLocale={locale}>
-        <FavoritesProvider><CartProvider><CustomerProvider><DeliveryAddressProvider><StorefrontFrame><MobileNavigationDockProvider><MobileProductSheetProvider>
+        <CustomerProvider><FavoritesProvider><CartProvider><DeliveryAddressProvider><StorefrontFrame><MobileNavigationDockProvider><MobileProductSheetProvider>
           <SiteHeader />
           {children}
           <SiteFooter />
           <Suspense fallback={null}><MobileNavigation /></Suspense>
           <ScrollToTop />
-        </MobileProductSheetProvider></MobileNavigationDockProvider></StorefrontFrame></DeliveryAddressProvider></CustomerProvider></CartProvider></FavoritesProvider>
+        </MobileProductSheetProvider></MobileNavigationDockProvider></StorefrontFrame></DeliveryAddressProvider></CartProvider></FavoritesProvider></CustomerProvider>
         </LanguageProvider>
       </body>
     </html>
