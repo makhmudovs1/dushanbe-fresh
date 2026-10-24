@@ -2,10 +2,12 @@
 
 ## Status
 
-Prepared locally, not deployed. No real SMS sent. Customer login and mandatory
-phone verification remain disabled by default; guest checkout stays available.
-No new database migration, OTP generation, expiry, rate-limit or session changes.
-The existing account backend/migration is still separate from production.
+Deployed in `4e35e96` on 2026-10-24, with customer login and mandatory phone
+verification OFF. No real SMS sent. Payom's response contract is still unconfirmed
+and the adapter cannot send, including when credentials are supplied.
+The adapter itself does not change OTP generation, expiry, limits or sessions.
+Account/shopping migrations were deployed separately from provider activation;
+see [CUSTOMER_RELEASE_20261024.md](CUSTOMER_RELEASE_20261024.md).
 
 ## Request
 
@@ -71,7 +73,8 @@ one-minute resend interval, five-minute code lifetime and attempt limit remain.
 Do not enable mandatory auth during setup. After contract tests and independent
 staging/account-migration/security checks, a separately approved test may verify
 real delivery. Enable optional login first; mandatory phone verification is a
-separate decision. This task does not authorize real SMS or production rollout.
+separate decision. The code-only rollout does not authorize real SMS or provider
+activation.
 
 ## Local Verification
 

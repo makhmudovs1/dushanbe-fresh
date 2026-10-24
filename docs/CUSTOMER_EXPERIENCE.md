@@ -1,9 +1,10 @@
 # Customer Experience
 
-Local implementation, not pushed or deployed. SMS login is not production-ready
-until a real provider's acceptance contract and delivery are verified. Guest
-checkout remains available with the default flags. No catalog, pricing, delivery
-fee or production data was changed for this work.
+Deployed in `4e35e96` on 2026-10-24 with SMS login and mandatory verification OFF.
+See [CUSTOMER_RELEASE_20261024.md](CUSTOMER_RELEASE_20261024.md). SMS activation
+requires a real provider's acceptance contract and delivery verification. Guest
+checkout requires no login; existing missing production pricing settings still
+need owner input. No catalog, prices, fees or existing production rows were changed.
 
 ## Entry And Login
 
@@ -169,15 +170,16 @@ its owned cleanup before another integration run. Do not print captured codes.
 
 - Lint: all workspace packages and the out-of-build API test utilities passed.
 - Typecheck: all workspace packages passed.
-- Unit/integration: shared 6/6, Web 271/271, API 349/349. API used the explicitly
+- Unit/integration: shared 6/6, Web 272/272, API 349/349. API used the explicitly
   isolated local `dushanbe_fresh_customer_account_test_shopping_20261024` database;
   no integration test was skipped. No seed or normal/production DB reset ran.
 - Production builds: API and Web passed; separate temporary output/snapshot was
   used for the final verification. The final preview application source matches
   the working tree. An earlier worker Web build used the normal `.next`; final
   builds no longer use that development cache.
-- Browser: 21/21 Chromium and 21/21 WebKit on the final build, RU/TJ at 360, 390
-  and 1440 pixels. Each engine produced 88 explicit PNGs, with no OTP fields,
+- Browser: 27/27 Chromium and 27/27 WebKit on the final release preview, including
+  six header regression cases, RU/TJ at 360, 390, 768 and 1440 pixels. Each engine
+  produced 94 explicit PNGs, with no OTP fields,
   traces or video. Initial WebKit test navigation raced a pending tracking route;
   the test now waits for the actual tracking UI/address and completed navigation.
   No application/error assertion was removed to make it pass.
@@ -195,11 +197,11 @@ its owned cleanup before another integration run. Do not print captured codes.
   `apps/web/test-results/customer-experience-20261024/index.html`, 20 principal
   mobile/desktop screens. All 20 images load; gallery has no horizontal overflow
   at 390px. No screenshot or generated archive is intended for Git.
-- Not verified: real Payom acceptance/delivery/billing, production migration and
-  proxy/cookie topology, physical iPhone keyboard/toolbars/GPS permissions,
+- Not verified: real Payom acceptance/delivery/billing, production proxy/cookie
+  topology, physical iPhone keyboard/toolbars/GPS permissions,
   geocoder service or map-tile contractual availability. Browser WebKit emulation
   is not a substitute for a real-device pre-launch check.
 
-No push/deployment was performed for this increment. Both auth flags remain off
-in the configuration template. The local guest preview uses only the isolated
-test database; it is not the real catalog or an SMS-enabled environment.
+The release was pushed and deployed only after owner approval. Both auth flags
+remain off in production and the template. Local browser fixtures use an isolated
+test database, not the real catalog or a real SMS provider.

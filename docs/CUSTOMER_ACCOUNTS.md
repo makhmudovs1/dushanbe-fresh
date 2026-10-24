@@ -2,17 +2,17 @@
 
 ## Status And Ownership
 
-Account backend is preserved on GitHub in `feature/customer-accounts`, not deployed.
-The later preserved snapshot is `wip/customer-accounts-payom-20261023`. The
-2026-10-24 shopping/profile UX changes are local only; see
-[CUSTOMER_EXPERIENCE.md](CUSTOMER_EXPERIENCE.md) for the additional migration,
-server-side favorites/cart and checkout flow.
-It was saved separately at the owner's request on 2026-10-22; it is not merged
-into the production branch. The Web-only release plan is
-recorded in `WEB_RELEASE_20261022.md`; it does not activate customer accounts.
-Payom.tj request integration is prepared locally; its response contract and API
-access are still pending. See [PAYOM_SMS.md](PAYOM_SMS.md). Login and
-mandatory verification are disabled by default; guest checkout remains available.
+Deployed behind disabled auth flags on 2026-10-24 in commit `4e35e96`.
+Both additive account/shopping migrations are applied. Earlier preserved
+`feature/customer-accounts` / `wip/customer-accounts-payom-20261023` snapshots
+remain historical checkpoints, not separate production identities. See
+[CUSTOMER_RELEASE_20261024.md](CUSTOMER_RELEASE_20261024.md) for rollout evidence
+and [CUSTOMER_EXPERIENCE.md](CUSTOMER_EXPERIENCE.md) for the shopping/profile UX.
+Payom.tj request integration is deployed but fails closed: its response contract
+and API access are still pending. See [PAYOM_SMS.md](PAYOM_SMS.md). Login and
+mandatory verification remain disabled; guest checkout requires no login.
+Existing production pricing settings are absent and must be supplied by the owner;
+this release did not invent fees or bypass the existing quote validation.
 A configured provider's outage is an error, not simulated success or a login bypass.
 
 `User` is the login identity. `Customer.userId` reuses the existing normalized
@@ -112,9 +112,7 @@ Before production activation:
    repeats/current prices, manual COD review and courier navigation.
 
 Rollback uses feature flags, not deletion of schema/users/orders. Public tracking
-links remain valid. The account backend and migration are pushed only to
-`feature/customer-accounts`, not deployed; frontend scaffolding alone does not
-enable login.
+links remain valid. Code/schema deployment does not authorize SMS activation.
 
 ## Local Tests
 
