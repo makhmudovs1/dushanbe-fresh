@@ -4,9 +4,9 @@ import { ReactNode, useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { useDialogViewport } from "./use-dialog-viewport";
 
-export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму", fitVisualViewport = false, surfaceClassName }: {
+export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму", fitVisualViewport = false, surfaceClassName, focusTitleOnMobile = false }: {
   title: string; children: ReactNode; busy: boolean; onClose: () => void;
-  className?: string; closeLabel?: string; fitVisualViewport?: boolean; surfaceClassName?: string;
+  className?: string; closeLabel?: string; fitVisualViewport?: boolean; surfaceClassName?: string; focusTitleOnMobile?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -31,7 +31,12 @@ export function CatalogDialog({ title, children, busy, onClose, className = "", 
       body.style.left = `${-scroll.x}px`;
       body.style.width = "100%";
     }
+    const focusTitle = focusTitleOnMobile && matchMedia("(max-width: 1023px)").matches;
+    const heading = dialog.querySelector<HTMLElement>(".catalog-dialog__header h2");
+    // Native dialog focus runs during showModal: select a non-input before it opens.
+    if (focusTitle) heading?.setAttribute("autofocus", "");
     dialog.showModal();
+    if (focusTitle) heading?.focus({ preventScroll: true });
     document.body.style.overflow = "hidden";
     return () => {
       dialog.close();
@@ -50,10 +55,10 @@ export function CatalogDialog({ title, children, busy, onClose, className = "", 
       }
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
     };
-  }, [fitVisualViewport]);
+  }, [fitVisualViewport, focusTitleOnMobile]);
   useDialogViewport(ref, fitVisualViewport);
   const content = <>
-    <header className="catalog-dialog__header"><h2 id={titleId}>{title}</h2>
+    <header className="catalog-dialog__header"><h2 id={titleId} tabIndex={focusTitleOnMobile ? -1 : undefined}>{title}</h2>
       <button className="catalog-icon-action" type="button" aria-label={closeLabel} title={closeLabel}
         disabled={busy} onClick={onClose}><X size={20} aria-hidden="true" /></button>
     </header>

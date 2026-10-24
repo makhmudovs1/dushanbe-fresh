@@ -21,8 +21,8 @@ test("public pages emit Russian metadata, canonical and social previews", async 
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", origin + "/brand/og-v3.png");
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
     await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", origin + "/brand/og-v3.png");
-    await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
-    await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
+    await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
+    await expect(page.locator('link[rel="icon"][type="image/png"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
     const brandReferences = await page.locator('head link[href*="/brand/"], head meta[content*="/brand/"]').evaluateAll(elements => elements.map(element => element.getAttribute("href") || element.getAttribute("content")));
     expect(brandReferences.some(value => value?.includes("-v2."))).toBe(false);

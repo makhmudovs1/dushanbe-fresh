@@ -26,7 +26,7 @@
 .catalog-sidebar h2 { font-size: 20px; line-height: 26px; margin-bottom: 12px; }
 .catalog-sidebar nav { gap: 2px; }
 .catalog-sidebar nav a { min-height: 44px; padding: 4px 8px; gap: 9px; font-size: 13px; line-height: 18px; font-weight: 500; }
-.catalog-sidebar__sections { border-bottom: 1px solid #eef0ee; padding-bottom: 12px; margin-bottom: 12px; }
+.catalog-sidebar__sections { border-bottom: 0; padding-bottom: 12px; margin-bottom: 12px; }
 .category-menu-icon { flex: 0 0 32px; width: 32px; height: 32px; display: grid; place-items: center; color: #687d72; }
 .category-menu-icon img { width: 32px; height: 32px; object-fit: contain; }
 .category-menu-row { display: flex; align-items: center; border-radius: 8px; min-width: 0; transition: background-color 180ms ease; }

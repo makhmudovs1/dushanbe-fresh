@@ -9,9 +9,9 @@ test("v3 bitmap wordmark, transparent artwork, favicon and bounded products afte
   await page.goto("/");
   await expect(page.locator(".site-logo")).toHaveAttribute("aria-label", "Dushanbe Fresh");
   await expect(page.locator(".brand-logo__initial")).toHaveCount(0);
-  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
-  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
-  const icon = await (await page.request.get("/brand/favicon-v3.ico")).body();
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
+  await expect(page.locator('link[rel="icon"][type="image/png"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
+  const icon = await (await page.request.get("/brand/favicon-v4.ico")).body();
   expect(icon.readUInt16LE(0)).toBe(0);
   expect(icon.readUInt16LE(2)).toBe(1);
   expect(icon.readUInt16LE(4)).toBeGreaterThan(1);
@@ -29,9 +29,14 @@ test("v3 bitmap wordmark, transparent artwork, favicon and bounded products afte
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(page.locator(".product-card h3").first()).toBeAttached();
-    expect(await page.locator(".product-card").count()).toBeLessThanOrEqual(8);
-    const last = (await page.locator(".home-category-section:visible, .mobile-home-categories > section:visible").last().boundingBox())!;
-    expect((await page.locator(".product-card").first().boundingBox())!.y).toBeGreaterThan(last.y + last.height);
+    if (width >= 1024) {
+      expect(await page.locator(".product-card:visible").count()).toBeLessThanOrEqual(8);
+      const last = (await page.locator(".home-category-section:visible").last().boundingBox())!;
+      expect((await page.locator(".product-card").first().boundingBox())!.y).toBeGreaterThan(last.y + last.height);
+    } else {
+      await expect(page.locator(".home-category-section:visible")).toHaveCount(0);
+      await expect(page.locator(".home-quick-links")).toBeVisible();
+    }
     await expect(page.locator(".header-favorites")).toHaveCount(0);
     await expect(page.locator(".product-card .availability-badge")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

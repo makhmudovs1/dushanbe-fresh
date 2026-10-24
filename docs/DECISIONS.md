@@ -982,3 +982,26 @@
 - This is a Web-only deployment, without API restart, migrations, auth activation,
   environment changes, catalog writes or production checkout/SMS tests.
 - Asset recipe and rollout evidence: [HEADER_BRAND_20261024.md](HEADER_BRAND_20261024.md).
+
+## 2026-10-24: Coherent Storefront Discovery
+
+- Mobile home is three existing banners, horizontally scrollable working links,
+  then the full public catalog. Desktop retains its thematic category sections
+  and an eight-product selection. No invented offers, categories or purchase data.
+- The bottom Catalog destination reuses the same database-backed grouped image
+  tiles, rather than a second vertical mobile menu. Existing category URLs and
+  mobile subcategory tabs remain. Desktop category navigation is unchanged.
+- "Already bought" opens the existing account order section; guests see the honest
+  current login availability. Discounts are offered only for a real positive
+  price drop and use a public-catalog display filter, without changing prices.
+- Favorites use an unframed red heart and a personal-shelf empty state. No data
+  migration, auth activation or guest/account favorites merge is added.
+- The mobile address trigger is the compact supplied logo plus the real address,
+  without a city subtitle. Its sheet occupies 78% of the visual viewport. Native
+  dialog autofocus targets the title, never a mobile input; pointer opening also
+  captures a consistent return-focus target across Safari and Chrome.
+- Avoid focus-dependent surface resizing: input blur during pointer-down must not
+  move the close button before pointer-up. Use one visual-viewport geometry.
+- Browser favicons have explicit 16/32px PNGs and a versioned v4 ICO URL instead of
+  relying on a single 512px PNG choice. OS/browser tab caches and icon visibility
+  preferences cannot be forcibly reset by site code.

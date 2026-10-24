@@ -20,7 +20,7 @@ import { CatalogSearch } from "./catalog-search";
 import { useCart } from "@/cart/cart-context";
 
 export function DeliveryLocation({ mobile = false }: { mobile?: boolean }) {
-  return <DeliveryAddressTrigger eyebrow={mobile ? undefined : "Доставка в"} className={`header-location header-location--${mobile ? "mobile" : "desktop"}`} />;
+  return <DeliveryAddressTrigger eyebrow={mobile ? "" : "Доставка в"} brandMark={mobile} className={`header-location header-location--${mobile ? "mobile" : "desktop"}`} />;
 }
 
 export function SiteHeader() {

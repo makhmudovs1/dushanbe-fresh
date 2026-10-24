@@ -110,7 +110,8 @@ async function expectHeader(page: Page, width: number, locale: Locale, authentic
   await expect(location.locator(".delivery-address-trigger__address")).toBeVisible();
   if (width < 1024) {
     await expect(account).toBeHidden();
-    await expect(location.locator(".delivery-address-trigger__city")).toBeVisible();
+    await expect(location.locator(".delivery-address-trigger__city")).toHaveCount(0);
+    await expect(location.locator(".delivery-address-trigger__brand")).toBeVisible();
     const profile = page.locator(".mobile-navigation").getByRole("link", { name: t("Профиль"), exact: true });
     await expect(profile).toBeVisible();
     await expect(profile).toHaveAttribute("href", "/account");

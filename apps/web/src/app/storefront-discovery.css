@@ -1,0 +1,55 @@
+.home-quick-links, .home-products-title--mobile, .category-screen--mobile { display: none; }
+.category-showcase { display: grid; gap: 28px; }
+.catalog-sidebar .category-menu-icon--favorite { color: #ff4d4f; background: transparent; }
+.catalog-sidebar__sections > a[href="/favorites"], .catalog-sidebar__sections > a[href="/favorites"]:hover { background: transparent; color: var(--color-text); }
+.favorites-page-heading { margin-bottom: 28px; }
+.favorites-page-heading h1 { margin: 0; font-size: 42px; line-height: 1.15; }
+.favorites-empty { min-height: 450px; padding: 24px 16px 64px; align-content: start; gap: 12px; }
+.favorites-empty__art { position: relative; width: min(310px, 100%); aspect-ratio: 1.4; margin: 0 0 8px; }
+.favorites-empty__art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.favorites-empty__heart { position: absolute; color: #ff4d4f; stroke: #fff; stroke-width: 2px; }
+.favorites-empty__heart--first { left: 25%; top: 46%; transform: rotate(-12deg); }
+.favorites-empty__heart--second { right: 22%; top: 57%; transform: rotate(14deg); }
+.favorites-empty h2 { max-width: 285px; font-size: 28px; line-height: 30px; }
+.favorites-empty p { max-width: 290px; color: #666; font-size: 15px; line-height: 21px; }
+.favorites-empty .secondary-link { margin-top: 4px; min-height: 44px; color: #1f1f1f; background: transparent; }
+
+@media (min-width: 1024px) {
+  .home-available-products .product-grid > :nth-child(n+9) { display: none; }
+  .product-card .favorite-button { background: transparent; box-shadow: none; border: 0; }
+}
+
+@media (max-width: 1023px) {
+  .site-header .header-location--mobile { gap: 10px; padding: 0; min-height: 44px; }
+  .delivery-address-trigger__brand { display: block; flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; }
+  .site-header .header-location--mobile .delivery-address-trigger__city { display: none; }
+  .site-header .header-location--mobile .delivery-address-trigger__address { font-size: 14px; font-weight: 600; line-height: 19px; }
+  .home-benefits { display: none; }
+  .home-quick-links { display: flex; gap: 22px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-block: 12px; margin-top: 10px; }
+  .home-quick-links::-webkit-scrollbar { display: none; }
+  .home-quick-links a { display: inline-flex; align-items: center; flex: 0 0 auto; gap: 7px; min-height: 44px; color: #1f1f1f; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; text-decoration: none; }
+  .home-quick-links a svg { flex-shrink: 0; }
+  .home-quick-links__favorites svg { color: #ff4d4f; }
+  .home-quick-links__discounts svg { color: #ef7819; }
+  .home-quick-links a:focus-visible { outline: 2px solid #17643b; outline-offset: -2px; border-radius: 4px; }
+  .home-products-title--desktop { display: none; }
+  .home-products-title--mobile { display: inline; }
+  .home-available-products { margin-top: 10px; }
+  .home-available-products .product-grid > .product-card { display: flex; }
+  .category-screen--desktop { display: none; }
+  .category-screen--mobile { display: block; }
+  .category-showcase { gap: 28px; padding-block: 12px; }
+  .category-showcase .storefront-section { margin: 0; }
+  .category-showcase .storefront-section-heading { margin-bottom: 10px; }
+  .category-showcase h2 { font-size: 21px; line-height: 26px; }
+  .category-showcase .storefront-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .category-showcase .storefront-category { width: 100%; max-width: 100%; height: auto; min-height: 0; aspect-ratio: 1.7; border-radius: 16px; }
+  .category-showcase .storefront-categories > .storefront-category:only-child { grid-column: auto; max-width: 100%; }
+  .category-showcase .storefront-category strong { font-size: 14px; line-height: 18px; top: 10px; left: 10px; right: 8px; overflow-wrap: anywhere; }
+  .customer-address-flow .customer-dialog__surface { height: calc(var(--dialog-viewport-height, 100dvh) * .78); max-height: calc(var(--dialog-viewport-height, 100dvh) - 8px); }
+  .customer-address-flow .catalog-dialog__header h2:focus { outline: none; }
+  .customer-address-flow .catalog-dialog__body { flex: 1; }
+  .favorites-page-heading h1 { font-size: 30px; }
+  .favorites-empty { min-height: 390px; padding-top: 12px; }
+  .favorites-empty h2 { font-size: 25px; line-height: 28px; }
+}

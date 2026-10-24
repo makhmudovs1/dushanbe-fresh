@@ -9,6 +9,7 @@ import { CategorySkeleton, ProductGridSkeleton } from "./loading-state";
 import { CategorySidebar } from "./category-navigation";
 import { CatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { MobileCategoryTabs } from "./mobile-category-tabs";
+import { hasPriceDrop } from "@/lib/storefront";
 
 export function CatalogBrowser({
   initialCategory = "", initialSearch = "", initialCategories, initialProducts, withSidebar = false, limit
@@ -59,7 +60,9 @@ export function CatalogBrowser({
   }, [initialCategories, loadCategories]);
 
   const category = categories.find(item => item.slug === currentCategory);
-  const title = currentSearch ? t("Результаты поиска") : category ? name(category) : t("Каталог");
+  const discounts = withSidebar && params?.get("collection") === "discounts";
+  const visibleProducts = discounts ? products.filter(hasPriceDrop) : products;
+  const title = currentSearch ? t("Результаты поиска") : category ? name(category) : t(discounts ? "Скидки" : "Каталог");
   return <div className={withSidebar ? "catalog-page" : undefined}>
     {withSidebar ? <header className="page-heading catalog-page-heading"><CatalogBreadcrumbs categories={categories} category={category} search={Boolean(currentSearch)} /><h1>{title}</h1>
       {currentSearch ? <p>«{currentSearch}»</p> : null}</header> : null}
@@ -76,9 +79,9 @@ export function CatalogBrowser({
         <button className="secondary-link" type="button" onClick={() => void loadProducts(currentCategory, currentSearch)}>{t("Повторить загрузку товаров")}</button>
       </div> : null}
       {pending ? <ProductGridSkeleton /> : null}
-      {!pending && !error && !products.length ? <p className="catalog-empty" role="status">
+      {!pending && !error && !visibleProducts.length ? <p className="catalog-empty" role="status">
         {t(currentSearch ? "По вашему запросу ничего не найдено." : "В этом разделе пока нет товаров.")}</p> : null}
-      {!pending && !error ? <div className="product-grid">{products.map(product => <ProductCard key={product.id} product={product} />)}</div> : null}
+      {!pending && !error ? <div className="product-grid">{visibleProducts.map(product => <ProductCard key={product.id} product={product} />)}</div> : null}
     </section>
     </div>
   </div>;

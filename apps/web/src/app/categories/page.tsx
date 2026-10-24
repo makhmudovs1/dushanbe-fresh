@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
+import { CategoryShowcase } from "@/components/home-category-sections";
 import { CategorySidebar } from "@/components/category-sidebar";
 import { CategorySkeleton } from "@/components/loading-state";
-import { getPublicCategories } from "@/lib/catalog.server";
+import { getPublicCategories, getPublicProducts } from "@/lib/catalog.server";
 import { serverI18n } from "@/i18n/server";
 import { publicMetadata } from "@/lib/seo";
 
@@ -11,7 +12,9 @@ export const dynamic = "force-dynamic";
 export const metadata = publicMetadata("/categories", "Категории | Dushanbe Fresh", "Выберите категорию свежих продуктов Dushanbe Fresh.");
 
 async function Categories() {
-  return <CategorySidebar categories={await getPublicCategories()} categoryScreen />;
+  const [categories, products] = await Promise.all([getPublicCategories(), getPublicProducts()]);
+  return <><div className="category-screen--desktop"><CategorySidebar categories={categories} categoryScreen /></div>
+    <div className="category-screen--mobile"><CategoryShowcase categories={categories} products={products} /></div></>;
 }
 
 export default function CategoriesPage() {

@@ -64,10 +64,10 @@ test("only light mode is used, including with a stale saved dark preference", as
 test("brand metadata uses the supplied multi-resolution favicon and Apple icon", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Dushanbe Fresh — доставка свежих продуктов в Душанбе");
-  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
-  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
+  await expect(page.locator('link[rel="icon"][type="image/png"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
-  const icon = await page.request.get("/brand/favicon-v3.ico");
+  const icon = await page.request.get("/brand/favicon-v4.ico");
   expect(icon.ok()).toBeTruthy();
   const bytes = await icon.body();
   expect(bytes.readUInt16LE(2)).toBe(1);

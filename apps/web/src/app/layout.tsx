@@ -26,10 +26,11 @@ export const metadata: Metadata = {
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   icons: {
     icon: [
-      { url: "/brand/favicon-v3.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
-      { url: "/brand/icon-v3.png", type: "image/png", sizes: "512x512" }
+      { url: "/brand/favicon-v4.ico", type: "image/x-icon", sizes: "any" },
+      { url: "/brand/favicon-16-v4.png", type: "image/png", sizes: "16x16" },
+      { url: "/brand/favicon-32-v4.png", type: "image/png", sizes: "32x32" }
     ],
-    shortcut: "/brand/favicon-v3.ico",
+    shortcut: "/brand/favicon-v4.ico",
     apple: { url: "/brand/apple-touch-icon-v3.png", sizes: "180x180", type: "image/png" }
   }
 };

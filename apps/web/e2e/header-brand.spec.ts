@@ -95,7 +95,8 @@ async function header(page: Page, width: number, locale: Locale) {
     await expect(root.locator(".site-logo")).toBeHidden();
     await expect(account).toBeHidden();
     await expect(root.locator(".cart-link")).toBeHidden();
-    await expect(location.locator(".delivery-address-trigger__city")).toHaveText(t("Душанбе"));
+    await expect(location.locator(".delivery-address-trigger__city")).toHaveCount(0);
+    await expect(location.locator(".delivery-address-trigger__brand")).toBeVisible();
     const navigation = page.locator(".mobile-navigation");
     await expect(navigation.getByRole("link", { name: t("Корзина"), exact: true })).toBeVisible();
     await expect(navigation.getByRole("link", { name: t("Профиль"), exact: true })).toHaveAttribute("href", "/account");
@@ -176,18 +177,18 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) for (const locale of 
 
 test("v3 metadata and binary ICO, PNG and WebP assets are valid", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator('link[rel="icon"]')).toHaveCount(2);
-  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
-  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("href", "/brand/icon-v3.png");
-  await expect(page.locator('link[rel="icon"][type="image/png"]')).toHaveAttribute("sizes", "512x512");
-  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v3.ico");
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(3);
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
+  await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
+  await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute("href", "/brand/favicon-16-v4.png");
+  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", "https://dushanbefresh.tj/brand/og-v3.png");
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
   await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", "https://dushanbefresh.tj/brand/og-v3.png");
   await noOldBrandReferences(page);
 
-  const favicon = await page.request.get("/brand/favicon-v3.ico");
+  const favicon = await page.request.get("/brand/favicon-v4.ico");
   expect(favicon.ok()).toBe(true);
   const ico = await favicon.body();
   expect(ico.readUInt16LE(0)).toBe(0);

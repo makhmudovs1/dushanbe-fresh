@@ -67,7 +67,7 @@ export function CategorySidebar({ categories, active, onNavigate, onRetry, categ
       }}>
         <span className="category-menu-icon"><LayoutGrid size={20} aria-hidden="true" /></span><span>{t("Все продукты")}</span></Link>
       {!categoryScreen ? <Link href="/favorites" className={pathname === "/favorites" ? "is-active" : ""} onClick={onNavigate}>
-        <span className="category-menu-icon"><Heart size={20} aria-hidden="true" /></span><span>{t("Избранное")}</span></Link> : null}
+        <span className="category-menu-icon category-menu-icon--favorite"><Heart size={24} fill="currentColor" aria-hidden="true" /></span><span>{t("Избранное")}</span></Link> : null}
     </nav>
     {categories === null ? <div className="category-load-error"><p role="status">{t("Не удалось загрузить категории. Попробуйте ещё раз.")}</p>
       <button type="button" className="secondary-link" onClick={onRetry ?? (() => router.refresh())}>{t("Повторить")}</button></div> :

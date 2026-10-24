@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryArtwork, homeCategorySections, homeBanners, homePromotionBanners, mobileHomeCategories } from "./storefront";
+import { categoryArtwork, hasPriceDrop, homeCategorySections, homeBanners, homePromotionBanners, mobileHomeCategories } from "./storefront";
 import { translate } from "@/i18n/locale";
 import type { Category } from "./api";
 
@@ -7,6 +7,12 @@ const category = (slug: string, sortOrder = 0, extra: Partial<Category> = {}): C
 const products = (...ids: string[]) => ids.map(id => ({ category: { id, slug: id, name: id } }));
 
 describe("storefront configuration", () => {
+  it("offers discounts only when the real previous price is higher", () => {
+    expect(hasPriceDrop({ sellingPrice: "7", priceDrop: { oldPrice: "9", discountPercent: 22 } })).toBe(true);
+    expect(hasPriceDrop({ sellingPrice: "7", priceDrop: null })).toBe(false);
+    expect(hasPriceDrop({ sellingPrice: "7", priceDrop: { oldPrice: "7", discountPercent: 10 } })).toBe(false);
+    expect(hasPriceDrop({ sellingPrice: "7", priceDrop: { oldPrice: "6", discountPercent: 10 } })).toBe(false);
+  });
   it("keeps mobile roots and populated child selections separate without repeated tiles", () => {
     const categories = [category("fruit", 10), category("vegetables", 0), category("child", 0, { parentId: "vegetables" }), category("empty", 0, { parentId: "vegetables" })];
     const result = mobileHomeCategories(categories, products("fruit", "child"));

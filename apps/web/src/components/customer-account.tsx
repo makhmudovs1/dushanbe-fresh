@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CustomerOrderSummary, SavedAddress, SavedAddressInput } from "@dushanbe-fresh/shared";
 import { Plus, Pencil, Trash2, LogOut, Heart, Clock3, MapPin, Settings2, ChevronRight, ArrowLeft, LockKeyhole } from "lucide-react";
@@ -19,11 +20,13 @@ export function CustomerAccount() {
   return <CustomerAccountContent key={user?.id ?? "guest"} />;
 }
 function CustomerAccountContent() {
+  const params = useSearchParams();
   const customer = useCustomer();
   const delivery = useDeliveryAddress();
   const { t, name, locale } = useI18n();
   const cart = useCart();
-  const [tab, setTab] = useState<"overview" | "orders" | "addresses" | "profile">("overview");
+  const [tab, setTab] = useState<"overview" | "orders" | "addresses" | "profile">(() => params?.get("section") === "orders" ? "orders" : "overview");
+  useEffect(() => { if (params?.get("section") === "orders") setTab("orders"); }, [params]);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [orders, setOrders] = useState<CustomerOrderSummary[]>([]);
   const [editor, setEditor] = useState<(SavedAddressInput & { id?: string }) | null>(null);

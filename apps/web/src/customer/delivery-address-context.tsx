@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import Image from "next/image";
 import { ArrowLeft, ChevronDown, ChevronRight, MapPin, PencilLine, Search } from "lucide-react";
 import type { AddressInput, SavedAddress } from "@dushanbe-fresh/shared";
 import { AddressFields, AddressMap, emptyAddress } from "@/components/address-fields";
@@ -135,14 +136,15 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
 }
 
 // Optional drop-in header control; no header/layout edits are required by this module.
-export function DeliveryAddressTrigger({ className = "", eyebrow = "Душанбе" }: { className?: string; eyebrow?: string }) {
+export function DeliveryAddressTrigger({ className = "", eyebrow = "Душанбе", brandMark = false }: { className?: string; eyebrow?: string; brandMark?: boolean }) {
   const delivery = useDeliveryAddress();
   const { t } = useI18n();
   if (!delivery) return null;
   const label = delivery.addressLabel || t("Указать адрес доставки");
   return <button type="button" className={`delivery-address-trigger ${className}`} disabled={!delivery.ready}
-    aria-haspopup="dialog" aria-label={`${t("Адрес доставки")}: ${label}`} title={label} onClick={() => delivery.openAddress()}>
-    <MapPin size={18} aria-hidden="true" /><span className="delivery-address-trigger__text"><span className="delivery-address-trigger__city">{t(eyebrow)}</span><span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
+    aria-haspopup="dialog" aria-label={`${t("Адрес доставки")}: ${label}`} title={label} onClick={event => { event.currentTarget.focus({ preventScroll: true }); delivery.openAddress(); }}>
+    {brandMark ? <Image className="delivery-address-trigger__brand" src="/brand/mark-v3.webp" width={36} height={36} alt="" /> : <MapPin size={18} aria-hidden="true" />}
+    <span className="delivery-address-trigger__text">{eyebrow ? <span className="delivery-address-trigger__city">{t(eyebrow)}</span> : null}<span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
   </button>;
 }
 
@@ -170,7 +172,12 @@ function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConf
   useEffect(() => {
     const form = mobileBody.current;
     form?.closest(".catalog-dialog__body")?.scrollTo(0, 0);
-    if (stage === "choose") form?.querySelector<HTMLInputElement>("input[type=search]")?.focus({ preventScroll: true });
+    if (stage === "choose") {
+      const target = matchMedia("(max-width: 1023px)").matches
+        ? form?.closest("dialog")?.querySelector<HTMLElement>(".catalog-dialog__header h2")
+        : form?.querySelector<HTMLInputElement>("input[type=search]");
+      target?.focus({ preventScroll: true });
+    }
     else form?.querySelector<HTMLElement>("[data-stage-heading]")?.focus({ preventScroll: true });
   }, [stage]);
 
@@ -225,7 +232,7 @@ function DeliveryAddressModal({ initial, addresses, savedStatus, onClose, onConf
     setStage("map");
   }
 
-  return <CustomerDialog title={t("Адрес доставки")} busy={saving} onClose={onClose} className="customer-address-flow">
+  return <CustomerDialog title={t("Адрес доставки")} busy={saving} onClose={onClose} className="customer-address-flow" focusTitleOnMobile>
     <form ref={mobileBody} className="delivery-address-form" data-address-stage={stage} onSubmit={event => {
       event.preventDefault();
       const value = parseDeliveryAddress(address);

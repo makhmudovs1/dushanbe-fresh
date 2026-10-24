@@ -1,6 +1,10 @@
 import { categoryDescendantIds, visibleCategoryTree } from "@dushanbe-fresh/shared";
 import type { Category, Product } from "./api";
 
+export function hasPriceDrop(product: Pick<Product, "priceDrop" | "sellingPrice">) {
+  return Boolean(product.priceDrop && product.priceDrop.discountPercent > 0 && Number(product.priceDrop.oldPrice) > Number(product.sellingPrice));
+}
+
 export function mobileHomeCategories(categories: Category[], products: Pick<Product, "category">[]) {
   const visible = visibleCategoryTree(categories);
   const populated = visible.filter(category => {
