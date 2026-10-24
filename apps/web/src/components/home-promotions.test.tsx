@@ -15,5 +15,10 @@ describe("home promotion layout", () => {
     expect(html.match(/<li>/g)).toHaveLength(3);
     expect(html).toContain("Доставка по Душанбе");
     expect(html).toContain("Бережная сборка заказа");
+    expect(html).toContain(encodeURIComponent("/storefront/home/care-v1.webp"));
+    expect(html).toContain("Продукты с заботой");
+    expect(html).toContain("Доставляем свежесть по Душанбе");
+    expect(html).toMatch(/<a(?=[^>]*href="\/catalog")(?=[^>]*tabindex="-1")[^>]*>/i);
+    expect(html.match(/class="promotion-banner promotion-banner--/g)).toHaveLength(3);
   });
 });

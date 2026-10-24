@@ -18,10 +18,6 @@
   .site-header .header-location--desktop { display: none; }
   .site-header .header-brand .brand-logo { display: none; }
   .site-header--compact { top: calc(-54px - env(safe-area-inset-top, 0px)); }
-  .site-header--compact .header-brand, .site-header--compact .site-nav, .site-header--compact > .language-switcher { visibility: hidden; }
-  .site-header--compact:has(dialog[open]) > .language-switcher { visibility: visible; }
-  .site-header--compact .header-search { grid-area: 2 / 1 / 3 / 3; border-radius: 24px; }
-  .site-header--compact .header-scroll-brand { display: grid; place-items: center; grid-area: 2 / 3; width: 44px; height: 44px; border-radius: 50%; background: #f3f5f4; }
   .site-header--cart { display: none; }
   .mobile-navigation { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .mobile-navigation__count { background: #c83d36; }

@@ -9,13 +9,13 @@ test("v3 bitmap wordmark, transparent artwork, favicon and bounded products afte
   await page.goto("/");
   await expect(page.locator(".site-logo")).toHaveAttribute("aria-label", "Dushanbe Fresh");
   await expect(page.locator(".brand-logo__initial")).toHaveCount(0);
-  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
-  await expect(page.locator('link[rel="icon"][type="image/png"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
-  const icon = await (await page.request.get("/brand/favicon-v4.ico")).body();
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v5.ico");
+  await expect(page.locator('link[rel="icon"][type="image/png"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v5.png");
+  const icon = await (await page.request.get("/brand/favicon-v5.ico")).body();
   expect(icon.readUInt16LE(0)).toBe(0);
   expect(icon.readUInt16LE(2)).toBe(1);
   expect(icon.readUInt16LE(4)).toBeGreaterThan(1);
-  const apple = await (await page.request.get("/brand/apple-touch-icon-v3.png")).body();
+  const apple = await (await page.request.get("/brand/apple-touch-icon-v5.png")).body();
   expect(apple.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
   expect(apple.readUInt32BE(16)).toBe(180); expect(apple.readUInt32BE(20)).toBe(180);
   const image = page.locator(".site-logo img");

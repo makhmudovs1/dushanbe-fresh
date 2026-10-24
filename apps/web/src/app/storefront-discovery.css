@@ -21,7 +21,7 @@
 
 @media (max-width: 1023px) {
   .site-header .header-location--mobile { gap: 10px; padding: 0; min-height: 44px; }
-  .delivery-address-trigger__brand { display: block; flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; }
+  .delivery-address-trigger__brand { display: block; flex: 0 0 108px; width: 108px; height: 38px; object-fit: contain; }
   .site-header .header-location--mobile .delivery-address-trigger__city { display: none; }
   .site-header .header-location--mobile .delivery-address-trigger__address { font-size: 14px; font-weight: 600; line-height: 19px; }
   .home-benefits { display: none; }

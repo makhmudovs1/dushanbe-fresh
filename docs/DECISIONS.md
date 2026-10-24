@@ -1005,3 +1005,23 @@
 - Browser favicons have explicit 16/32px PNGs and a versioned v4 ICO URL instead of
   relying on a single 512px PNG choice. OS/browser tab caches and icon visibility
   preferences cannot be forcibly reset by site code.
+
+## 2026-10-24: Care Banner and Mobile Brand Transition
+
+- Rotate only the primary vegetable banner, not the three-banner home mosaic.
+  The supplied text-free grocery-bag photograph is optimized to WebP. Copy is
+  ordinary localized HTML: RU/TJ heading, delivery subtitle and catalog CTA.
+- Native horizontal scroll-snap provides swiping. Six-second automatic rotation
+  pauses for focus/hover, manual interaction, background tabs and reduced motion.
+  Manual controls and a pause/resume button remain available.
+- Mobile uses the full supplied wordmark in the address trigger. Search reserves
+  a permanent 44px slot on its left for the compact capital/heart; the two header
+  rows crossfade/translate over 240ms without changing search width. Reduced
+  motion disables these transitions. Desktop header layout is unchanged.
+- The explicit request for a full-logo favicon supersedes the earlier compact
+  favicon decision. v5 ICO/16px/32px PNG, Apple and root fallbacks contain the
+  original full wordmark, fitted without distortion on white. The compact mark
+  remains for the scrolling header. A full name is inherently less legible at
+  16px; Safari's existing UI preferences and OS icon cache cannot be forced.
+- Ship Web only. No API/auth enablement, migrations, catalog writes, checkout
+  submissions, SMS sends or production environment edits are required.

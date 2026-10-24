@@ -143,7 +143,7 @@ export function DeliveryAddressTrigger({ className = "", eyebrow = "Душанб
   const label = delivery.addressLabel || t("Указать адрес доставки");
   return <button type="button" className={`delivery-address-trigger ${className}`} disabled={!delivery.ready}
     aria-haspopup="dialog" aria-label={`${t("Адрес доставки")}: ${label}`} title={label} onClick={event => { event.currentTarget.focus({ preventScroll: true }); delivery.openAddress(); }}>
-    {brandMark ? <Image className="delivery-address-trigger__brand" src="/brand/mark-v3.webp" width={36} height={36} alt="" /> : <MapPin size={18} aria-hidden="true" />}
+    {brandMark ? <Image className="delivery-address-trigger__brand" src="/brand/wordmark-v3.webp" width={108} height={38} alt="Dushanbe Fresh" priority /> : <MapPin size={18} aria-hidden="true" />}
     <span className="delivery-address-trigger__text">{eyebrow ? <span className="delivery-address-trigger__city">{t(eyebrow)}</span> : null}<span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
   </button>;
 }

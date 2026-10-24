@@ -54,7 +54,7 @@ export function SiteHeader() {
       <button className="header-catalog-trigger" type="button" aria-label={t("Открыть каталог")} title={t("Открыть каталог")}
         aria-expanded={drawer} onClick={() => void openCatalog()}><Menu size={21} aria-hidden="true" /></button>
       <CatalogSearch />
-      <Link href="/" className="header-scroll-brand" aria-label="Dushanbe Fresh"><Image src="/brand/mark-v3.webp" width={32} height={32} alt="" /></Link>
+      <Link href="/" className="header-scroll-brand" aria-label="Dushanbe Fresh" tabIndex={compact ? 0 : -1} aria-hidden={!compact}><Image src="/brand/mark-v3.webp" width={32} height={32} alt="" /></Link>
       <DeliveryLocation />
       <LanguageSwitcher />
       <nav className="site-nav" aria-label={t("Основная навигация")}>

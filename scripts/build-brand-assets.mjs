@@ -129,17 +129,17 @@ function iconDib(rgba, size) {
   return result;
 }
 
-async function favicon(sizes) {
+async function favicon(sizes, artwork = mark) {
   const frames = [];
   for (const size of sizes) {
-    const raster = sharp(mark).flatten({ background: white }).resize(size, size).ensureAlpha();
+    const raster = sharp(artwork).flatten({ background: white }).resize(size, size).ensureAlpha();
     const pixels = await raster.clone().raw().toBuffer();
     let darkPixels = 0; let redPixels = 0;
     for (let offset = 0; offset < pixels.length; offset += 4) {
       if (pixels[offset] < 200 && pixels[offset + 1] < 200 && pixels[offset + 2] < 200) darkPixels++;
       if (red(pixels[offset], pixels[offset + 1], pixels[offset + 2])) redPixels++;
     }
-    assert(darkPixels > 10 && redPixels > 0, `Both capital and heart must survive at ${size}px`);
+    assert(darkPixels > 10 && (artwork !== mark || redPixels > 0), `Logo must survive at ${size}px`);
     frames.push(size <= 48 ? iconDib(pixels, size) : await raster.png(pngOptions).toBuffer());
   }
   const directory = Buffer.alloc(6 + sizes.length * 16);
@@ -158,6 +158,9 @@ async function favicon(sizes) {
 }
 
 const ico = await favicon([16, 32, 48]);
+const fullIcon = await sharp({ create: { width: 512, height: 512, channels: 3, background: white } })
+  .composite([{ input: await sharp(wordmark).resize({ width: 504 }).png(pngOptions).toBuffer(), gravity: "centre" }]).png(pngOptions).toBuffer();
+const fullIco = await favicon([16, 32, 48], fullIcon);
 // Older v2 consumers expect six entries; retain that container contract with the new bitmap.
 const legacyIco = await favicon([16, 32, 48, 64, 128, 256]);
 const outputs = new Map();
@@ -175,9 +178,15 @@ add("brand/favicon-v3.ico", ico);
 add("brand/favicon-v4.ico", ico);
 add("brand/favicon-16-v4.png", await sharp(mark).flatten({ background: white }).resize(16, 16).png(pngOptions).toBuffer(), 16, 16);
 add("brand/favicon-32-v4.png", await sharp(mark).flatten({ background: white }).resize(32, 32).png(pngOptions).toBuffer(), 32, 32);
-add("favicon.ico", ico);
-add("icon.png", icon, 512, 512);
-add("apple-touch-icon.png", apple, 180, 180);
+add("brand/favicon-v5.ico", fullIco);
+for (const size of [16, 32]) add(`brand/favicon-${size}-v5.png`, await sharp(fullIcon).resize(size, size).png(pngOptions).toBuffer(), size, size);
+add("brand/icon-v5.png", fullIcon, 512, 512);
+add("brand/apple-touch-icon-v5.png", await sharp(fullIcon).resize(180, 180).png(pngOptions).toBuffer(), 180, 180);
+add("brand/pwa-192-v5.png", await sharp(fullIcon).resize(192, 192).png(pngOptions).toBuffer(), 192, 192);
+add("brand/pwa-512-v5.png", fullIcon, 512, 512);
+add("favicon.ico", fullIco);
+add("icon.png", fullIcon, 512, 512);
+add("apple-touch-icon.png", await sharp(fullIcon).resize(180, 180).png(pngOptions).toBuffer(), 180, 180);
 add("brand/mark-v2.webp", await sharp(mark).resize(128, 128).webp({ lossless: true, effort: 6 }).toBuffer(), 128, 128);
 add("brand/icon-v2.png", icon, 512, 512);
 add("brand/apple-touch-icon-v2.png", apple, 180, 180);

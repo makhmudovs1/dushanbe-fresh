@@ -178,17 +178,17 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) for (const locale of 
 test("v3 metadata and binary ICO, PNG and WebP assets are valid", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('link[rel="icon"]')).toHaveCount(3);
-  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
-  await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v4.png");
-  await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute("href", "/brand/favicon-16-v4.png");
-  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
-  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v3.png");
+  await expect(page.locator('link[rel="icon"][type="image/x-icon"]')).toHaveAttribute("href", "/brand/favicon-v5.ico");
+  await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute("href", "/brand/favicon-32-v5.png");
+  await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute("href", "/brand/favicon-16-v5.png");
+  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v5.ico");
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/brand/apple-touch-icon-v5.png");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", "https://dushanbefresh.tj/brand/og-v3.png");
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
   await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", "https://dushanbefresh.tj/brand/og-v3.png");
   await noOldBrandReferences(page);
 
-  const favicon = await page.request.get("/brand/favicon-v4.ico");
+  const favicon = await page.request.get("/brand/favicon-v5.ico");
   expect(favicon.ok()).toBe(true);
   const ico = await favicon.body();
   expect(ico.readUInt16LE(0)).toBe(0);
@@ -218,7 +218,7 @@ test("v3 metadata and binary ICO, PNG and WebP assets are valid", async ({ page 
   }
   expect(sizes).toEqual(expect.arrayContaining([16, 32, 48]));
 
-  for (const [path, width, height] of [["/brand/icon-v3.png", 512, 512], ["/brand/apple-touch-icon-v3.png", 180, 180], ["/brand/og-v3.png", 1200, 630]] as const) {
+  for (const [path, width, height] of [["/brand/icon-v5.png", 512, 512], ["/brand/apple-touch-icon-v5.png", 180, 180], ["/brand/og-v3.png", 1200, 630]] as const) {
     const response = await page.request.get(path);
     expect(response.ok()).toBe(true);
     expect(response.headers()["content-type"]).toContain("image/png");

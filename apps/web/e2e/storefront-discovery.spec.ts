@@ -51,7 +51,7 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
       await expect(shortcuts.getByRole("link", { name: t("Любимое"), exact: true })).toHaveAttribute("href", "/favorites");
       const mark = page.locator(".header-location--mobile .delivery-address-trigger__brand");
       await expect(mark).toBeVisible();
-      await expect(mark).toHaveAttribute("src", /mark-v3/);
+      await expect(mark).toHaveAttribute("src", /wordmark-v3/);
       await expect(page.locator(".header-location--mobile .delivery-address-trigger__city")).toHaveCount(0);
       await expect(page.locator(".header-location--mobile .lucide-map-pin")).toHaveCount(0);
       await noOverflow(page);
@@ -146,7 +146,7 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
 test("tab icons provide explicit small PNGs and a fresh ICO URL", async ({ page }) => {
   await page.goto("/");
   for (const size of [16, 32]) {
-    const href = `/brand/favicon-${size}-v4.png`;
+    const href = `/brand/favicon-${size}-v5.png`;
     await expect(page.locator(`link[rel="icon"][sizes="${size}x${size}"]`)).toHaveAttribute("href", href);
     const response = await page.request.get(href);
     expect(response.ok()).toBe(true);
@@ -167,5 +167,5 @@ test("tab icons provide explicit small PNGs and a fresh ICO URL", async ({ page 
       return dark > 5 && red > 0;
     }, href)).toBe(true);
   }
-  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v4.ico");
+  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute("href", "/brand/favicon-v5.ico");
 });
