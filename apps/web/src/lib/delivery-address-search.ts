@@ -1,4 +1,4 @@
-import { ADDRESS_QUERY_MAX, ADDRESS_QUERY_MIN, ADDRESS_SEARCH_LIMIT, CityBounds, DELIVERY_CITY, DUSHANBE_BOUNDS, hasAddressControlCharacters, isWithinDeliveryBounds, parseCityBounds, parseDeliveryAddress, type AddressSuggestion } from "./delivery-address";
+import { ADDRESS_QUERY_MAX, ADDRESS_QUERY_MIN, ADDRESS_SEARCH_LIMIT, CityBounds, DELIVERY_CITY, DUSHANBE_BOUNDS, WORLD_BOUNDS, hasAddressControlCharacters, isWithinDeliveryBounds, parseCityBounds, parseDeliveryAddress, type AddressSuggestion } from "./delivery-address";
 import type { AddressInput } from "@dushanbe-fresh/shared";
 
 export const ADDRESS_SEARCH_TIMEOUT_MS = 4000;
@@ -8,7 +8,7 @@ export type AddressLanguage = "ru" | "tg";
 
 export function parseAddressLanguage(value: unknown): AddressLanguage { return value === "tg" ? "tg" : "ru"; }
 
-export function parseAddressPoint(value: unknown, bounds: CityBounds): AddressPoint | null {
+export function parseAddressPoint(value: unknown, bounds: CityBounds = WORLD_BOUNDS): AddressPoint | null {
   if (!value || typeof value !== "object") return null;
   const { latitude, longitude } = value as Record<string, unknown>;
   if (typeof latitude !== "number" || typeof longitude !== "number" || !isWithinDeliveryBounds({ latitude, longitude }, bounds)) return null;
@@ -132,15 +132,15 @@ export async function searchDeliveryAddresses(query: string, config: AddressSear
   finally { clearTimeout(timeout); signal?.removeEventListener("abort", abort); }
 }
 
-export function parseGeoapifyAddresses(value: unknown, bounds: CityBounds, addressesOnly = false): AddressSuggestion[] | null {
+export function parseGeoapifyAddresses(value: unknown, bounds: CityBounds, addressesOnly = false, cityOnly = true): AddressSuggestion[] | null {
   if (!value || typeof value !== "object" || !Array.isArray((value as { results?: unknown }).results)) return null;
   const items = (value as { results: unknown[] }).results.slice(0, 100).flatMap(item => {
     if (!item || typeof item !== "object") return [];
     const row = item as Record<string, unknown>;
     // A named park/shop may match the query but sit on a completely different street.
     if (addressesOnly && row.result_type !== undefined && !["street", "building"].includes(String(row.result_type))) return [];
-    if (typeof row.country_code !== "string" || row.country_code.toLowerCase() !== "tj" || typeof row.city !== "string"
-      || !["dushanbe", "душанбе", "dushanbe city", "шаҳри душанбе", "город душанбе"].includes(row.city.trim().toLowerCase())) return [];
+    if (cityOnly && (typeof row.country_code !== "string" || row.country_code.toLowerCase() !== "tj" || typeof row.city !== "string"
+      || !["dushanbe", "душанбе", "dushanbe city", "шаҳри душанбе", "город душанбе"].includes(row.city.trim().toLowerCase()))) return [];
     const description = [row.suburb || row.district, row.city].filter(part => typeof part === "string").join(", ");
     return [{ street: row.street, building: row.housenumber ?? "", lat: row.lat, lng: row.lon, description }];
   });
@@ -165,8 +165,8 @@ async function requestGeoapify(operation: "autocomplete" | "reverse", params: Re
 }
 
 export async function reverseDeliveryAddress(point: AddressPoint, config: AddressSearchConfig, signal?: AbortSignal, language: AddressLanguage = "ru"): Promise<AddressInput[] | null> {
-  if (config.provider !== "geoapify" || !parseAddressPoint(point, config.bounds)) return null;
+  if (config.provider !== "geoapify" || !parseAddressPoint(point)) return null;
   const data = await requestGeoapify("reverse", { lat: String(point.latitude), lon: String(point.longitude), lang: language, limit: "1" }, config, signal);
   // The nearest mapped building may differ from the explicitly chosen entrance.
-  return parseGeoapifyAddresses(data, config.bounds)?.map(address => ({ ...address, ...point })) ?? null;
+  return parseGeoapifyAddresses(data, WORLD_BOUNDS, false, false)?.map(address => ({ ...address, ...point })) ?? null;
 }

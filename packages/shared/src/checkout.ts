@@ -8,7 +8,7 @@ export type CheckoutItemInput = {
   observedPrice?: string;
 };
 
-export type CheckoutInput = { items: CheckoutItemInput[]; deliverySlotId: string };
+export type CheckoutInput = { items: CheckoutItemInput[]; deliverySlotId: string; address?: AddressInput };
 export const slotUnavailableLabels = {
   capacity_full: "Мест больше нет",
   cutoff_passed: "Время заказа прошло",

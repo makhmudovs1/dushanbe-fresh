@@ -10,5 +10,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "build": "tsc -p tsconfig.build.json && node -e \"require('./dist/index.js')\""
+  },
+  "dependencies": {
+    "@turf/area": "7.4.0",
+    "@turf/boolean-point-in-polygon": "7.4.0",
+    "@turf/clean-coords": "7.4.0",
+    "@turf/kinks": "7.4.0"
   }
 }

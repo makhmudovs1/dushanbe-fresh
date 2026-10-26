@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const config = addressSearchConfig(process.env);
   let input: unknown;
   try { input = await readBoundedJson(request.body, 2048); } catch { return reply({ status: "invalid", items: [] }, 400); }
-  const point = parseAddressPoint(input, config.bounds);
+  const point = parseAddressPoint(input);
   if (!point) return reply({ status: "invalid", items: [] }, 400);
   if (config.provider !== "geoapify") return reply({ status: "unavailable", items: [] });
   const release = reserveAddressRequest();

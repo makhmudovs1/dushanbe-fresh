@@ -41,7 +41,7 @@ export function parseCheckout(value: unknown): CheckoutInput {
     }
     return { productId, qualityOptionId, quantity, observedPrice: observedPrice as string | undefined };
   });
-  return { items, deliverySlotId: text(body.deliverySlotId, "Окно доставки", 100) };
+  return { items, deliverySlotId: text(body.deliverySlotId, "Окно доставки", 100), ...(body.address === undefined ? {} : { address: parseAddress(body.address) }) };
 }
 
 export function parseCreateOrder(value: unknown): CreateOrderInput {

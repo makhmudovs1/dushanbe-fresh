@@ -63,7 +63,8 @@ export function CheckoutContent() {
   const [policy, setPolicy] = useState<SubstitutionPolicy>("contact_me");
   const inputKey = JSON.stringify({
     items: state.items.map(item => ({ productId: item.productId, quantity: item.quantity,
-      qualityOptionId: item.qualityOptionId ?? null, observedPrice: item.sellingPrice })), deliverySlotId
+      qualityOptionId: item.qualityOptionId ?? null, observedPrice: item.sellingPrice })), deliverySlotId,
+    ...(parseDeliveryAddress(currentAddress) ? { address: currentAddress } : {})
   } satisfies CheckoutInput);
 
   async function loadSlots() {

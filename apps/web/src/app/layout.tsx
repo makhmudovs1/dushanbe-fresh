@@ -1,5 +1,6 @@
 import "./styles.css";
 import "leaflet/dist/leaflet.css";
+import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";

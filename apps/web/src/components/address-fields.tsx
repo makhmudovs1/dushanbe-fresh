@@ -3,14 +3,14 @@ import { useId, useState } from "react";
 import { MapPin, LocateFixed, X } from "lucide-react";
 import type { AddressInput } from "@dushanbe-fresh/shared";
 import { useI18n } from "@/i18n/provider";
-import { DUSHANBE_BOUNDS, type CityBounds } from "@/lib/delivery-address";
+import { WORLD_BOUNDS, type CityBounds } from "@/lib/delivery-address";
 import { AddressPicker } from "./address-picker";
 import { useDeliveryGeolocation } from "./use-delivery-geolocation";
 
 export { emptyAddress } from "@/lib/delivery-address";
 
 
-export function AddressFields({ value, onChange, fields = "all", onChooseMap, bounds = DUSHANBE_BOUNDS }: {
+export function AddressFields({ value, onChange, fields = "all", onChooseMap, bounds = WORLD_BOUNDS }: {
   value: AddressInput; onChange: (address: AddressInput) => void;
   fields?: "all" | "street" | "details"; onChooseMap?: () => void; bounds?: CityBounds;
 }) {

@@ -10,8 +10,9 @@ export const ADDRESS_SEARCH_LIMIT = 6;
 export const ADDRESS_QUERY_MIN = 3;
 export const ADDRESS_QUERY_MAX = 150;
 export type CityBounds = readonly [west: number, south: number, east: number, north: number];
-// Approximate Dushanbe search/selector envelope, NOT an authoritative delivery polygon.
+// Search focus only. The administrator's delivery polygon is a separate setting.
 export const DUSHANBE_BOUNDS: CityBounds = [68.65, 38.45, 68.90, 38.68];
+export const WORLD_BOUNDS: CityBounds = [-180, -90, 180, 90];
 export const DELIVERY_CITY = "Dushanbe";
 const limits = { street: 150, building: 30, apartment: 30, entrance: 30, floor: 30, instructions: 500 } as const;
 export function hasAddressControlCharacters(value: string): boolean {

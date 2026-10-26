@@ -1,13 +1,15 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, Bookmark, BriefcaseBusiness, Check, ChevronRight, Home, LoaderCircle, MapPin, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Bookmark, BriefcaseBusiness, Check, ChevronRight, Home, LoaderCircle, MapPin, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { checkDeliveryZone, deliveryZoneMessages } from "@dushanbe-fresh/shared";
 import type { AddressInput, SavedAddress } from "@dushanbe-fresh/shared";
 import { useI18n } from "@/i18n/provider";
-import { ADDRESS_QUERY_MIN, ADDRESS_QUERY_MAX, ADDRESS_SEARCH_LIMIT, deliveryAddressLabel, DUSHANBE_BOUNDS, emptyAddress, isWithinDeliveryBounds, parseAddressSuggestion, parseCityBounds, parseDeliveryAddress, type AddressSuggestion, type CityBounds } from "@/lib/delivery-address";
+import { ADDRESS_QUERY_MIN, ADDRESS_QUERY_MAX, ADDRESS_SEARCH_LIMIT, deliveryAddressLabel, DUSHANBE_BOUNDS, WORLD_BOUNDS, emptyAddress, isWithinDeliveryBounds, parseAddressSuggestion, parseCityBounds, parseDeliveryAddress, type AddressSuggestion, type CityBounds } from "@/lib/delivery-address";
 import { AddressMapCanvas, type DeliveryPoint } from "./address-map-canvas";
 import { CustomerDialog } from "./customer-dialog";
 import { useReverseAddress } from "./use-reverse-address";
 import { useDeliveryGeolocation } from "./use-delivery-geolocation";
+import { useDeliveryZone } from "./use-delivery-zone";
 
 export type AddressMetadata = { id?: string; label: SavedAddress["label"]; isDefault?: boolean };
 const labels = [{ value: "home", text: "Дом", Icon: Home }, { value: "work", text: "Работа", Icon: BriefcaseBusiness }, { value: "other", text: "Другое", Icon: Bookmark }] as const;
@@ -31,8 +33,9 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
   const [search, setSearch] = useState<{ status: "idle" | "loading" | "ready" | "error"; items: AddressSuggestion[] }>({ status: "idle", items: [] });
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const reverse = useReverseAddress(address, config.bounds, view === "map" && source === "map" && !moving);
-  const gps = useDeliveryGeolocation(changePoint, config.bounds);
+  const delivery = useDeliveryZone();
+  const reverse = useReverseAddress(address, WORLD_BOUNDS, view === "map" && source === "map" && !moving);
+  const gps = useDeliveryGeolocation(changePoint, WORLD_BOUNDS);
   const cancelLocation = gps.cancel;
   useEffect(() => { if (view !== "map") cancelLocation(); }, [view, cancelLocation]);
 
@@ -84,7 +87,10 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
   }
   function edit(item: SavedAddress) { setAddress(item); setMetadata({ id: item.id, label: item.label, isDefault: item.isDefault }); setView("details"); }
   function add() { setAddress({ ...emptyAddress }); setMetadata({ label: "home" }); setQuery(""); setDirty(false); setSource("manual"); setView("map"); }
-  const validPoint = isWithinDeliveryBounds(address, config.bounds);
+  const zoneResult = delivery.zone ? checkDeliveryZone(delivery.zone, address) : null;
+  const validPoint = delivery.status === "ready" && zoneResult === "allowed";
+  const zoneError = delivery.status === "unavailable" ? deliveryZoneMessages.unavailable : zoneResult && zoneResult !== "allowed" ? deliveryZoneMessages[zoneResult] : "";
+  const zoneNotice = <>{zoneError ? <p className="address-zone-error" role="alert">{t(zoneError)}{delivery.status === "unavailable" ? <button type="button" className="catalog-icon-action" title={t("Повторить")} aria-label={t("Повторить")} onClick={delivery.refresh}><RefreshCw size={18} /></button> : null}</p> : null}</>;
   const showResults = open && dirty && query.trim().length >= ADDRESS_QUERY_MIN;
   const title = view === "saved" ? "Выберите адрес" : view === "details" ? metadata.id ? "Изменить адрес" : "Детали адреса" : "Куда доставить?";
 
@@ -94,11 +100,15 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
       {addresses.map(item => {
         const Icon = labels.find(label => label.value === item.label)?.Icon ?? Bookmark;
         return <div className="address-book__item" key={item.id}>
-          <button className="address-book__row" type="button" disabled={busy} onClick={() => onSelect(item)}><Icon size={21} /><span><strong>{t(labels.find(label => label.value === item.label)?.text ?? "Другое")}</strong><small>{deliveryAddressLabel(item)}{item.apartment ? `, ${t("Квартира")} ${item.apartment}` : ""}</small></span></button>
+          <button className="address-book__row" type="button" disabled={busy || delivery.status !== "ready"} onClick={() => {
+            if (delivery.zone && checkDeliveryZone(delivery.zone, item) === "allowed") onSelect(item);
+            else { edit(item); setQuery(deliveryAddressLabel(item)); setDirty(false); setView("map"); }
+          }}><Icon size={21} /><span><strong>{t(labels.find(label => label.value === item.label)?.text ?? "Другое")}</strong><small>{deliveryAddressLabel(item)}{item.apartment ? `, ${t("Квартира")} ${item.apartment}` : ""}</small></span></button>
           <button className="address-book__edit" type="button" title={t("Изменить адрес")} aria-label={`${t("Изменить адрес")}: ${deliveryAddressLabel(item)}`} onClick={() => edit(item)}><Pencil size={18} /></button>
         </div>;
       })}
       {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
+      {delivery.status === "unavailable" ? zoneNotice : null}
     </div> : view === "map" ? <div className="address-picker__selection">
       <div className="address-search-bar">
         {addresses.length ? <button type="button" className="address-picker__back" title={t("Мои адреса")} aria-label={t("Мои адреса")} onClick={() => setView("saved")}><ArrowLeft size={20} /></button> : <Search size={21} aria-hidden="true" />}
@@ -119,11 +129,12 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
           {config.geoapify && search.items.length ? <small className="address-suggestions__credit"><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a></small> : null}
         </div> : null}
       </div>
-      <AddressMapCanvas point={address} bounds={config.bounds} onChange={changePoint} onMoving={setMoving} onLocate={gps.locate} onInteraction={cancelLocation} locating={gps.locating} locationError={gps.error} />
+      <AddressMapCanvas point={address} zone={delivery.zone} onChange={changePoint} onMoving={setMoving} onLocate={gps.locate} onInteraction={cancelLocation} locating={gps.locating} locationError={gps.error} />
       <footer className="address-picker__footer">
-        <div className="address-picker__selected"><MapPin size={20} /><span><strong>{dirty ? query || t("Выберите точку на карте") : moving ? t("Выберите точку на карте") : deliveryAddressLabel(address) || t("Уточните улицу и номер дома")}</strong><small>{t("Душанбе")}</small></span>
+        {delivery.zone?.enabled && !moving && address.latitude != null ? <p className={`address-zone-status${zoneResult === "outside" ? " is-outside" : ""}`} data-testid="delivery-zone-status">{zoneResult === "allowed" ? <Check size={16} /> : <MapPin size={16} />}{t(zoneResult === "allowed" ? "Сюда доставляем" : "За зоной доставки")}</p> : null}
+        <div className="address-picker__selected"><MapPin size={20} /><span><strong>{dirty ? query || t("Выберите точку на карте") : moving ? t("Выберите точку на карте") : deliveryAddressLabel(address) || t("Уточните улицу и номер дома")}</strong>{isWithinDeliveryBounds(address, DUSHANBE_BOUNDS) ? <small>{t("Душанбе")}</small> : null}</span>
           {reverse?.status === "searching" ? <LoaderCircle size={18} className="address-search-spinner" aria-label={t("Определяем адрес точки...")} /> : null}</div>
-        {!validPoint ? <p className="checkout-error" role="alert">{t("Точка за пределами зоны выбора в Душанбе")}</p> : null}
+        {zoneNotice}
         <button type="button" className="primary-action" data-testid="address-continue" disabled={moving || !validPoint} onClick={() => {
           if (dirty) setAddress(current => ({ ...current, street: query.trim(), building: "" }));
           setView("details"); setOpen(false);
@@ -142,6 +153,7 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
         <label className="address-detail-comment">{t(address.housingType === "house" ? "Ориентир и комментарий курьеру" : "Комментарий курьеру")}<textarea rows={2} maxLength={500} value={address.instructions} onChange={event => setAddress(current => ({ ...current, instructions: event.target.value }))} /></label>
       </fieldset>
       {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
+      {zoneNotice}
       <footer className="address-picker__footer address-details__footer">{metadata.id ? <button className="address-delete" type="button" disabled={busy} onClick={() => onDelete(metadata.id!)}><Trash2 size={18} />{t("Удалить")}</button> : null}
         <button className="primary-action" type="submit" disabled={busy || !parseDeliveryAddress(address) || !validPoint}>{t(busy ? "Сохраняем..." : "Сохранить адрес")}</button></footer>
     </form>}

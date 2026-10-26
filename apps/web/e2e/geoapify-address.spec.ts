@@ -1,5 +1,6 @@
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 import { translate, type Locale } from "../src/i18n/locale";
+import { type DeliveryZone, unrestrictedDeliveryZone } from "@dushanbe-fresh/shared";
 
 test.describe.configure({ mode: "parallel" });
 test.use({ trace: "off", screenshot: "off", video: "off", serviceWorkers: "block" });
@@ -7,18 +8,19 @@ test.setTimeout(90000);
 const point = { latitude: 38.56234, longitude: 68.77123 };
 const address = { housingType: "apartment", street: "Рудаки", building: "15", apartment: "", entrance: "", floor: "", intercom: "", instructions: "", ...point };
 
-async function setup(page: Page, context: BrowserContext, baseURL: string, locale: Locale, options: { failure?: boolean; empty?: boolean; reverseError?: boolean; account?: boolean } = {}) {
+async function setup(page: Page, context: BrowserContext, baseURL: string, locale: Locale, options: { failure?: boolean; empty?: boolean; reverseError?: boolean; account?: boolean; zone?: DeliveryZone; zoneError?: boolean } = {}) {
   expect(["localhost", "127.0.0.1"]).toContain(new URL(baseURL).hostname);
   await context.addCookies([{ name: "df-language", value: locale, url: baseURL }]);
   const errors: string[] = [], blocked: string[] = [];
   const saved = [{ ...address, id: "saved-work", label: "work", isDefault: true }];
   const changes: string[] = [];
-  let lastPoint = point;
+  let lastPoint = point, reverseCalls = 0;
   page.on("pageerror", error => errors.push(error.name));
   await context.route("**/*", async route => {
     const req = route.request(), path = new URL(req.url()).pathname;
     if (new URL(req.url()).hostname === "api.geoapify.com") { blocked.push("Direct browser geocoder"); return route.abort(); }
     if (path === "/api/v1/customer-auth/status") return route.fulfill({ json: { enabled: !!options.account, requiredForCheckout: false } });
+    if (path === "/api/v1/delivery-zone") return route.fulfill(options.zoneError ? { status: 503, json: {} } : { json: options.zone ?? unrestrictedDeliveryZone });
     if (path === "/api/v1/customer-auth/me") return route.fulfill({ json: { id: "test-account", name: "Тест", phone: "+992900000000" } });
     if (path === "/api/v1/customer/addresses") {
       if (req.method() !== "GET") changes.push(req.method());
@@ -38,6 +40,7 @@ async function setup(page: Page, context: BrowserContext, baseURL: string, local
       return route.fulfill(options.failure ? { status: 503, json: {} } : { json: { status: "available", items: options.empty ? [] : [{ ...address, description: "Сино, Душанбе" }] } });
     }
     if (path === "/api/address-reverse") {
+      reverseCalls++;
       const p = req.postDataJSON(); lastPoint = { latitude: p.latitude, longitude: p.longitude };
       return route.fulfill(options.reverseError ? { status: 503, json: {} } : { json: { status: "available", items: [{ ...address, street: "Сомони", building: "20", ...lastPoint }] } });
     }
@@ -48,7 +51,7 @@ async function setup(page: Page, context: BrowserContext, baseURL: string, local
   await page.locator((page.viewportSize()?.width ?? 1440) < 1024 ? ".header-location--mobile" : ".header-location--desktop").click();
   const dialog = page.locator(".address-picker");
   await expect(dialog).toBeVisible();
-  return { dialog, errors, blocked, changes, latestPoint: () => lastPoint };
+  return { dialog, errors, blocked, changes, latestPoint: () => lastPoint, reversals: () => reverseCalls };
 }
 
 for (const width of [375, 390, 1440]) for (const locale of ["ru", "tg"] as const) {
@@ -139,7 +142,8 @@ test("GPS and viewport changes keep the confirmation visible", async ({ page, co
     navigator.geolocation.getCurrentPosition = (success, error, options) => locate(success, error, { ...options, maximumAge: 0 });
   });
   await dialog.getByRole("button", { name: "Моё местоположение", exact: true }).click();
-  await expect(dialog.getByText("Точка за пределами зоны выбора в Душанбе", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Точка за пределами зоны выбора в Душанбе", { exact: true })).toHaveCount(0);
+  await expect(dialog.getByTestId("address-continue")).toBeEnabled();
   await context.unrouteAll({ behavior: "ignoreErrors" });
 });
 
@@ -232,4 +236,128 @@ for (const width of [390, 1440]) test(`courier coordinates and navigation ${widt
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath(`courier-${width}.png`), animations: "disabled" });
   await context.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+for (const width of [375, 390, 1440]) for (const locale of ["ru", "tg"] as const) test(`configured polygon, outside warning and reversible restriction ${locale} ${width}`, async ({ page, context, baseURL }, info) => {
+  const t = (s: string) => translate(locale, s);
+  await page.setViewportSize({ width, height: 900 });
+  const zone: DeliveryZone = { version: 1, enabled: true, polygon: { type: "Polygon", coordinates: [[[68.769,38.5605],[68.7724,38.5605],[68.7724,38.564],[68.769,38.564],[68.769,38.5605]]] } };
+  const { dialog, errors } = await setup(page, context, baseURL!, locale, { zone });
+  const search = dialog.getByRole("combobox");
+  await search.fill("Рудаки 15"); await dialog.getByRole("option").first().click();
+  await expect(dialog.getByTestId("delivery-zone-status")).toHaveText(t("Сюда доставляем"));
+  const map = dialog.locator(".address-map-canvas__tiles");
+  await expect(dialog.locator(".address-zone-polygon")).toHaveCount(1);
+  await expect(dialog.locator(".address-map-canvas")).not.toHaveClass(/is-moving/);
+  await expect.poll(() => map.locator(".leaflet-tile:not(.leaflet-tile-loaded)").count(), { timeout: 20000 }).toBe(0);
+  await expect(map.locator(".leaflet-tile-loaded").first()).toBeVisible();
+  await page.waitForTimeout(250);
+  expect(await dialog.locator(".address-center-pin > span").evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgb(31, 31, 31)");
+  await page.screenshot({ path: info.outputPath(`zone-inside-${locale}-${width}.png`), animations: "disabled" });
+  const box = (await map.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2 + 80, box.y + box.height / 2 + 60);
+  await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 - 150, box.y + box.height / 2 + 60, { steps: 12 }); await page.mouse.up();
+  await expect(search).toHaveValue("Сомони, 20");
+  await expect(dialog.getByTestId("delivery-zone-status")).toHaveText(t("За зоной доставки"));
+  await expect(dialog.getByTestId("address-continue")).toBeDisabled();
+  await expect(dialog.getByText(t("Пока не доставляем по этому адресу. Выберите точку внутри зоны доставки."), { exact: true })).toBeVisible();
+  const button = (await dialog.getByTestId("address-continue").boundingBox())!;
+  expect(button.y + button.height).toBeLessThanOrEqual(900);
+  await page.screenshot({ path: info.outputPath(`zone-outside-${locale}-${width}.png`), animations: "disabled" });
+  zone.enabled = false;
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(dialog.locator(".address-zone-polygon")).toHaveCount(0);
+  await expect(dialog.getByTestId("address-continue")).toBeEnabled();
+  zone.enabled = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(dialog.locator(".address-zone-polygon")).toHaveCount(1);
+  await expect(dialog.getByTestId("address-continue")).toBeDisabled();
+  expect(errors).toEqual([]);
+  await context.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+test("unavailable zone configuration never silently permits an address", async ({ page, context, baseURL }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const options = { zoneError: true };
+  const { dialog } = await setup(page, context, baseURL!, "ru", options);
+  await expect(dialog.getByText("Не удалось проверить зону доставки. Повторите попытку.", { exact: true })).toBeVisible();
+  await expect(dialog.getByTestId("address-continue")).toBeDisabled();
+  options.zoneError = false;
+  await dialog.getByRole("button", { name: "Повторить", exact: true }).click();
+  await expect(dialog.getByTestId("address-continue")).toBeEnabled();
+  await context.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+test("mouse wheel, keyboard, interrupted flight and resize preserve a usable map", async ({ page, context, baseURL }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const { dialog, latestPoint, errors, reversals } = await setup(page, context, baseURL!, "ru");
+  const map = dialog.locator(".address-map-canvas__tiles");
+  await expect(map.locator(".leaflet-tile-loaded").first()).toBeVisible();
+  await dialog.getByRole("combobox").fill("Рудаки 15");
+  await dialog.getByRole("option").first().click();
+  // Interrupt the address flight before it settles, as a real impatient gesture would.
+  await map.focus(); await page.keyboard.press("ArrowRight");
+  await expect(dialog.locator(".address-map-canvas")).not.toHaveClass(/is-moving/);
+  await expect(dialog.getByRole("combobox")).toHaveValue("Сомони, 20");
+  const before = latestPoint();
+  await page.keyboard.press("ArrowLeft");
+  await expect.poll(() => latestPoint().longitude).not.toBe(before.longitude);
+  const count = reversals();
+  await map.hover(); await page.mouse.wheel(0, -240);
+  await expect.poll(reversals).toBeGreaterThan(count);
+  await expect(dialog.locator(".address-map-canvas")).not.toHaveClass(/is-moving/);
+  const selected = latestPoint();
+  for (const height of [650, 900, 720]) {
+    await page.setViewportSize({ width: 1440, height });
+    await expect(dialog.getByTestId("address-continue")).toBeInViewport();
+  }
+  await page.waitForTimeout(600);
+  expect(latestPoint()).toEqual(selected);
+  expect(errors).toEqual([]);
+  await context.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+for (const width of [375, 390]) test(`touch pan and pinch zoom ${width}`, async ({ browser, baseURL }, info) => {
+  const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
+  try {
+    const page = await context.newPage();
+    const { dialog, latestPoint, errors } = await setup(page, context, baseURL!, "ru");
+    const map = dialog.locator(".address-map-canvas__tiles");
+    await expect(map.locator(".leaflet-tile-loaded").first()).toBeVisible();
+    await dialog.getByRole("combobox").fill("Рудаки 15"); await dialog.getByRole("option").first().click();
+    await expect(dialog.locator(".address-map-canvas")).not.toHaveClass(/is-moving/);
+    const gesture = async (pinch: boolean) => map.evaluate(async (element, pinch) => {
+      const bounds = element.getBoundingClientRect(), x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+      const active = new Map<number, { identifier: number; target: Element; clientX: number; clientY: number; pageX: number; pageY: number }>();
+      const dispatch = (type: string, id: number, dx: number, dy: number) => {
+        const touch = { identifier: id, target: element, clientX: x + dx, clientY: y + dy, pageX: x + dx, pageY: y + dy };
+        if (type === "pointerup") active.delete(id); else active.set(id, touch);
+        const event = new Event(type === "pointerdown" ? "touchstart" : type === "pointerup" ? "touchend" : "touchmove", { bubbles: true, cancelable: true });
+        Object.defineProperties(event, { touches: { value: [...active.values()] }, targetTouches: { value: [...active.values()] }, changedTouches: { value: [touch] } });
+        element.dispatchEvent(event);
+      };
+      dispatch("pointerdown", 1, pinch ? -30 : 40, 40);
+      if (pinch) dispatch("pointerdown", 2, 30, 40);
+      for (let i = 1; i <= 12; i++) {
+        dispatch("pointermove", 1, pinch ? -30 - i * 5 : 40 - i * 8, 40);
+        if (pinch) dispatch("pointermove", 2, 30 + i * 5, 40);
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      dispatch("pointerup", 1, pinch ? -90 : -56, 40);
+      if (pinch) dispatch("pointerup", 2, 90, 40);
+    }, pinch);
+    await gesture(false);
+    await expect(dialog.getByRole("combobox")).toHaveValue("Сомони, 20");
+    expect(latestPoint().longitude).toBeGreaterThan(point.longitude);
+    const zoom = () => map.locator("img.leaflet-tile-loaded").evaluateAll(images => Math.max(...images.map(img => {
+      const segments = new URL((img as HTMLImageElement).src).pathname.split("/"); return Number(segments[segments.length - 3]);
+    })));
+    const before = await zoom();
+    await gesture(true);
+    await expect.poll(zoom).toBeGreaterThan(before);
+    await expect(dialog.locator(".address-map-canvas")).not.toHaveClass(/is-moving/);
+    await expect(dialog.getByTestId("address-continue")).toBeEnabled();
+    await page.screenshot({ path: info.outputPath(`touch-map-${width}.png`) });
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
 });

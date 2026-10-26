@@ -7,6 +7,8 @@ import { readSlot, slotDto } from "../delivery-slots/delivery-slots.service";
 import { slotUnavailableLabels } from "@dushanbe-fresh/shared";
 import { attachConfirmedOrders } from "../operations/operations.defaults";
 import { normalizePhone } from "../customers/phone";
+import { checkDeliveryZone, DELIVERY_ZONE_KEY, deliveryZoneMessages } from "@dushanbe-fresh/shared";
+import { deliveryZoneFromSetting } from "../delivery-zone/delivery-zone.service";
 
 const D = Prisma.Decimal;
 const maxMoney = new D("9999999999.99");
@@ -28,7 +30,7 @@ export class CheckoutService {
       include: { category: true, qualityOptions: { where: { isActive: true } } }
     });
     const settings = await tx.appSetting.findMany({
-      where: { key: { in: ["minimum_order_amount", "delivery_fee", "service_fee", "service_fee_percent"] } }
+      where: { key: { in: ["minimum_order_amount", "delivery_fee", "service_fee", "service_fee_percent", DELIVERY_ZONE_KEY] } }
     });
     function setting(key: string) {
       const value = settings.find(setting => setting.key === key)?.value;
@@ -77,6 +79,9 @@ export class CheckoutService {
     });
     const deliverySlot = await readSlot(tx, input.deliverySlotId);
     const errors: string[] = [];
+    const zone = deliveryZoneFromSetting(settings.find(setting => setting.key === DELIVERY_ZONE_KEY)?.value);
+    const zoneResult = checkDeliveryZone(zone, input.address ?? {});
+    if (zoneResult !== "allowed") errors.push(deliveryZoneMessages[zoneResult]);
     if (!deliverySlot) errors.push("Окно доставки не найдено. Выберите другое время.");
     else errors.push(...deliverySlot.unavailableReasons.map(reason => slotUnavailableLabels[reason]));
     const shortfall = D.max(0, minimum.minus(subtotal));
@@ -93,6 +98,7 @@ export class CheckoutService {
     // Capacity is rechecked independently and does not invalidate an otherwise identical quote.
     const reviewToken = hash({
       items: items.map(item => ({ ...item, warnings: [] })), ...values,
+      ...(zone.enabled ? { deliveryZone: zone, point: { latitude: input.address?.latitude, longitude: input.address?.longitude } } : {}),
       slot: deliverySlot && { id: deliverySlot.id, date: deliverySlot.date, startsAt: deliverySlot.startsAt, endsAt: deliverySlot.endsAt }
     });
     return { valid: !errors.length && items.every(item => !item.errors.length), items,

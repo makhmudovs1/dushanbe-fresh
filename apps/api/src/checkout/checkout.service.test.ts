@@ -6,6 +6,7 @@ import type { CheckoutInput } from "@dushanbe-fresh/shared";
 import { CheckoutService } from "./checkout.service";
 import { parseCheckout, parseCreateOrder } from "./checkout.validation";
 import { slotDto } from "../delivery-slots/delivery-slots.service";
+import { DELIVERY_ZONE_KEY } from "@dushanbe-fresh/shared";
 
 const D = Prisma.Decimal;
 const input: CheckoutInput = { deliverySlotId: "slot", items: [{ productId: "product", quantity: "12", qualityOptionId: null, observedPrice: "10.50" }] };
@@ -18,7 +19,7 @@ function fixture() {
     qualityOptions: [{ id: "quality", label: "спелые" }] };
   const slot = { id: "slot", date: new Date("2099-01-01"), startsAt: new Date("1970-01-01T10:00:00Z"),
     endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 2, isActive: true, createdAt: new Date(), updatedAt: new Date() };
-  const settings = [ { key: "minimum_order_amount", value: "120.00" }, { key: "delivery_fee", value: "20.00" }, { key: "service_fee", value: "0.00" } ];
+  const settings: Array<{ key: string; value: Prisma.JsonValue }> = [ { key: "minimum_order_amount", value: "120.00" }, { key: "delivery_fee", value: "20.00" }, { key: "service_fee", value: "0.00" } ];
   const tx = {
     product: { findMany: vi.fn().mockImplementation(async () => [product]) },
     appSetting: { findMany: vi.fn().mockResolvedValue(settings) },
@@ -39,6 +40,54 @@ function fixture() {
   }
   return { service, tx, prisma, product, slot, settings, orderInput };
 }
+
+describe("checkout delivery zone", () => {
+  const polygon = { type: "Polygon", coordinates: [[[68.76, 38.55], [68.80, 38.55], [68.80, 38.60], [68.76, 38.60], [68.76, 38.55]]] };
+  it("keeps guest/manual checkout working with an absent or disabled zone", async () => {
+    const { service, settings, orderInput } = fixture();
+    expect((await service.validate(input)).valid).toBe(true);
+    settings.push({ key: DELIVERY_ZONE_KEY, value: { version: 1, enabled: false, polygon } });
+    const order = await orderInput();
+    expect((await service.createOrder({ ...order, address: { ...address, latitude: 55, longitude: 37 } })).address.latitude).toBe(55);
+  });
+  it("requires a point when enabled and rejects outside points before any order writes", async () => {
+    const { service, settings, tx, orderInput } = fixture();
+    const old = await orderInput();
+    settings.push({ key: DELIVERY_ZONE_KEY, value: { version: 1, enabled: true, polygon } });
+    expect((await service.validate(input)).errors.join()).toContain("Отметьте дом");
+    const outside = { ...old, address: { ...address, latitude: 38.57, longitude: 68.85 } };
+    expect((await service.validate(outside)).errors.join()).toContain("не доставляем");
+    await expect(service.createOrder(outside)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.createOrder(old)).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.order.create).not.toHaveBeenCalled(); expect(tx.customer.upsert).not.toHaveBeenCalled();
+  });
+  it("accepts an inside or boundary point and retains the exact coordinates and price", async () => {
+    for (const point of [{ latitude: 38.57, longitude: 68.78 }, { latitude: 38.55, longitude: 68.76 }]) {
+      const { service, settings, orderInput } = fixture();
+      const order = { ...await orderInput(), address: { ...address, ...point } };
+      settings.push({ key: DELIVERY_ZONE_KEY, value: { version: 1, enabled: true, polygon } });
+      const quote = await service.validate(order); expect(quote.valid).toBe(true);
+      const receipt = await service.createOrder({ ...order, reviewToken: quote.reviewToken });
+      expect(receipt.address).toMatchObject(point); expect(receipt.totalEstimated).toBe("146.00");
+    }
+  });
+  it("rechecks edited boundaries between quote and submit", async () => {
+    const { service, settings, tx, orderInput } = fixture();
+    const order = { ...await orderInput(), address: { ...address, latitude: 38.57, longitude: 68.78 } };
+    const zone = { version: 1, enabled: true, polygon };
+    settings.push({ key: DELIVERY_ZONE_KEY, value: zone });
+    order.reviewToken = (await service.validate(order)).reviewToken;
+    zone.polygon = { type: "Polygon", coordinates: [[[68.81, 38.55], [68.85, 38.55], [68.85, 38.60], [68.81, 38.60], [68.81, 38.55]]] };
+    await expect(service.createOrder(order)).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.order.create).not.toHaveBeenCalled();
+  });
+  it("fails closed on malformed stored geometry, without touching an order", async () => {
+    const { service, settings, tx, orderInput } = fixture(); const order = await orderInput();
+    settings.push({ key: DELIVERY_ZONE_KEY, value: { version: 1, enabled: true, polygon: null } });
+    await expect(service.createOrder(order)).rejects.toThrow("зону доставки");
+    expect(tx.order.create).not.toHaveBeenCalled();
+  });
+});
 
 describe("checkout validation", () => {
   it.each(["0.5", "1", "1.5", "2"])("accepts quantity %s with the updated half-kilo catalog rule", async quantity => {

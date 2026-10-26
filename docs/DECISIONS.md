@@ -1064,3 +1064,26 @@
 - Diagnose local catalog P2022 separately; do not repair it with destructive
   resets or automatically migrate production. The owner subsequently authorized
   GitHub push and a Web-only production rollout after verification.
+
+## 2026-10-26: Configurable Delivery Zone
+
+- A single versioned GeoJSON Polygon in existing AppSetting `delivery_zone`
+  controls both the customer overlay and authoritative checkout validation.
+  No schema migration, guessed boundary, catalog write or order rewrite.
+- The owner explicitly chose the initial policy OFF with no polygon; OFF removes
+  ALL spatial restrictions, including the old approximate selection rectangle.
+  Autocomplete remains Dushanbe-focused. Disabling preserves a saved polygon.
+- Active zones include their boundary and require a valid selected point, even
+  for a manually refined address. Quote and create check the current policy;
+  idempotent retries can still read a previously created receipt.
+- Missing policy defaults OFF without writing a setting. Malformed/unavailable
+  configuration fails closed. Admin updates require a current active admin,
+  optimistic revision, serializable transaction and audit record.
+- Use detailed light osm-bright at zoom 17, a fixed black center pin, normal
+  mouse/touch/keyboard navigation, and green non-interactive zone overlay.
+  Defer map resizing during movement and preserve its center on layout changes;
+  resize-generated moveend must not finish a flight or publish a partial point.
+- Admin editing uses Leaflet Geoman; shared geometric validation uses Turf.
+  Keep one simple polygon, max 200 vertices, no holes or antimeridian wrapping.
+- Owner authorized production rollout of Web and API after checks, with zone
+  restriction OFF. Administrators will draw and enable their real boundary.

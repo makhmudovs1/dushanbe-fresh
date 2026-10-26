@@ -33,7 +33,7 @@ describe("address API routes", () => {
     expect((await POST(request({ query: "Рудаки" }, undefined, "text/plain"))).status).toBe(415);
     for (const query of ["Ру", "x".repeat(151), "Рудаки\u0000"]) expect((await POST(request({ query }))).status).toBe(400);
     expect((await POST(request({ query: "x".repeat(3000) }))).status).toBe(400);
-    expect((await reverse(request({ latitude: 55, longitude: 37 }))).status).toBe(400);
+    expect((await reverse(request({ latitude: 91, longitude: 37 }))).status).toBe(400);
     expect(fetch).not.toHaveBeenCalled();
   });
   it("returns manual-entry fallback without upstream errors or credentials", async () => {
@@ -42,5 +42,10 @@ describe("address API routes", () => {
     expect(await response.json()).toEqual({ status: "unavailable", items: [] });
     vi.stubEnv("GEOAPIFY_API_KEY", ""); vi.stubEnv("ADDRESS_SEARCH_URL", "");
     expect(await (await GET()).json()).toMatchObject({ status: "unavailable", reverse: false });
+  });
+  it("does not confuse the Dushanbe search envelope with a delivery restriction", async () => {
+    const response = await reverse(request({ latitude: 55, longitude: 37 }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ items: [{ latitude: 55, longitude: 37 }] });
   });
 });

@@ -12,6 +12,7 @@ import { StaffModule } from "./staff/staff.module";
 import { DeliveryFinanceModule } from "./delivery-finance/delivery-finance.module";
 import { PublicOrdersModule } from "./public-orders/public-orders.module";
 import { CustomerAccountModule } from "./customer-account/customer-account.module";
+import { DeliveryZoneModule } from "./delivery-zone/delivery-zone.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CustomerAccountModule } from "./customer-account/customer-account.modul
     HealthModule,
     AuthModule,
     CustomerAccountModule,
+    DeliveryZoneModule,
     MediaModule,
     StaffModule,
     DeliveryFinanceModule,

@@ -74,7 +74,7 @@ describe("Geoapify server adapter", () => {
     expect(await searchDeliveryAddresses("Рудаки", config())).toBeNull();
     const count = fetch.mock.calls.length;
     expect(await searchDeliveryAddresses("Рудаки", config(), AbortSignal.abort())).toBeNull();
-    expect(await reverseDeliveryAddress({ latitude: 55, longitude: 37 }, config())).toBeNull();
+    expect(await reverseDeliveryAddress({ latitude: 91, longitude: 37 }, config())).toBeNull();
     expect(fetch).toHaveBeenCalledTimes(count);
   });
   it("enforces the provider deadline", async () => {
