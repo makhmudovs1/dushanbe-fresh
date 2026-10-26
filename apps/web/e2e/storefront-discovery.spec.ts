@@ -112,21 +112,21 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
       await page.evaluate(() => {
         (window as unknown as { addressInputFocus: number }).addressInputFocus = 0;
         document.addEventListener("focusin", event => {
-          if ((event.target as HTMLElement).matches(".customer-address-flow input")) (window as unknown as { addressInputFocus: number }).addressInputFocus++;
+          if ((event.target as HTMLElement).matches(".address-picker input")) (window as unknown as { addressInputFocus: number }).addressInputFocus++;
         });
       });
       await trigger.click();
-      const dialog = page.getByRole("dialog", { name: t("Адрес доставки"), exact: true });
+      const dialog = page.getByRole("dialog", { name: t("Куда доставить?"), exact: true });
       const surface = dialog.locator(".customer-dialog__surface");
       await expect(dialog.locator(".catalog-dialog__header h2")).toBeFocused();
       expect(await page.evaluate(() => (window as unknown as { addressInputFocus: number }).addressInputFocus)).toBe(0);
       const viewport = await page.evaluate(() => visualViewport?.height ?? innerHeight);
       const box = await surface.boundingBox();
-      expect(box!.height / viewport).toBeGreaterThanOrEqual(.70);
-      expect(box!.height / viewport).toBeLessThanOrEqual(.80);
+      expect(box!.height / viewport).toBeGreaterThanOrEqual(.90);
+      expect(box!.height / viewport).toBeLessThanOrEqual(.98);
       await page.screenshot({ path: info.outputPath(`address-${locale}-${width}.png`), animations: "disabled" });
-      await dialog.getByRole("searchbox").click();
-      await expect(dialog.getByRole("searchbox")).toBeFocused();
+      await dialog.getByRole("combobox").click();
+      await expect(dialog.getByRole("combobox")).toBeFocused();
       await page.setViewportSize({ width, height: 600 });
       await expect.poll(async () => {
         const bounds = await surface.boundingBox();
@@ -137,7 +137,7 @@ for (const width of [375, 390, 430, 768, 1440]) for (const locale of ["ru", "tg"
       await expect(trigger).toBeFocused();
       await page.setViewportSize({ width, height: 900 });
       await trigger.click();
-      await expect(page.locator(".customer-address-flow .catalog-dialog__header h2")).toBeFocused();
+      await expect(page.locator(".address-picker .catalog-dialog__header h2")).toBeFocused();
       await page.getByRole("dialog").getByRole("button", { name: t("Закрыть форму"), exact: true }).click();
     }
   });

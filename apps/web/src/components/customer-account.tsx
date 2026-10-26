@@ -28,6 +28,7 @@ function CustomerAccountContent() {
   const [tab, setTab] = useState<"overview" | "orders" | "addresses" | "profile">(() => params?.get("section") === "orders" ? "orders" : "overview");
   useEffect(() => { if (params?.get("section") === "orders") setTab("orders"); }, [params]);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const visibleAddresses = delivery?.savedAddresses ?? addresses;
   const [orders, setOrders] = useState<CustomerOrderSummary[]>([]);
   const [editor, setEditor] = useState<(SavedAddressInput & { id?: string }) | null>(null);
   const [profileName, setProfileName] = useState("");
@@ -115,12 +116,12 @@ function CustomerAccountContent() {
       </details>
     </section> : null}
     {tab === "addresses" ? <section className="account-section"><h2>{t("Мои адреса")}</h2>
-      {addresses.map(address => <article className="account-address" key={address.id}><div><strong>{t(labels[address.label])}{address.isDefault ? ` · ${t("По умолчанию")}` : ""}</strong><p>{address.street}, {address.building}{address.apartment ? `, ${t("Квартира")} ${address.apartment}` : ""}</p><p>{address.instructions}</p></div><div className="address-tools">
+      {visibleAddresses.map(address => <article className="account-address" key={address.id}><div><strong>{t(labels[address.label])}{address.isDefault ? ` · ${t("По умолчанию")}` : ""}</strong><p>{address.street}, {address.building}{address.apartment ? `, ${t("Квартира")} ${address.apartment}` : ""}</p><p>{address.instructions}</p></div><div className="address-tools">
         {!address.isDefault ? <button type="button" className="secondary-link" disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "PATCH", { ...address, isDefault: true })); await delivery?.refreshAddresses(); })}>{t("Сделать основным")}</button> : null}
-        <button className="catalog-icon-action" title={t("Изменить адрес")} aria-label={t("Изменить адрес")} disabled={busy} onClick={() => { setEditor(address); setAddressStage("street"); }}><Pencil size={18} /></button>
+        <button className="catalog-icon-action" title={t("Изменить адрес")} aria-label={t("Изменить адрес")} disabled={busy} onClick={() => { if (delivery) delivery.openAddress(address); else { setEditor(address); setAddressStage("street"); } }}><Pencil size={18} /></button>
         <button className="catalog-icon-action" title={t("Удалить адрес")} aria-label={t("Удалить адрес")} disabled={busy} onClick={() => void run(async () => { setAddresses(await customerRequest<SavedAddress[]>(`customer/addresses/${address.id}`, "DELETE")); await delivery?.refreshAddresses(); })}><Trash2 size={18} /></button>
       </div></article>)}
-      <button type="button" className="secondary-link" onClick={() => { setEditor({ ...emptyAddress, label: "home", isDefault: !addresses.length }); setAddressStage("street"); }}><Plus size={18} />{t("Добавить адрес")}</button>
+      <button type="button" className="secondary-link" onClick={() => { if (delivery) delivery.openAddress({ ...emptyAddress }); else { setEditor({ ...emptyAddress, label: "home", isDefault: !addresses.length }); setAddressStage("street"); } }}><Plus size={18} />{t("Добавить адрес")}</button>
       {editor ? <CustomerDialog title={t(editor.id ? "Изменить адрес" : "Добавить адрес")} busy={busy} onClose={() => setEditor(null)}>
         {error ? <p className="checkout-error" role="alert">{t(error)}</p> : null}
         <form className="customer-form address-editor" onSubmit={event => { event.preventDefault(); if (addressStage === "street") { setAddressStage("details"); return; } void run(async () => {

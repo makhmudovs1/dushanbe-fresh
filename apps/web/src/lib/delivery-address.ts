@@ -2,6 +2,9 @@ import type { AddressInput, SavedAddress } from "@dushanbe-fresh/shared";
 import { CHECKOUT_DRAFT_KEY, loadCheckoutDraft, saveCheckoutDraft } from "./checkout-draft";
 
 export const DELIVERY_ADDRESS_KEY = "df.delivery.address.v1";
+export const GUEST_ADDRESS_LIST_KEY = "df.delivery.addresses.v1";
+export type AddressSuggestion = AddressInput & { description?: string };
+export const emptyAddress: AddressInput = { housingType: "apartment", street: "", building: "", apartment: "", entrance: "", floor: "", intercom: "", instructions: "", latitude: null, longitude: null };
 const OWNER_KEY = "df.delivery.address.account.v1";
 export const ADDRESS_SEARCH_LIMIT = 6;
 export const ADDRESS_QUERY_MIN = 3;
@@ -52,6 +55,27 @@ export function parseDeliveryAddress(value: unknown, complete = true): AddressIn
   address.latitude = latitude as number | null;
   address.longitude = longitude as number | null;
   return address;
+}
+
+export function parseAddressSuggestion(value: unknown): AddressSuggestion | null {
+  const address = parseDeliveryAddress(value, false);
+  if (!address) return null;
+  const description = (value as { description?: unknown }).description;
+  return { ...address, ...(typeof description === "string" && description.length <= 180 && !hasAddressControlCharacters(description) ? { description: description.trim() } : {}) };
+}
+
+export function loadGuestAddressList(storage: Pick<Storage, "getItem">): SavedAddress[] {
+  try {
+    const raw = storage.getItem(GUEST_ADDRESS_LIST_KEY);
+    if (!raw || raw.length > 100000) return [];
+    const data = JSON.parse(raw);
+    if (data?.version !== 1 || !Number.isFinite(data.savedAt) || data.savedAt > Date.now() || Date.now() - data.savedAt > 86400000) return [];
+    return parseSavedAddresses(data.addresses).slice(0, 20);
+  } catch { return []; }
+}
+
+export function saveGuestAddressList(storage: Pick<Storage, "setItem">, addresses: SavedAddress[]) {
+  try { storage.setItem(GUEST_ADDRESS_LIST_KEY, JSON.stringify({ version: 1, savedAt: Date.now(), addresses: parseSavedAddresses(addresses).slice(0, 20) })); } catch { /* Storage is optional. */ }
 }
 
 export function deliveryAddressLabel(address: AddressInput | null): string {

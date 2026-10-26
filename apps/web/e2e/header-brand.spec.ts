@@ -149,9 +149,9 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) for (const locale of 
     await capture(page, info, `language-${next}-${width}`);
 
     await page.locator(width < 1024 ? ".header-location--mobile" : ".header-location--desktop").click();
-    const address = page.getByRole("dialog", { name: t("Адрес доставки"), exact: true });
-    await expect(address.getByRole("searchbox")).toBeVisible();
-    await expect(address.getByTestId("address-manual")).toBeVisible();
+    const address = page.getByRole("dialog", { name: t("Куда доставить?"), exact: true });
+    await expect(address.getByRole("combobox")).toBeVisible();
+    await expect(address.getByTestId("address-continue")).toBeVisible();
     await expect(address.getByLabel(t("Улица"), { exact: true })).toHaveCount(0);
     await capture(page, info, `address-${next}-${width}`);
     await address.getByRole("button", { name: t("Закрыть форму"), exact: true }).click();

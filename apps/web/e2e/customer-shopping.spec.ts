@@ -159,8 +159,8 @@ for (const width of [360, 390, 1440]) for (const locale of ["ru", "tg"] as const
       await expect(dialog).toHaveCount(0);
     }
     await page.locator(width < 1024 ? ".header-location--mobile" : ".header-location--desktop").click();
-    const address = page.getByRole("dialog", { name: t("Адрес доставки"), exact: true });
-    await expect(address.getByRole("searchbox")).toBeVisible();
+    const address = page.locator(".address-picker");
+    await expect(address.getByRole("combobox")).toBeVisible();
     await address.getByRole("button", { name: t("Закрыть форму"), exact: true }).click();
     await expect(address).toHaveCount(0);
     await screenshot(page, info, `header-${locale}-${width}`);
@@ -218,29 +218,28 @@ for (const width of [360, 390, 1440]) for (const locale of ["ru", "tg"] as const
 
     phase = "guest address";
     await page.locator(width < 1024 ? ".header-location--mobile" : ".header-location--desktop").click();
-    const address = page.getByRole("dialog", { name: t("Адрес доставки"), exact: true });
-    await expect(address.getByRole("searchbox")).toBeVisible();
+    const address = page.locator(".address-picker");
+    await expect(address.getByRole("combobox")).toBeVisible();
     await expect(address.getByLabel(t("Улица"), { exact: true })).toHaveCount(0);
     await screenshot(page, info, `address-search-${suffix}`);
-    await address.getByTestId("address-manual").click();
+    await address.getByTestId("address-continue").click();
     await address.getByLabel(t("Улица"), { exact: true }).fill("Рудаки");
-    await address.getByLabel(t("Дом"), { exact: true }).fill("15");
-    await expect(address.getByRole("textbox", { name: t("Квартира"), exact: true })).toHaveCount(0);
-    await address.getByTestId("address-next").click();
+    await address.getByRole("textbox", { name: t("Дом"), exact: true }).fill("15");
     await address.getByText(t(housing === "house" ? "Частный дом" : "Квартира"), { exact: true }).first().click();
     if (housing === "apartment") {
-      await address.getByRole("textbox", { name: t("Квартира"), exact: true }).fill("23");
+      await address.getByRole("textbox", { name: t("Номер квартиры"), exact: true }).fill("23");
       await address.getByLabel(t("Подъезд"), { exact: true }).fill("2");
       await address.getByLabel(t("Этаж"), { exact: true }).fill("4");
       await address.getByLabel(t("Домофон"), { exact: true }).fill("23К");
-    } else await expect(address.getByRole("textbox", { name: t("Квартира"), exact: true })).toHaveCount(0);
-    await address.getByLabel(t("Комментарий / ориентир")).fill("Тестовый вход со двора");
-    await address.getByTestId("address-back").click();
-    await expect(address.getByLabel(t("Улица"), { exact: true })).toHaveValue("Рудаки");
-    await address.getByTestId("address-next").click();
-    await expect(address.getByLabel(t("Комментарий / ориентир"))).toHaveValue("Тестовый вход со двора");
+    } else await expect(address.getByRole("textbox", { name: t("Номер квартиры"), exact: true })).toHaveCount(0);
+    const comment = address.getByRole("textbox", { name: t(housing === "house" ? "Ориентир и комментарий курьеру" : "Комментарий курьеру"), exact: true });
+    await comment.fill("Тестовый вход со двора");
+    await address.locator(".address-details__location").click();
+    await expect(address.getByRole("combobox")).toHaveValue("Рудаки, 15");
+    await address.getByTestId("address-continue").click();
+    await expect(comment).toHaveValue("Тестовый вход со двора");
     await screenshot(page, info, `address-details-${suffix}`);
-    await address.getByTestId("address-confirm").click();
+    await address.getByRole("button", { name: t("Сохранить адрес"), exact: true }).click();
     await expect(address).toHaveCount(0);
     const expectedAddress = { street: "Рудаки", building: "15", housingType: housing, apartment: housing === "house" ? "" : "23", entrance: housing === "house" ? "" : "2", floor: housing === "house" ? "" : "4", intercom: housing === "house" ? "" : "23К", instructions: "Тестовый вход со двора" };
     phase = "guest favorite";
@@ -458,15 +457,14 @@ for (const width of [390, 1440]) test(`blocked session storage keeps guest addre
   await page.goto(`/catalog?category=${marker}`);
   await page.locator(".product-card__action").click();
   await page.getByRole("dialog", { name: "Укажите ваш адрес", exact: true }).getByRole("button", { name: "Указать адрес", exact: true }).click();
-  const address = page.getByRole("dialog", { name: "Адрес доставки", exact: true });
-  await address.getByTestId("address-manual").click();
+  const address = page.locator(".address-picker");
+  await address.getByTestId("address-continue").click();
   await address.getByLabel("Улица", { exact: true }).fill("Адрес только в памяти");
-  await address.getByLabel("Дом", { exact: true }).fill("8");
-  await address.getByTestId("address-next").click();
-  await address.getByRole("textbox", { name: "Квартира", exact: true }).fill("31");
+  await address.getByRole("textbox", { name: "Дом", exact: true }).fill("8");
+  await address.getByRole("textbox", { name: "Номер квартиры", exact: true }).fill("31");
   await address.getByLabel("Домофон", { exact: true }).fill("31К");
-  await address.getByLabel("Комментарий / ориентир").fill("Не терять при входе");
-  await address.getByTestId("address-confirm").click();
+  await address.getByLabel("Комментарий курьеру", { exact: true }).fill("Не терять при входе");
+  await address.getByRole("button", { name: "Сохранить адрес", exact: true }).click();
   const headerAddress = page.locator(width < 1024 ? ".header-location--mobile" : ".header-location--desktop");
   await expect(headerAddress).toContainText("Адрес только в памяти");
   // Keep the guest provider alive: blocked storage cannot survive a document reload before login.

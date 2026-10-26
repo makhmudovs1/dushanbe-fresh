@@ -167,6 +167,14 @@ describe("order creation", () => {
     expect(tx.$queryRaw).toHaveBeenCalled();
     expect(prisma.$transaction).toHaveBeenLastCalledWith(expect.any(Function), expect.objectContaining({ isolationLevel: "Serializable" }));
   });
+  it("preserves the explicitly selected delivery coordinates in the order snapshot and receipt", async () => {
+    const { service, tx, orderInput } = fixture();
+    const order = await orderInput();
+    const point = { latitude: 38.57212, longitude: 68.78745 };
+    const result = await service.createOrder({ ...order, address: { ...order.address, ...point } });
+    expect(tx.order.create.mock.calls[0][0].data.deliveryAddressSnapshot).toMatchObject(point);
+    expect(result.address).toMatchObject(point);
+  });
   it("rechecks capacity after validate and does not write a full slot", async () => {
     const { service, tx, orderInput } = fixture(); const order = await orderInput();
     tx.order.count.mockResolvedValue(2);

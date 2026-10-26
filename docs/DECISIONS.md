@@ -1035,3 +1035,32 @@
 - Banner CTA buttons use the existing graphite action tokens at every breakpoint,
   including hover/pressed states. Brand greens, white quantity controls, warning
   surfaces and product photography retain their separate semantic roles.
+
+## 2026-10-26: Geoapify Address Provider
+
+- Use the existing Next address-search gateway for Geoapify autocomplete and a
+  matching same-origin reverse endpoint. The server key stays private; a separate
+  optional public key controls Geoapify tiles in the existing Leaflet map.
+- Preserve manual entry and the old custom gateway fallback. Validate country,
+  Dushanbe city, coordinate pairs and the existing approximate selection bounds;
+  do not misrepresent that rectangle as an authoritative delivery polygon.
+- Applying a reverse address requires explicit confirmation and preserves the
+  picked point. Editing street/house manually clears potentially stale coordinates.
+  Courier navigation uses the saved point, without introducing a routing service.
+- No production deployment, environment change, data migration or live order/SMS
+  creation is required. Setup and restrictions: [GEOAPIFY.md](GEOAPIFY.md).
+
+## 2026-10-26: Unified Address Picker
+
+- A single search/map screen precedes compact address details; saved addresses
+  use a simple select/edit/add list shared by header, checkout and account.
+- Keep a fixed center pin and pan the map. Reverse fills text automatically,
+  retaining exact chosen coordinates. The owner's new explicit requirement
+  supersedes the earlier manual-edit policy: street/house refinements KEEP the
+  point instead of clearing it. New input cancels obsolete reverse/search/GPS.
+- Use the dedicated public tile key and the quieter light positron style;
+  server autocomplete/reverse credentials never become browser configuration.
+- Guest address lists remain session-scoped (24h, max 20), not a new account model.
+- Diagnose local catalog P2022 separately; do not repair it with destructive
+  resets or automatically migrate production. The owner subsequently authorized
+  GitHub push and a Web-only production rollout after verification.

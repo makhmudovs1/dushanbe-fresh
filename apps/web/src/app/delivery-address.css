@@ -34,6 +34,11 @@
 .delivery-address-manual .housing-toggle label { max-width: none; }
 .delivery-address-manual .address-tools { gap: 8px 16px; margin-top: 12px; }
 .delivery-address-manual .address-tools button { min-height: 44px; white-space: normal; text-align: left; }
+.address-map-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.address-map-tools > small { flex: 1 0 100%; font-variant-numeric: tabular-nums; }
+.address-map-result { min-width: 0; padding-block: 8px; border-top: 1px solid var(--color-border); overflow-wrap: anywhere; }
+.address-map-result p { margin: 0 0 6px; }
+.address-map-result small { color: var(--color-muted); font-size: 11px; }
 .delivery-address-footer { padding-top: 12px; border-top: 1px solid var(--color-border); }
 .delivery-address-footer .primary-action { width: 100%; min-height: 48px; white-space: normal; }
 .delivery-address-marker { border: 3px solid white; border-radius: 50%; background: #145b35; box-shadow: 0 0 0 2px #145b35, 0 2px 8px #0004; }

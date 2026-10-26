@@ -232,7 +232,7 @@ export function CheckoutContent() {
           {savedAddresses.length ? <label className="field">{t("Сохранённый адрес")}<select value={selectedAddress} onChange={event => {
             setSelectedAddress(event.target.value); const saved = savedAddresses.find(address => address.id === event.target.value); setAddress(parseDeliveryAddress(saved) ?? emptyAddress);
           }}><option value="">{t("Новый адрес")}</option>{savedAddresses.map(address => <option key={address.id} value={address.id}>{address.street}, {address.building}</option>)}</select></label> : null}
-          <AddressFields value={currentAddress} onChange={value => { setSelectedAddress(""); setAddress(value); }} />
+          <AddressFields value={currentAddress} onChange={value => { setSelectedAddress(""); setAddress(value); }} onChooseMap={deliveryAddress ? () => deliveryAddress.openAddress(currentAddress) : undefined} />
           {customer.user ? <label className="checkout-option"><input type="checkbox" checked={saveAddress} onChange={event => setSaveAddress(event.target.checked)} />{t("Сохранить адрес в личном кабинете")}</label> : null}
           </>}
         </section>
