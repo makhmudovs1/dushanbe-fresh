@@ -14,9 +14,10 @@ article.page { display: block; min-width: 0; }
 .purchase :global(.product-price__current > span) { font-size: 12px; }
 .purchase :global(.product-price__previous del) { font-size: 18px; }
 .purchase :global(.product-price__trend), .purchase :global(.product-price__discount) { display: none; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: 2 1 240px; min-width: 0; }
-.actions :global(.product-purchase-add) { width: auto; flex: 1; min-width: 176px; }
-.actions :global(.quantity-stepper) { flex: 1 1 146px; width: auto; min-width: 146px; height: 52px; border: 0; border-radius: 24px; grid-template-columns: 44px minmax(0, 1fr) 44px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: 0 1 auto; min-width: 0; margin-left: auto; }
+.actions :global(.product-purchase-add) { width: 156px; flex: 0 0 156px; min-height: 56px; border-radius: 20px; padding: 12px 16px; }
+.actions :global(.product-purchase-add > svg) { display: none; }
+.actions :global(.quantity-stepper) { flex: 0 0 156px; width: 156px; min-width: 146px; height: 52px; border: 0; border-radius: 20px; grid-template-columns: 44px minmax(0, 1fr) 44px; }
 .actions :global(.quantity-stepper button) { width: 44px; height: 52px; }
 .actions :global(.primary-link) { flex: 1 1 106px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: 24px; }
 @media (max-width: 1100px) { .layout { gap: 28px; } }

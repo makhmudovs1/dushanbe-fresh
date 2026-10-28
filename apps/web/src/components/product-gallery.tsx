@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { productPhotos, swipeDirection } from "@/lib/product-gallery";
 import { photoAttribution } from "@/lib/photo-attribution";
@@ -50,10 +50,6 @@ export function ProductGallery({ product, href, eager = false, thumbnails = fals
           <small>{locale === "tg" ? "Акс барои каталог коркард шудааст." : "Фото обработано для каталога."}</small>
         </div>
       </details> : null}
-      {photos.length > 1 ? <div className="product-gallery__arrows">
-        <button type="button" aria-label={t("Предыдущее фото")} title={t("Предыдущее фото")} onClick={() => move(-1)}><ChevronLeft size={18} /></button>
-        <button type="button" aria-label={t("Следующее фото")} title={t("Следующее фото")} onClick={() => move(1)}><ChevronRight size={18} /></button>
-      </div> : null}
     </div>
     {photos.length > 1 ? <div className={thumbnails ? "product-gallery__thumbnails" : "product-gallery__dots"} role="group" aria-label={`${t("Фотографии товара")}: ${name(product)}`}>
       {photos.map((photo, position) => <button key={photo.url} type="button" aria-label={`${t("Фото")} ${position + 1}: ${name(product)}`}

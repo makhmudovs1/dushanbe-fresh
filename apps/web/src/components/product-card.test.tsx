@@ -57,6 +57,7 @@ describe("catalog card", () => {
     const html = renderToStaticMarkup(<ProductCard product={{ ...product, images: [1, 2, 3].map(i => ({ url: `/photo-${i}`, sortOrder: i, isPrimary: i === 1 })),
       priceDrop: { oldPrice: "12", discountPercent: 17 } }} />);
     expect(html).toContain("product-gallery__dots"); expect(html).toContain("Стало дешевле");
+    expect(html).not.toContain("product-gallery__arrows");
     expect(html).toContain("−17%"); expect(html).toContain("<del");
     expect(html.indexOf("product-price__current")).toBeLessThan(html.indexOf("product-price__meta"));
     expect(html.indexOf("product-price__meta")).toBeLessThan(html.indexOf("<h3"));

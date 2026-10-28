@@ -29,7 +29,8 @@ describe("product detail without quality selection", () => {
     expect(html).toContain('href="/catalog?category=vegetables"');
     expect(html).toContain("1 кг");
     expect(html).not.toContain("ккал");
-    expect(html).not.toContain("Срок годности");
+    expect(html).toContain("По маркировке или данным поставщика.");
+    expect(html).not.toContain("product-gallery__arrows");
   });
   it("shows thumbnails and an actual discount only when returned in the catalog", () => {
     const html = renderToStaticMarkup(<ProductDetail slug={product.slug} initialProduct={{ ...product,

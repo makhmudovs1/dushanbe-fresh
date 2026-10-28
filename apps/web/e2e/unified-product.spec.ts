@@ -60,8 +60,8 @@ test.describe("desktop product composition", () => {
     await expect(media.locator("img")).not.toHaveAttribute("src", src!);
     await expect(thumbs.last()).toHaveAttribute("aria-pressed", "true");
     await thumbs.first().click();
-    await expect(detail.getByRole("heading", { name: "О товаре", exact: true })).toBeVisible();
-    await expect(detail.getByRole("heading", { name: "Характеристики", exact: true })).toBeVisible();
+    await expect(detail.getByRole("region", { name: "О товаре", exact: true })).toBeVisible();
+    await expect(detail.locator("summary", { hasText: "Характеристики" })).toBeVisible();
     await expect(detail.locator(".product-discount-badge")).toHaveCount(0);
     const grid = detail.locator("[data-recommendation-grid]");
     await expect(grid.locator(".product-card")).toHaveCount(12);
@@ -148,7 +148,7 @@ test.describe("persistent mobile product navigation", () => {
     await page.goto("/products/potatoes");
     const sheet = page.getByRole("dialog");
     await expect(sheet.getByRole("heading", { level: 1 })).toContainText("Картошка");
-    await expect(sheet.getByRole("heading", { name: "Хусусиятҳо", exact: true })).toBeVisible();
+    await expect(sheet.locator("summary", { hasText: "Хусусиятҳо" })).toBeVisible();
     await expect(sheet.locator(".mobile-navigation a")).toHaveCount(4);
     await expect(sheet.locator(".product-information")).not.toContainText("Минимальное количество");
   });
