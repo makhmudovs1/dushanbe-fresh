@@ -51,3 +51,27 @@ auth activation, database migrations, seed, catalog import or API restart.
 Build from the reviewed commit in an independent server directory, preserve
 the private Geoapify environment, retain old static assets and rollback runtime.
 Verify API PID, auth status, environment checksums and public catalog before/after.
+
+## Verification And Production, 2026-10-28
+
+- Local lint, typecheck and Shared/API/Web builds passed. All 818 tests passed:
+  Shared 23, Web 357, API 438. Database tests used a new isolated local database,
+  removed after the run; no paid SMS or real orders were submitted.
+- Chromium and WebKit: 11 browser scenarios per engine passed. Desktop widths
+  1024/1280/1440, mobile/tablet 375/390/430/768, RU/TJ, orientation change,
+  gallery selection, hover, quantity increments and nutrition basis switching.
+- Runtime commit `b661096f784666b5dcb6ef206cce876c5670e759` activated at
+  `2026-10-28T11:19:49Z`; build ID `5rvWnXPIOGEyq3VRtzGkb`.
+- API PID stayed `1382577`; API runtime paths and entrypoint, production ENV
+  checksums and the public catalog response matched before/after activation.
+  Auth stayed disabled/not required; no migrations, catalog edits or API restart.
+- Production browser smoke: 3/3 per engine passed on desktop1440, mobile375 RU
+  and mobile390 TJ. Mutating API requests were blocked. Screenshots were opened
+  and visually reviewed; these are browser-engine checks, not a physical iPhone.
+- Production now names the same potato slug "Картофель мытый". The test reads
+  the live display name instead of assuming it stays "Картофель"; the release
+  does not rename products. Screenshots wait for visible photographs to decode.
+- Ignored screenshots are in `apps/web/test-results/product-reference-*`.
+  Rollback runtime is retained at
+  `/opt/dushanbe-fresh/dist/web-releases/product-facts-20261028-b661096/rollback`.
+  A short Web-only restart occurred; no claim of zero downtime.
