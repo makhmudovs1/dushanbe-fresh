@@ -86,6 +86,7 @@ model User {
   priceChanges    ProductPriceHistory[]
   customerProfile Customer?
   customerSessions CustomerSession[]
+  mobileSessions MobileCustomerSession[]
   accountOrders   Order[]            @relation("AccountOrders")
   favorites       CustomerFavorite[]
   cart            CustomerCart?
@@ -701,4 +702,35 @@ model ReplacementDelivery {
   issue              DeliveryIssue @relation(fields: [deliveryIssueId], references: [id])
 
   @@map("replacement_deliveries")
+}
+// Additive mobile transport; existing browser/staff session tables are unchanged.
+model MobileCustomerSession {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  accessTokenHash   String    @unique @map("access_token_hash")
+  accessExpiresAt   DateTime  @map("access_expires_at")
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  revokedAt         DateTime? @map("revoked_at")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens     MobileRefreshToken[]
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("mobile_customer_sessions")
+}
+model MobileRefreshToken {
+  tokenHash String @id @map("token_hash")
+  sessionId String @map("session_id")
+  usedAt DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  session MobileCustomerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([sessionId])
+  @@map("mobile_refresh_tokens")
+}
+model MobileApiLimit {
+  key String @id
+  count Int
+  resetsAt DateTime @map("resets_at")
+  @@index([resetsAt])
+  @@map("mobile_api_limits")
 }

@@ -73,10 +73,11 @@ the same device sends its pending clear on its next synchronization.
 
 ## Migration And Activation
 
-Before enabling auth, also unify the completion criterion for a verified account
-whose name step was cancelled: Cart currently waits for a name while favorites
-and addresses can already use the verified session. This path is unreachable
-with auth disabled and must be resolved/retested before SMS activation.
+The 2026-10-29 local candidate resolves the cancelled-name-step inconsistency:
+Cart, favorites and addresses all use the verified identity without requiring
+the optional profile name step to finish. Checkout still requires contact details.
+Desktop/mobile RU/TJ browser regressions cover cancellation, cart import and
+session/cart restoration in a new browser context. This fix is not yet deployed.
 
 1. Rehearse the existing `20261021090000_customer_accounts` migration if it has not
    been deployed. It remains a separate prerequisite, not silently enabled here.
@@ -85,8 +86,10 @@ with auth disabled and must be resolved/retested before SMS activation.
    snapshots and order data are not rewritten. Back up and rehearse on staging.
 3. Follow [CUSTOMER_ACCOUNTS.md](CUSTOMER_ACCOUNTS.md) and
    [PAYOM_SMS.md](PAYOM_SMS.md). Obtain Payom HOST, token, approved sender and the
-   exact accepted/rejected response contract. Fill `CUSTOMER_SMS_URL`,
-   `CUSTOMER_SMS_API_KEY`, `CUSTOMER_SMS_SENDER` and a separate `CUSTOMER_OTP_SECRET`.
+   approved OTP template UUID and exact API variable key. The local adapter validates the
+   accepted/rejected response contract from the new OpenAPI. Fill `CUSTOMER_SMS_URL`,
+   `CUSTOMER_SMS_API_KEY`, `CUSTOMER_SMS_SENDER`, `CUSTOMER_SMS_TEMPLATE_ID`, `CUSTOMER_SMS_CODE_VARIABLE` and a
+   separate `CUSTOMER_OTP_SECRET`.
 4. Keep `CUSTOMER_AUTH_ENABLED=false` and `CUSTOMER_REQUIRE_PHONE=false` until real
    SMS delivery, HTTPS/cookies, proxy limits, migration and security checks pass.
    The test-only in-memory gateway is excluded from the application build.

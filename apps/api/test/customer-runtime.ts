@@ -80,13 +80,15 @@ async function main() {
         res.end("{}"); return;
       }
       if (req.method === "POST" && req.url === "/api/message") {
-        if (failNext) { failNext = false; res.writeHead(503).end('{"accepted":false}'); return; }
+        if (failNext) { failNext = false; res.writeHead(503).end('{"title":"Test unavailable"}'); return; }
         let raw = ""; for await (const chunk of req) { raw += chunk; if (raw.length > 4096) { res.writeHead(413).end(); return; } }
         const body = JSON.parse(raw);
-        if (typeof body.telephone !== "string" || !/^\+992\d{9}$/.test(body.telephone) || typeof body.text !== "string") { res.writeHead(400).end("{}"); return; }
+        const code = body.templateMessage?.variables?.["code-1"];
+        if (typeof body.telephone !== "string" || !/^\+992\d{9}$/.test(body.telephone) || typeof code !== "string" || !/^\d{6}$/.test(code)
+          || body.templateMessage?.templateId !== "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31" || body.text !== undefined) { res.writeHead(422).end('{"title":"Invalid test template"}'); return; }
         phones.add(body.telephone);
-        messages.set(body.telephone, body.text.match(/\b\d{6}\b/)?.[0] ?? "");
-        res.end(JSON.stringify({ accepted: true })); return;
+        messages.set(body.telephone, code);
+        res.writeHead(201).end(JSON.stringify({ id: "6edb7b9f-097c-492f-8853-4739a5396eca", deliveryStatus: "SERVICE_ACCEPTED" })); return;
       }
       if (req.method === "GET" && url.pathname === "/captured") {
         res.end(JSON.stringify({ code: messages.get(url.searchParams.get("phone") ?? "") ?? null })); return;
@@ -96,12 +98,12 @@ async function main() {
   });
   if (!previewOnly) await new Promise<void>(resolve => gateway.listen(gatewayPort, "127.0.0.1", resolve));
   Object.assign(process.env, { CUSTOMER_AUTH_ENABLED: previewOnly ? "false" : "true", CUSTOMER_REQUIRE_PHONE: previewOnly ? "false" : "true", CUSTOMER_OTP_SECRET: randomBytes(32).toString("hex"),
-    CUSTOMER_SMS_URL: `http://127.0.0.1:${gatewayPort}/api/message`, CUSTOMER_SMS_API_KEY: key, CUSTOMER_SMS_SENDER: "Local test", WEB_ORIGIN: web.origin });
-  // Only this guarded, out-of-build fixture uses a synthetic acceptance contract.
-  // It is not a claim about Payom's undocumented production response.
-  const sms = new PayomSmsAdapter({ confirmed: true, accepts: body => typeof body === "object" && body !== null && "accepted" in body && body.accepted === true });
+    CUSTOMER_SMS_URL: `http://127.0.0.1:${gatewayPort}/api/message`, CUSTOMER_SMS_API_KEY: key, CUSTOMER_SMS_SENDER: "LocalTest",
+    CUSTOMER_SMS_TEMPLATE_ID: "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31", CUSTOMER_SMS_CODE_VARIABLE: "code-1", WEB_ORIGIN: web.origin });
+  // Invented IDs and captured OTPs belong only to this isolated loopback fixture.
+  const sms = new PayomSmsAdapter();
   CustomerSmsGateway.prototype.configured = () => sms.configured();
-  CustomerSmsGateway.prototype.send = (phone, code) => sms.send(phone, code);
+  CustomerSmsGateway.prototype.send = async (phone, code) => { await sms.send(phone, code); };
   await db.category.upsert({ where: { id: marker }, create: { id: marker, name: "Овощи", nameTj: "Сабзавот", slug: marker }, update: {} });
   await db.product.upsert({ where: { id: marker }, create: { id: marker, slug: marker, categoryId: marker, name: "Огурцы", nameTj: "Бодиринг", imageUrl, unit: "kg", currentPurchasePrice: "8", currentSalePrice: "10", minQuantity: "0.5", quantityStep: "0.25", isWeighted: true, qualityOptions: { create: { label: "Старое предпочтение", labelTj: "Интихоби пешина" } } }, update: { imageUrl } });
   const tomorrow = new Date(); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); tomorrow.setUTCHours(0, 0, 0, 0);

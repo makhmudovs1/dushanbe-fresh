@@ -8,12 +8,13 @@ import { AppModule } from "../app.module";
 import { CustomerSmsGateway } from "./customer-auth.service";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { clearTestFinances } from "../delivery-finance/test-cleanup";
+import { PayomSmsAdapter } from "./payom-sms.adapter";
 
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("customer accounts over HTTP", () => {
   const db = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
   const marker = `account-${randomUUID()}`;
-  const phones = Array.from({ length: 10 }, (_, index) => `+9929${String(Date.now()).slice(-7)}${index}`);
+  const phones = Array.from({ length: 12 }, (_, index) => `+9929${String(Date.now()).slice(-6)}${String(index).padStart(2, "0")}`);
   const messages = new Map<string, { code: string; id: string }>();
   let app: INestApplication; let base: string; let cookie = ""; let otherCookie = ""; let userId = "";
   let addressId = ""; let secondAddressId = ""; let orderId = "";
@@ -43,7 +44,8 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
     vi.stubEnv("CUSTOMER_OTP_SECRET", randomBytes(32).toString("hex"));
     vi.stubEnv("CUSTOMER_SMS_URL", "https://sms.example.invalid/api/message"); vi.stubEnv("CUSTOMER_SMS_API_KEY", "test-only");
-    vi.stubEnv("CUSTOMER_SMS_SENDER", "Local test");
+    vi.stubEnv("CUSTOMER_SMS_SENDER", "DFRESH"); vi.stubEnv("CUSTOMER_SMS_TEMPLATE_ID", "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31");
+    vi.stubEnv("CUSTOMER_SMS_CODE_VARIABLE", "code-1");
     // This HTTP suite simulates a connected provider; the Payom transport has its own mocked tests.
     vi.spyOn(CustomerSmsGateway.prototype, "configured").mockImplementation(() => Boolean(process.env.CUSTOMER_SMS_API_KEY));
     vi.spyOn(CustomerSmsGateway.prototype, "send").mockImplementation(async (phone, code, id) => { messages.set(phone, { code, id }); });
@@ -214,5 +216,88 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
       await db.customerOtpChallenge.updateMany({ where: { phone: phones[8] }, data: { createdAt: new Date(Date.now() - 61000) } });
     }
     expect((await request("/customer-auth/code", "POST", { phone: phones[8] })).status).toBe(429);
+  });
+
+  it.each([200, 201])("keeps an OTP unusable when Payom rejects in an HTTP %s body", async status => {
+    const telephone = phones[status === 200 ? 10 : 11];
+    const originalFetch = globalThis.fetch;
+    let providerCalls = 0, generatedCode = "";
+    const intercepted = vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+      if (String(url) !== "https://sms.example.invalid/api/message") {
+        if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(String(url)).hostname)) throw new Error("External requests are forbidden in OTP tests");
+        return originalFetch(url, init);
+      }
+      providerCalls++;
+      return Promise.resolve(new Response(JSON.stringify(status === 200
+        ? { code: 401, message: "JWT Token not found" }
+        : { id: "6edb7b9f-097c-492f-8853-4739a5396eca", deliveryStatus: "REJECTED" }), { status }));
+    });
+    vi.mocked(CustomerSmsGateway.prototype.send).mockImplementationOnce(async (phone, code) => {
+      generatedCode = code; await new PayomSmsAdapter().send(phone, code);
+    });
+    try {
+      expect((await request("/customer-auth/code", "POST", { phone: telephone }, "")).status).toBe(503);
+      const failed = await db.customerOtpChallenge.findFirstOrThrow({ where: { phone: telephone } });
+      expect(failed.sentAt).toBeNull();
+      expect((await request("/customer-auth/verify", "POST", { challengeId: failed.id, code: generatedCode }, "")).status).toBe(401);
+      expect(await db.user.count({ where: { phone: telephone } })).toBe(0);
+      expect(providerCalls).toBe(1);
+    } finally { intercepted.mockRestore(); }
+  });
+
+  it("completes OTP and session flow with one mocked Payom template/201 response", async () => {
+    const before = vi.mocked(CustomerSmsGateway.prototype.send).mock.calls.length;
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousUrl = process.env.CUSTOMER_SMS_URL;
+    const previousProxy = process.env.CUSTOMER_TRUST_LOCAL_PROXY;
+    const originalFetch = globalThis.fetch;
+    let providerCalls = 0;
+    const intercepted = vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+      if (String(url) !== "https://gateway.payom.tj/api/message") {
+        if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(String(url)).hostname)) throw new Error("External requests are forbidden in OTP tests");
+        return originalFetch(url, init);
+      }
+      providerCalls++;
+      const payload = JSON.parse(init!.body as string);
+      expect(payload).not.toHaveProperty("text");
+      expect(payload.templateMessage.templateId).toBe(process.env.CUSTOMER_SMS_TEMPLATE_ID);
+      expect(Object.keys(payload.templateMessage.variables)).toEqual(["code-1"]);
+      expect(payload.templateMessage.variables["code-1"]).toMatch(/^\d{6}$/);
+      return Promise.resolve(new Response(JSON.stringify({ id: "6edb7b9f-097c-492f-8853-4739a5396eca", deliveryStatus: "SERVICE_ACCEPTED" }), { status: 201 }));
+    });
+    vi.mocked(CustomerSmsGateway.prototype.send).mockImplementationOnce(async (phone, code, id) => {
+      messages.set(phone, { code, id }); await new PayomSmsAdapter().send(phone, code);
+    });
+    vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false"); vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CUSTOMER_SMS_URL", "https://gateway.payom.tj/api/message");
+    vi.stubEnv("CUSTOMER_TRUST_LOCAL_PROXY", "true");
+    try {
+      expect(await (await request("/customer-auth/status")).json()).toEqual({ enabled: true, requiredForCheckout: false });
+      expect(await (await request("/customer-auth/me", "GET", undefined, "")).json()).toBeNull();
+      const session = await login(phones[9]);
+      expect(session.header).toContain("__Host-df_customer=");
+      for (const attribute of ["HttpOnly", "Secure", "SameSite=Lax", "Path=/", "Max-Age=2592000"]) expect(session.header).toContain(attribute);
+      expect(session.header).not.toMatch(/(?:^|;)\s*Domain=/i);
+      expect((await request("/customer/profile", "PATCH", { name: "Тест Payom" }, session.cookie)).status).toBe(200);
+      for (let reload = 0; reload < 2; reload++) {
+        expect(await (await request("/customer-auth/me", "GET", undefined, session.cookie)).json()).toMatchObject({ id: session.user.id, name: "Тест Payom" });
+      }
+      const token = session.cookie.split("=")[1];
+      const persisted = await db.customerSession.findUniqueOrThrow({ where: { tokenHash: createHash("sha256").update(token).digest("hex") } });
+      expect(persisted.userId).toBe(session.user.id); expect(persisted.revokedAt).toBeNull();
+      expect(persisted.expiresAt.getTime()).toBeGreaterThan(Date.now() + 29 * 86400000);
+      const message = messages.get(phones[9])!;
+      expect((await db.customerOtpChallenge.findUniqueOrThrow({ where: { id: message.id } })).sentAt).not.toBeNull();
+      expect((await request("/customer-auth/verify", "POST", { challengeId: message.id, code: message.code }, "")).status).toBe(401);
+      expect((await request("/customer-auth/logout", "POST", {}, session.cookie)).status).toBe(201);
+      expect(await (await request("/customer-auth/me", "GET", undefined, session.cookie)).json()).toBeNull();
+      expect(vi.mocked(CustomerSmsGateway.prototype.send).mock.calls.length - before).toBe(1);
+      expect(providerCalls).toBe(1);
+    } finally {
+      intercepted.mockRestore();
+      vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true"); vi.stubEnv("NODE_ENV", previousNodeEnv ?? "test");
+      vi.stubEnv("CUSTOMER_SMS_URL", previousUrl ?? "");
+      vi.stubEnv("CUSTOMER_TRUST_LOCAL_PROXY", previousProxy ?? "false");
+    }
   });
 });

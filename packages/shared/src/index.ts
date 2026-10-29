@@ -14,3 +14,4 @@ export type * from "./customer";
 export * from "./delivery-finance";
 export * from "./tracking";
 export * from "./delivery-zone";
+export * from "./mobile";

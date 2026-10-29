@@ -8,8 +8,9 @@ Both additive account/shopping migrations are applied. Earlier preserved
 remain historical checkpoints, not separate production identities. See
 [CUSTOMER_RELEASE_20261024.md](CUSTOMER_RELEASE_20261024.md) for rollout evidence
 and [CUSTOMER_EXPERIENCE.md](CUSTOMER_EXPERIENCE.md) for the shopping/profile UX.
-Payom.tj request integration is deployed but fails closed: its response contract
-and API access are still pending. See [PAYOM_SMS.md](PAYOM_SMS.md). Login and
+The deployed Payom.tj integration still fails closed; the local adapter has now
+been updated from Payom OpenAPI to template sending/HTTP 201 validation, without
+deployment or activation. Template UUID and API access are pending. See [PAYOM_SMS.md](PAYOM_SMS.md). Login and
 mandatory verification remain disabled; guest checkout requires no login.
 Existing production pricing settings are absent and must be supplied by the owner;
 this release did not invent fees or bypass the existing quote validation.
@@ -48,19 +49,25 @@ the account's default address and allows choosing/editing another.
 CUSTOMER_AUTH_ENABLED=false
 CUSTOMER_REQUIRE_PHONE=false
 # CUSTOMER_OTP_SECRET=<independent random secret, >=32 bytes>
-# CUSTOMER_SMS_URL=https://HOST/api/message
+# CUSTOMER_SMS_URL=https://gateway.payom.tj/api/message
 # CUSTOMER_SMS_API_KEY=<Payom Bearer token>
-# CUSTOMER_SMS_SENDER=<Payom-approved sender>
+# CUSTOMER_SMS_SENDER=DFRESH
+# CUSTOMER_SMS_TEMPLATE_ID=<real approved OTP template UUID from Payom>
+# CUSTOMER_SMS_CODE_VARIABLE=<exact API variable key confirmed by Payom>
 ```
 
-The adapter sends Payom's `POST {telephone, text, senderName, type: "SMS"}` with
-`Authorization: Bearer <key>`. The official page does not specify an acceptance
-response; the isolated response verifier is deliberately unconfirmed. Until Payom
-confirms it and tests pass, sending/login remain disabled even with ENV filled.
-A 2xx alone is not acceptance. Redirects are refused, timeout is ten seconds,
+The local adapter sends Payom's `POST {telephone, senderName, type: "SMS",
+templateMessage: {templateId, variables: {[configuredKey]: code}}}` with `Authorization: Bearer <key>`.
+This is an individual account; there is no free-text mode/fallback. It validates
+exact HTTP 201, UUID `id` and positive `deliveryStatus` from the new OpenAPI.
+Queue acceptance is not delivery. Missing template UUID/explicit variable key or invalid configuration
+keeps the provider disabled; filled ENV never changes the auth flags by itself.
+The editor's `{code-1}` is not automatically mapped to `code`; confirm the exact
+API name with Payom. No aliases or default variable key are sent.
+Redirects are refused, timeout is ten seconds,
 and uncertain requests are not automatically retried. Codes, keys and raw
 provider responses/errors are never logged or sent to the UI. Connection checklist
-and the remaining response-verification step: [PAYOM_SMS.md](PAYOM_SMS.md).
+and remaining setup/approved live test: [PAYOM_SMS.md](PAYOM_SMS.md).
 
 Only +992 plus nine national digits are accepted. Codes are random six-digit,
 HMAC-bound to challenge ID and phone, expire after five minutes, allow five
@@ -170,3 +177,13 @@ preview use `CUSTOMER_BROWSER_PREVIEW_ONLY=1`; the SMS test gateway is not start
 
 Security references: [OWASP authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html),
 [session management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
+## Activation Candidate, 2026-10-29
+
+See [PAYOM_ACTIVATION.md](PAYOM_ACTIVATION.md) for current read-only production
+evidence and the owner's private ENV instructions. Provider credentials, approved
+UUID and exact variable name remain external blockers; no SMS or release occurred.
+The candidate shares OTP between existing browser cookies and the reused native
+opaque access/rotating refresh transport. Native is separately opt-in through
+`MOBILE_CUSTOMER_API_ENABLED=false` by default, needs the additive mobile-session
+migration, and reuses the account/cart/address/order services without duplicating
+identity or purchasing rules. API and app-device live checks remain approval gates.

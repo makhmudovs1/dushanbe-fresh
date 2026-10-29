@@ -45,7 +45,7 @@ function browserStorage() {
 export function CartProvider({ children }: { children: ReactNode }) {
   const customer = useOptionalCustomer();
   const user = customer?.user;
-  const owner = !customer?.loading && customer?.status.enabled && user?.phoneVerifiedAt && user.name?.trim() ? user.id : null;
+  const owner = !customer?.loading && customer?.status.enabled && user?.phoneVerifiedAt ? user.id : null;
   const runtime = useRef<Runtime | null>(null);
   const [published, setPublished] = useState<{ owner: string | null; view: CartSyncView } | null>(null);
   const [lastAddition, setLastAddition] = useState(0);

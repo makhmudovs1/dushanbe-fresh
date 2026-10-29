@@ -343,6 +343,45 @@ for (const width of [360, 390, 1440]) for (const locale of ["ru", "tg"] as const
   });
 }
 
+for (const width of [390, 1440]) for (const locale of ["ru", "tg"] as const) test(`verified nameless account keeps shopping after closing name step ${width} ${locale}`, async ({ page, context, browser, baseURL }) => {
+  const t = (value: string) => translate(locale, value);
+  const phone = phoneNumber();
+  await context.addCookies([{ name: "df-language", value: locale, url: baseURL! }]);
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`/catalog?category=${marker}`);
+  await page.locator(".product-card__action").click();
+  await page.locator(".address-invitation .secondary-link").click();
+  await page.goto("/account");
+  await page.locator(".account-welcome").getByRole("button", { name: t("Войти"), exact: true }).click();
+  const loginDialog = page.locator(".customer-login");
+  await loginDialog.getByLabel(t("Телефон"), { exact: true }).fill(phone);
+  await loginDialog.getByRole("button", { name: t("Получить код"), exact: true }).click();
+  const input = loginDialog.getByLabel(t("Код из SMS"), { exact: true });
+  await expect(input).toBeVisible();
+  const captured = await page.request.get(`${gateway}/captured?phone=${encodeURIComponent(phone)}`, { headers });
+  const value = await captured.json() as { code?: string };
+  if (typeof value.code !== "string" || !/^\d{6}$/.test(value.code)) throw new Error("Local mock code unavailable");
+  await input.fill(value.code);
+  await loginDialog.getByRole("button", { name: t("Подтвердить номер"), exact: true }).click();
+  await expect(loginDialog.getByLabel(t("Имя"), { exact: true })).toBeVisible();
+  await loginDialog.getByRole("button", { name: t("Закрыть форму"), exact: true }).click();
+  await expect(page.locator(".account-identity")).toBeVisible();
+  await expect.poll(async () => (await cart(page)).items).toMatchObject([{ productId: marker, quantity: "0.5" }]);
+  const profile = await (await page.request.get("/api/v1/customer-auth/me")).json() as { name: string | null };
+  expect(profile.name).toBeNull();
+  await page.reload();
+  await expect(page.locator(".account-identity")).toBeVisible();
+  await expect.poll(async () => (await cart(page)).items).toMatchObject([{ productId: marker, quantity: "0.5" }]);
+  const reopened = await browser.newContext({ baseURL, storageState: await context.storageState(), viewport: { width, height: 900 } });
+  try {
+    const next = await reopened.newPage();
+    await next.goto("/cart");
+    await expect(next.locator(".cart-item")).toHaveCount(1);
+    await expect(next.locator(".cart-item output")).toContainText("0,5");
+    await expect(next.locator(".customer-login")).toHaveCount(0);
+  } finally { await reopened.close(); }
+});
+
 for (const locale of ["ru", "tg"] as const) test(`disabled SMS is honest and optional login does not gate checkout ${locale}`, async ({ page, context, baseURL }, info) => {
   const t = (value: string) => translate(locale, value);
   await page.setViewportSize({ width: locale === "ru" ? 360 : 1440, height: 900 });

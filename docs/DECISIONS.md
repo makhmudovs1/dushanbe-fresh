@@ -1087,3 +1087,57 @@
   Keep one simple polygon, max 200 vertices, no holes or antimeridian wrapping.
 - Owner authorized production rollout of Web and API after checks, with zone
   restriction OFF. Administrators will draw and enable their real boundary.
+
+## 2026-10-27: Payom OpenAPI Template OTP
+
+- The owner's individual Payom account uses only templateMessage with an approved
+  template UUID in CUSTOMER_SMS_TEMPLATE_ID and the existing six-digit code as a
+  string variable. No free-text fallback, invented production UUID, alternate
+  auth flow, automatic provider failover or OTP policy change.
+- Replace the earlier unconfirmed-contract hook with OpenAPI 1.0.0 validation:
+  exact HTTP 201, nonzero UUID id and positive known deliveryStatus. Negative or
+  unknown statuses fail closed. SERVICE_ACCEPTED is not delivery; neither are
+  SENT, ENROUTE or ACCEPTED. DELIVERED alone indicates handset delivery.
+- Parse documented Problem Details/AuthError bodies for 400/401/422, retaining
+  only safe error categories. Keep the existing generic HTTP 503 for clients;
+  never retain/log upstream text, response OTPs, phone or token in exceptions.
+- Preserve the existing sentAt marker for provider acceptance, not a new delivery
+  guarantee. No schema migration or order/account/session rewrite.
+- Loopback-only browser fixtures now follow the real template/201 shape instead
+  of injecting a synthetic acceptance predicate. Their invented UUIDs never
+  become defaults in application configuration.
+- Update locally only. No paid SMS, deployment, production environment write,
+  restart or auth enablement is authorized by this task.
+
+## 2026-10-27: Payom OTP Variable Name
+
+- OpenAPI describes variables as a name/value dictionary with code as an example;
+  it does not explain whether the editor's {code-1} contains metadata or an API
+  name. Do not infer a mapping or claim that support confirmed one.
+- Require CUSTOMER_SMS_CODE_VARIABLE explicitly, without a default, aliases,
+  brace/suffix stripping, trimming or case folding. Send exactly one literal
+  JSON key with the unchanged OTP string. Missing or unsafe keys disable sending.
+- Keep key safety checks local and documented, rather than presenting them as
+  provider schema constraints. The real template and variable name must both be
+  confirmed by Payom before a separately approved real test.
+- Mocks/loopback fixtures cover code-1 as a configurable example, not a claim
+  about the pending production template. No support message or paid SMS is sent.
+## 2026-10-29: Payom Activation Preparation And Shared Native OTP
+
+- Reuse the mobile worktree's existing native auth/session/controllers and
+  additive mobile-session migration in the main API, not a new OTP implementation.
+  Browser cookie/Origin security stays separate from native bearer/no-Origin
+  transport. Checkout/account/cart services remain shared; native geocoding and
+  app-store distribution are outside this SMS preparation.
+- A verified identity is sufficient for shopping synchronization even if the
+  user closes profile-name entry. Contact fields remain required at checkout.
+- Consume OTP and issue the native session in one transaction, so a storage
+  failure permits retrying verification without buying a second SMS.
+- A separately approved real pilot can be restricted to one phone/one attempt
+  through persistent existing auth-limit storage. Reserve before the provider
+  call, never retry uncertain sends, and never invalidate the first code when
+  the pilot's later resend is denied. Keep pilot ID, phone and OTP secret stable.
+- Read-only preflight never infers template approval or editor-variable mapping
+  from health or balance, never prints secrets, and cannot enable auth. Exact
+  production gateway/DFRESH and valid configuration are required before enabling.
+- Production settings/services/SMS remain unchanged until separate owner approval.

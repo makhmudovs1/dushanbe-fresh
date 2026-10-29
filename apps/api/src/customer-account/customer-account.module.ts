@@ -9,5 +9,5 @@ import { CustomerShoppingController } from "./customer-shopping.controller";
 import { CustomerShoppingService } from "./customer-shopping.service";
 
 @Module({ imports: [PrismaModule, CatalogModule], controllers: [CustomerAuthController, CustomerAccountController, CustomerShoppingController],
-  providers: [CustomerSmsGateway, CustomerAuthService, CustomerAccountService, CustomerShoppingService], exports: [CustomerAuthService] })
+  providers: [CustomerSmsGateway, CustomerAuthService, CustomerAccountService, CustomerShoppingService], exports: [CustomerAuthService, CustomerAccountService, CustomerShoppingService] })
 export class CustomerAccountModule {}

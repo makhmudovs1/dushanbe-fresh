@@ -7,5 +7,5 @@ import { CheckoutService } from "./checkout.service";
 import { CustomerAccountModule } from "../customer-account/customer-account.module";
 
 @Module({ imports: [PrismaModule, CustomerAccountModule], controllers: [CheckoutController, DeliverySlotsController],
-  providers: [CheckoutService, DeliverySlotsService] })
+  providers: [CheckoutService, DeliverySlotsService], exports: [CheckoutService] })
 export class CheckoutModule {}
