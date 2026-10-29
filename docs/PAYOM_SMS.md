@@ -1,5 +1,13 @@
 # Payom SMS Connection
 
+## Code Released, SMS Still Off
+
+The owner-approved preparation runtime `20341b0` was deployed on 2026-10-29.
+See [PAYOM_RELEASE_20261029.md](PAYOM_RELEASE_20261029.md) for backup, additive
+migration, production smoke and rollback evidence. Production ENV was preserved;
+no SMS was sent and neither optional nor mandatory SMS login was enabled.
+The preparation notes below record the state before this release.
+
 ## Activation Preparation, 2026-10-29
 
 The current operational guide is [PAYOM_ACTIVATION.md](PAYOM_ACTIVATION.md).

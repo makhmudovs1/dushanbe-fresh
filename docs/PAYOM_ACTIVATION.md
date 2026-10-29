@@ -1,5 +1,18 @@
 # Payom: Safe Activation And Owner Actions
 
+## Deployment Update
+
+The owner subsequently approved a code-only release. Runtime `20341b0` is now
+installed with its additive native migration and loopback API bind; see
+[PAYOM_RELEASE_20261029.md](PAYOM_RELEASE_20261029.md). ENV, auth flags and
+proxy opt-in remain unchanged/off; no SMS was sent. The audit below records
+the original pre-release state. Do not interpret the release as SMS approval.
+
+The reviewed OTP-secret helper is now also available on the VPS at
+`/opt/dushanbe-fresh/scripts/prepare-payom-otp-secret.cjs`. After approving the
+private ENV write, the owner may run it with sudo directly; copying it again
+is unnecessary. The token must still be entered privately with the editor.
+
 ## Current Evidence, 2026-10-29
 
 Preparation only. No production settings, files, services, customer data or SMS

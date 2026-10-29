@@ -187,3 +187,7 @@ opaque access/rotating refresh transport. Native is separately opt-in through
 `MOBILE_CUSTOMER_API_ENABLED=false` by default, needs the additive mobile-session
 migration, and reuses the account/cart/address/order services without duplicating
 identity or purchasing rules. API and app-device live checks remain approval gates.
+
+Owner-approved code deployment is now recorded in `PAYOM_RELEASE_20261029.md`.
+The additive native tables exist, but SMS/native login remain disabled, secrets
+are still absent, and no paid/device login verification has been performed.
