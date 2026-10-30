@@ -1,0 +1,50 @@
+name: df-tarena-encrypted-backup
+services:
+  daily-backup:
+    image: df-tarena-backup-candidate:20261030
+    command: [--loop]
+    volumes:
+      - ./ops:/ops:ro
+      - ./secrets/backup.json:/run/secrets/backup.json:ro
+      - ./secrets/restic-password:/run/secrets/restic-password:ro
+      - ./secrets/backup.pgpass:/run/secrets/backup.pgpass:ro
+      - ./work:/work
+      - ./repository:/repository
+      - ./status:/status
+      - ../df-tarena-rehearsal-20261029/images:/images:ro
+    networks: [rehearsal]
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    mem_limit: 256m
+    pids_limit: 48
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: 1m, max-file: "2"}
+  telegram-alerts:
+    profiles: [telegram]
+    image: df-tarena-backup-candidate:20261030
+    entrypoint: [python3, /ops/alert-agent.py]
+    volumes:
+      - ./ops:/ops:ro
+      - ./telegram:/run/secrets:ro
+      - ./alert-state:/alert-state
+      - ./status:/backup-status:ro
+      - ../df-tarena-rehearsal-20261029/monitoring:/monitor:ro
+    networks: [outbound]
+    read_only: true
+    mem_limit: 48m
+    pids_limit: 16
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: 1m, max-file: "2"}
+networks:
+  rehearsal:
+    external: true
+    name: df-tarena-rehearsal_private
+  outbound: {}

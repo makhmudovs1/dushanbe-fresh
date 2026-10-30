@@ -1,0 +1,10 @@
+[Unit]
+Description=Dushanbe Fresh closed readiness watchdog (not production)
+After=docker.service
+
+[Service]
+Type=oneshot
+User=adminj0n
+ExecStart=/usr/bin/python3 /home/adminj0n/df-tarena-readiness-20261031/ops/readiness-watchdog.py
+NoNewPrivileges=true
+PrivateTmp=true

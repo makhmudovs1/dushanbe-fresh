@@ -5,8 +5,8 @@ import { publicMetadata } from "@/lib/seo";
 
 export const metadata = publicMetadata("/about", "О сервисе | Dushanbe Fresh", "Как работает Dushanbe Fresh: выбираем свежие продукты на рынках Душанбе, проверяем качество, упаковываем и доставляем домой.");
 
-export default function AboutPage() {
-  const { t } = serverI18n();
+export default async function AboutPage() {
+  const { t } = await serverI18n();
   return <main className="page"><div className="shell about-page">
     <header className="page-heading"><h1>Dushanbe Fresh</h1><p>{t("Сервис доставки свежих продуктов с рынков Душанбе.")}</p></header>
     <p>{t("Мы хотим избавить жителей Душанбе от необходимости ехать на рынок за повседневными продуктами, сохранив возможность получать свежие овощи, фрукты, зелень и другие товары с местных рынков.")}</p>

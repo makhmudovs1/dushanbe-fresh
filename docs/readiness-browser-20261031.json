@@ -1,0 +1,16 @@
+{
+  "runDateMoscow": "2026-10-31",
+  "source": "Successful browser subprocess exit statuses captured by the initial readiness-exercise run; fault stage failed separately",
+  "syntheticOnly": true,
+  "browsers": [
+    {"engine": "chromium", "width": 1440, "passed": true},
+    {"engine": "webkit", "width": 375, "passed": true},
+    {"engine": "webkit", "width": 390, "passed": true},
+    {"engine": "webkit", "width": 430, "passed": true},
+    {"engine": "chromium", "width": 390, "passed": true}
+  ],
+  "scenarios": ["catalog RU/TJ", "cart reload", "product footer", "guest checkout", "staff session reload", "separate product varieties", "actual-weight goods total 25.20", "picker RBAC", "courier assignment", "logout"],
+  "actualIosAndroidDeviceTested": false,
+  "realSmsSent": false,
+  "productionTouched": false
+}

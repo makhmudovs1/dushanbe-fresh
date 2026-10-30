@@ -1,0 +1,160 @@
+{
+  "recordedAtUTC": "2026-10-30T23:01:33Z",
+  "syntheticOnly": true,
+  "memoryAvailableMiB": 883.05,
+  "swapUsedMiB": 92.04,
+  "diskFreeGiB": 59.52,
+  "cpuPercent": 14.07,
+  "cpuCounters": [
+    24884898,
+    23929863
+  ],
+  "containers": {
+    "api": {
+      "memory": 402653184,
+      "restart": {
+        "Name": "unless-stopped",
+        "MaximumRetryCount": 0
+      },
+      "user": "node",
+      "readOnly": true,
+      "image": "sha256:00730ddc933d48f527d64daee1542da715909d10f12d2229e69c8cad5c3dc9aa",
+      "healthy": "healthy",
+      "running": true,
+      "oomKilled": false,
+      "startedAt": "2026-10-30T22:46:24.756435268Z",
+      "memoryMax": "402653184",
+      "swapMax": "402653184",
+      "memoryPeakMiB": 64.11,
+      "layers": [
+        "sha256:9b35de7893378218e365c34c2c735fb0032a859112fb7345ca8ea73f9aa1db70",
+        "sha256:f0f61d9e9a7d5d2d29443c2f95d7b72efdabe7deda5f22966a47fb7562c9c578",
+        "sha256:9dbd0b23461d7b911915e0fb50a3d7ec0724eade9dd4a5f330629e48b9e1e5c4",
+        "sha256:68c748ee0ff2dbec5e3cf37b4f97e96e41cf3a5b3bcb3c7381525acde8804fb7",
+        "sha256:e52a180b9ae11a9ac546cefe561f41dad71de8861f39df663b1d63052e673428",
+        "sha256:19e79bde0c6615458b8e57662791d6b6b95b68d0c27944a231fbb3eeeab6dae2",
+        "sha256:e0c4e86bc105e2fd046beba6a32ae53bfd37fb57cb93e65eeaa112b64f3a5906",
+        "sha256:585e560584b7c8178f94bcf532e33e16252a9f749f1b40e8412d3848da968f01",
+        "sha256:cfdc2b3f439d64645abaf875eb2e351f61ffc8765f6b2241e2ba2cee1b04585e",
+        "sha256:b5e4518f8f892391188abbda3d2099dd4fedd92bd213f949b2e22956aaf02627",
+        "sha256:14b8ff583aa44126162a68c6c147c3c3b7741b56a2494911503d390123d277e4"
+      ],
+      "scannedLayersMatch": true
+    },
+    "web": {
+      "memory": 536870912,
+      "restart": {
+        "Name": "unless-stopped",
+        "MaximumRetryCount": 0
+      },
+      "user": "node",
+      "readOnly": true,
+      "image": "sha256:378f7036258c2602889ba2d86483ec8157e97acfac9844fa2e310625de93f981",
+      "healthy": "healthy",
+      "running": true,
+      "oomKilled": false,
+      "startedAt": "2026-10-30T22:47:49.457779578Z",
+      "memoryMax": "536870912",
+      "swapMax": "536870912",
+      "memoryPeakMiB": 66.84,
+      "layers": [
+        "sha256:9b35de7893378218e365c34c2c735fb0032a859112fb7345ca8ea73f9aa1db70",
+        "sha256:f0f61d9e9a7d5d2d29443c2f95d7b72efdabe7deda5f22966a47fb7562c9c578",
+        "sha256:9dbd0b23461d7b911915e0fb50a3d7ec0724eade9dd4a5f330629e48b9e1e5c4",
+        "sha256:68c748ee0ff2dbec5e3cf37b4f97e96e41cf3a5b3bcb3c7381525acde8804fb7",
+        "sha256:e52a180b9ae11a9ac546cefe561f41dad71de8861f39df663b1d63052e673428",
+        "sha256:19e79bde0c6615458b8e57662791d6b6b95b68d0c27944a231fbb3eeeab6dae2",
+        "sha256:e0c4e86bc105e2fd046beba6a32ae53bfd37fb57cb93e65eeaa112b64f3a5906",
+        "sha256:6e1bf075a889fad7a03582a0d0df88246d50d1de3054d05ec141a2d287020f6f",
+        "sha256:b10b938b75ce08576d3aa080ab0c567633d20d80c1dbf297736aa5e927f69b08",
+        "sha256:38cee64bc48e74e824644df80e8d672102825248895cd875a1f7cb629762f5e9"
+      ],
+      "scannedLayersMatch": true
+    },
+    "postgres": {
+      "memory": 402653184,
+      "restart": {
+        "Name": "unless-stopped",
+        "MaximumRetryCount": 0
+      },
+      "user": "",
+      "readOnly": false,
+      "image": "sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938",
+      "healthy": "healthy",
+      "running": true,
+      "oomKilled": false,
+      "startedAt": "2026-10-30T22:46:40.022029177Z",
+      "memoryMax": "402653184",
+      "swapMax": "402653184",
+      "memoryPeakMiB": 25.19,
+      "layers": [
+        "sha256:44a87794b739d471ec360bec56cc0ceac640d06bbf579ee7d9061a0b88d09818",
+        "sha256:3e26d2e9e46b11f0ce13491706ae00a0b4bdbc97ea4357eb936a8033fab87a18",
+        "sha256:8b5f862750faa8ed7def2e8c8ce611ff0374867d1d0ccb60228d8e60cf9d61f7",
+        "sha256:d2cc5ef5560910a76e85352a6ead6d0455a964baf7ed33a08e193cc133593c3b",
+        "sha256:f0199bdaa56b4b581af6bb1fedda5b1afcfb3674bf0ccb72d71f81a6d82f581b",
+        "sha256:406d2b22ba0407d51813c6cf91b5bd3127893e6b20d26e7753299a92fe0a1f52",
+        "sha256:6f5f445892d5c2f03ea08899bfb9b6720232007ce7077bcc92b3202e78247263",
+        "sha256:cdfa8f1d9a3de034c896030a2b7da8dfb3b7bc851c6759f97f7184de39171315",
+        "sha256:f9435ac318f63bf4b3a2b53f84055baa6f6cf3ffdb7dd133cd67b0f8104ace30",
+        "sha256:8ea3b41420449bb3bf31d985979baf270ba6c08e8309384b8d1c48a46112e7cd",
+        "sha256:d8b9a7cfb02bed7280edfcdaca8a92bee560f3b4b2a95c00d3c49f25dda5bd57",
+        "sha256:5986a8620109e7cbea4f8768df9184e61065fd961373cb7a61eadeb386834bd5",
+        "sha256:270517e23c73d52b354feffcac08fc84f8f0bcfb035105e2803cd738d8e6cd7a",
+        "sha256:a630672e6566e4702167a450ceeacf7e937e5d4cca2995fae5cc5b29b8af5b1f"
+      ],
+      "scannedLayersMatch": true
+    },
+    "proxy": {
+      "memory": 100663296,
+      "restart": {
+        "Name": "unless-stopped",
+        "MaximumRetryCount": 0
+      },
+      "user": "1000:1000",
+      "readOnly": true,
+      "image": "sha256:0731dfac318552d148be1d8ab0b27eb2064f87d0913ebe66d1110136590e1d29",
+      "healthy": null,
+      "running": true,
+      "oomKilled": false,
+      "startedAt": "2026-10-30T22:50:33.008529931Z",
+      "memoryMax": "100663296",
+      "swapMax": "100663296",
+      "memoryPeakMiB": 13.37,
+      "layers": [
+        "sha256:54ea9baa1bbd7651dbda5c61569dad60fa601c73e5b784e154e8ba0f314e84fd",
+        "sha256:ffe3f66a572836b76678fc7bd0f6cc19a2ef8585cca6fe0ba7c2e1037d2e1159",
+        "sha256:4bb692fe970995252617470d76a9c95d18cd822a52a59558822b5f1d29d6cf2f",
+        "sha256:d08f1a0adb5011e488b16040328bb140738ff8248022d359170147464b656e5b",
+        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+        "sha256:0d7d1b60e96f763527f29734a906feb1f1214c4a2bbb97171894724ece7cd2a8"
+      ],
+      "scannedLayersMatch": true
+    }
+  },
+  "alerts": [],
+  "probes": {
+    "api": 200,
+    "web": 200
+  },
+  "swapCounters": {
+    "pswpin": 697,
+    "pswpout": 23493
+  },
+  "swapPagesSincePreviousSample": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "runtimeRole": {
+    "superuser": false,
+    "createDb": false,
+    "createRole": false,
+    "replication": false,
+    "schemaCreate": false
+  },
+  "proxy": {
+    "requestsInCurrentLog": 991,
+    "serverErrorsInLastMinute": 0,
+    "sensitiveFieldsRemoved": true
+  }
+}

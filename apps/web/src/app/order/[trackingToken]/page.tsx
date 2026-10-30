@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   referrer: "no-referrer"
 };
-export default function TrackingPage({ params }: { params: { trackingToken: string } }) {
-  return <main className="page"><div className="shell tracking-shell"><OrderTracking key={params.trackingToken} token={params.trackingToken} /></div></main>;
+export default async function TrackingPage({ params }: { params: Promise<{ trackingToken: string }> }) {
+  const { trackingToken } = await params;
+  return <main className="page"><div className="shell tracking-shell"><OrderTracking key={trackingToken} token={trackingToken} /></div></main>;
 }

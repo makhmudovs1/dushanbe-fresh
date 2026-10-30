@@ -1,0 +1,309 @@
+{
+  "recordedAtUTC": "2026-10-30T23:13:24.032813+00:00",
+  "readOnly": true,
+  "cpuCount": 2,
+  "loadAverage": [
+    0.26513671875,
+    0.15380859375,
+    0.17333984375
+  ],
+  "memoryMiB": {
+    "MemTotal": 1967.62,
+    "MemAvailable": 1041.61
+  },
+  "swapUsedMiB": 92.04,
+  "diskGiB": {
+    "total": 78.19,
+    "free": 59.52
+  },
+  "freeInodeRatio": 0.9507,
+  "dockerAvailable": true,
+  "containers": [
+    {
+      "Names": "df-tarena-readiness-proxy-1",
+      "Image": "df-tarena-proxy-candidate:20261031",
+      "Status": "Exited (0) 10 minutes ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": null,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-readiness-web-1",
+      "Image": "df-tarena-web-candidate:20261031",
+      "Status": "Exited (0) 10 minutes ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-readiness-api-1",
+      "Image": "df-tarena-api-candidate:20261031",
+      "Status": "Exited (143) 10 minutes ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 3
+    },
+    {
+      "Names": "df-tarena-readiness-postgres-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Exited (0) 10 minutes ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 3
+    },
+    {
+      "Names": "df-tarena-encrypted-backup-daily-backup-1",
+      "Image": "df-tarena-backup-candidate:20261030",
+      "Status": "Up 2 hours",
+      "Ports": "5432/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 60.96,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-backup-scheduler-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Up 29 hours",
+      "Ports": "5432/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 13.16,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-v2-proxy-1",
+      "Image": "caddy:2",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": null,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-v2-web-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-v2-api-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Exited (143) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-v2-postgres-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-proxy-1",
+      "Image": "caddy:2",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": null,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-web-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-api-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Exited (143) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-recovery-postgres-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Exited (0) 29 hours ago",
+      "Ports": "",
+      "running": false,
+      "oomKilled": false,
+      "health": "unhealthy",
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-proxy-1",
+      "Image": "caddy:2",
+      "Status": "Up 29 hours",
+      "Ports": "80/tcp, 443/tcp, 2019/tcp, 443/udp, 127.0.0.1:8444->8444/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 12.4,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-monitor-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Up 29 hours",
+      "Ports": "",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 37.7,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-web-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Up 29 hours (healthy)",
+      "Ports": "127.0.0.1:18082->3000/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": "healthy",
+      "memoryPeakMiBSinceStart": 96.82,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-api-1",
+      "Image": "df-security-rehearsal:20261029",
+      "Status": "Up 29 hours (healthy)",
+      "Ports": "",
+      "running": true,
+      "oomKilled": false,
+      "health": "healthy",
+      "memoryPeakMiBSinceStart": 73.07,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-rehearsal-postgres-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Up 29 hours (healthy)",
+      "Ports": "5432/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": "healthy",
+      "memoryPeakMiBSinceStart": 73.85,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-pilot-proxy-1",
+      "Image": "caddy:2",
+      "Status": "Up 33 hours",
+      "Ports": "80/tcp, 443/tcp, 2019/tcp, 443/udp, 127.0.0.1:8443->8443/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 15.18,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-pilot-web-1",
+      "Image": "df-tarena-pilot:8bb9e75",
+      "Status": "Up 33 hours",
+      "Ports": "127.0.0.1:18080->3000/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 189.93,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-pilot-api-1",
+      "Image": "df-tarena-pilot:8bb9e75",
+      "Status": "Up 33 hours",
+      "Ports": "",
+      "running": true,
+      "oomKilled": false,
+      "health": null,
+      "memoryPeakMiBSinceStart": 67.27,
+      "restarts": 0
+    },
+    {
+      "Names": "df-tarena-pilot-postgres-1",
+      "Image": "postgres:16-bookworm",
+      "Status": "Up 33 hours (healthy)",
+      "Ports": "5432/tcp",
+      "running": true,
+      "oomKilled": false,
+      "health": "healthy",
+      "memoryPeakMiBSinceStart": 135.11,
+      "restarts": 0
+    }
+  ],
+  "listeners": [
+    "127.0.0.1:8443",
+    "127.0.0.1:8444",
+    "127.0.0.1:44043",
+    "0.0.0.0:22",
+    "127.0.0.1:18082",
+    "127.0.0.1:18080",
+    "127.0.0.53%lo:53",
+    "127.0.0.54:53",
+    "[::]:22"
+  ],
+  "ipv6Addresses": [
+    "2a0b:ae80:1:53::94"
+  ],
+  "sshdVerifiedNow": false,
+  "firewallVerifiedNow": false,
+  "rehearsalMonitor": {
+    "at": "2026-10-30T23:13:11.069Z",
+    "availableKiB": 1099792,
+    "cpuPercent": 4.8,
+    "newOomKills": 0,
+    "backupAt": "2026-10-30T23:11:41Z",
+    "alerts": []
+  },
+  "productionEnvPresent": false,
+  "encryptedBackup_latest": {
+    "generatedAt": "2026-10-30T20:55:40.497102+00:00",
+    "snapshot": "04dd73bcb51d341c4bae075f8a37d77fcd8b0873fff29502c641f6c5cca33582",
+    "integrityVerified": true,
+    "offsite": false,
+    "mode": "synthetic-local"
+  },
+  "encryptedBackup_restore-result": {
+    "syntheticOnly": true,
+    "encryptedResticRestore": true,
+    "wrongKeyRejected": true,
+    "fileHashesMatched": true,
+    "rowFingerprintsMatched": true,
+    "activeSessionsRestored": 0,
+    "products": 100,
+    "orders": 3,
+    "goodsTotalAllTestOrders": "75.60",
+    "uploadedImages": 1,
+    "restoreSeconds": 3.16
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "dateMoscow": "2026-10-29",
+  "recordedAtUTC": "2026-10-29T18:21:28.414Z",
+  "resources": {
+    "syntheticOnly": true,
+    "monitorSamples": 217,
+    "from": "2026-10-29T17:23:02.335Z",
+    "to": "2026-10-29T18:21:27.365Z",
+    "peakNonAvailableMiB": 1098.28,
+    "minimumAvailableMiB": 869.34,
+    "maxCpuPercent": 60.99,
+    "maxSwapUsedKiB": 268,
+    "newHostOomKills": 0,
+    "currentAlerts": [],
+    "disk": {
+      "totalGiB": 78.19,
+      "freeGiB": 61.12
+    },
+    "containers": {
+      "postgres": {
+        "status": "running",
+        "health": "healthy",
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 32.32
+      },
+      "api": {
+        "status": "running",
+        "health": "healthy",
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 69.61
+      },
+      "web": {
+        "status": "running",
+        "health": "healthy",
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 81.92
+      },
+      "proxy": {
+        "status": "running",
+        "health": null,
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 12.4
+      },
+      "monitor": {
+        "status": "running",
+        "health": null,
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 29.82
+      },
+      "backup-scheduler": {
+        "status": "running",
+        "health": null,
+        "oomKilled": false,
+        "restarts": 0,
+        "memoryPeakMiB": 7.61
+      }
+    },
+    "native-summary.json": {
+      "success": true,
+      "tests": 32,
+      "passed": 32,
+      "failed": 0,
+      "syntheticOnly": true,
+      "realProviderCalls": false,
+      "scope": "web/native HTTP contracts on VPS; mock loopback SMS only; not device testing",
+      "localOnlySuite": "customer-shopping.integration.test.ts needs psql, intentionally absent from the application runtime"
+    },
+    "fault-summary.json": {
+      "syntheticOnly": true,
+      "webOutageDetected": true,
+      "webRecoveryDetected": true,
+      "elapsedSeconds": 20.51,
+      "externalNotificationsConfigured": false
+    },
+    "backup": {
+      "generatedAt": "2026-10-29T18:11:26Z",
+      "archive": "20261029T181125Z.tar",
+      "syntheticOnly": true
+    }
+  },
+  "browser": {
+    "tls": {
+      "status": 200,
+      "authorized": true,
+      "protocol": "TLSv1.3",
+      "fingerprint": "15:36:85:E6:33:3E:5F:4A:FB:48:F9:F9:AA:87:A9:CB:0A:18:5D:37:C5:03:D1:CF:71:13:B0:A1:58:DB:E8:6F"
+    },
+    "results": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "passed": true,
+        "syntheticOnly": true,
+        "catalogProducts": 100,
+        "cartReload": true,
+        "guestCheckout": true,
+        "staffSessionReload": true,
+        "separateVarieties": true,
+        "finalGoodsTotal": "25.20",
+        "pickerPrivileges": true,
+        "courierAssignment": true,
+        "logout": true,
+        "tajikCatalog": true,
+        "smsEnabled": false,
+        "uploadedImage": true
+      },
+      {
+        "engine": "webkit",
+        "width": 375,
+        "passed": true,
+        "syntheticOnly": true,
+        "catalogProducts": 100,
+        "cartReload": true,
+        "guestCheckout": true,
+        "staffSessionReload": true,
+        "separateVarieties": true,
+        "finalGoodsTotal": "25.20",
+        "pickerPrivileges": true,
+        "courierAssignment": true,
+        "logout": true,
+        "tajikCatalog": true,
+        "smsEnabled": false,
+        "uploadedImage": false
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "passed": true,
+        "syntheticOnly": true,
+        "catalogProducts": 100,
+        "cartReload": true,
+        "guestCheckout": true,
+        "staffSessionReload": true,
+        "separateVarieties": true,
+        "finalGoodsTotal": "25.20",
+        "pickerPrivileges": true,
+        "courierAssignment": true,
+        "logout": true,
+        "tajikCatalog": true,
+        "smsEnabled": false,
+        "uploadedImage": false
+      }
+    ]
+  },
+  "recovery": {
+    "syntheticOnly": true,
+    "recoveredFromOffhostEncryptedSnapshot": true,
+    "rowFingerprintsMatched": true,
+    "uploadedImageServed": true,
+    "products": 100,
+    "orders": 3,
+    "separateVarietiesAndFinalGoods2520": true,
+    "freshStaffSessionSecureCookie": true,
+    "httpsScopedCaVerified": true,
+    "ssrCatalog": true,
+    "realSmsSent": false,
+    "oldVpsUsed": false,
+    "rtoSeconds": 103.21
+  },
+  "offhostReceipt": {
+    "generatedAt": "2026-10-29T17:53:24Z",
+    "archive": "20261029T175324Z.tar",
+    "syntheticOnly": true,
+    "plainSha256": "5e064d94d238fdc0ee3ca6d4f6ae6d57857104536b32b4d314701e21164e3556",
+    "encryptedSha256": "46f716929ab00268ffb88baf478c0c7807cb24e56ace8d330f09c1567eaca889",
+    "capturedAt": "2026-10-29T17:54:50.047Z"
+  },
+  "latency5Rps": {
+    "scheduled": 200,
+    "successful": 200,
+    "http429": 0,
+    "skipped": 0,
+    "productsP95Ms": 27.07,
+    "categoriesP95Ms": 10.78,
+    "catalogHtmlP95Ms": 121.2,
+    "productHtmlP95Ms": 46.78,
+    "scope": "inside Web container, 40s synthetic workload; not customer network SLA"
+  },
+  "verification": {
+    "workspaceTestsPassed": 874,
+    "opsSafetyPassed": 15,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "linuxAmd64BuildPassed": true,
+    "npmAuditKnownVulnerabilities": 0,
+    "dnsChanged": false,
+    "realClientDataTransferred": false,
+    "oldVpsUsed": false,
+    "realSmsSent": false,
+    "actualIosAndroidDeviceTested": false,
+    "publicAcmeCertificateIssued": false
+  }
+}

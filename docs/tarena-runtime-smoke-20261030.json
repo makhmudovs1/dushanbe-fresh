@@ -1,0 +1,18 @@
+{
+  "syntheticLocalOnly": true,
+  "minimalRuntimeBooted": true,
+  "databaseQueryPassed": true,
+  "rewritesPassed": true,
+  "staticAssetsPassed": true,
+  "routes": {
+    "/api/v1/health": 200,
+    "/api/v1/products": 200,
+    "/api/v1/categories": 200,
+    "/catalog": 200,
+    "/cart": 200,
+    "/account": 200,
+    "/admin/login": 200
+  },
+  "smsSent": false,
+  "productionTouched": false
+}

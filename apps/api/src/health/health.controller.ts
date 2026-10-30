@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from "@nestjs/common";
+import { Controller, Get, Header, Inject } from "@nestjs/common";
 
 import { HealthService } from "./health.service";
 
@@ -9,5 +9,11 @@ export class HealthController {
   @Get()
   getHealth() {
     return this.healthService.getHealth();
+  }
+
+  @Get("ready")
+  @Header("Cache-Control", "no-store")
+  getReadiness() {
+    return this.healthService.getReadiness();
   }
 }

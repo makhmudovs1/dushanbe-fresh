@@ -1,0 +1,6 @@
+FROM caddy:2@sha256:36c24ad91a7ff7bc4c87fe22bfa8df3c4b18da0773d73fc12ee2c52b98c0bb7e
+RUN apk upgrade --no-cache \
+    && apk add --no-cache libcap-utils \
+    && setcap -r /usr/bin/caddy \
+    && apk del libcap-utils curl
+USER 1000:1000

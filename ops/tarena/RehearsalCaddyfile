@@ -1,0 +1,11 @@
+{
+    auto_https disable_redirects
+    admin off
+}
+https://localhost:8444 {
+    tls internal
+    encode zstd gzip
+    header X-Robots-Tag "noindex, nofollow"
+    header X-Content-Type-Options nosniff
+    reverse_proxy web:3000
+}

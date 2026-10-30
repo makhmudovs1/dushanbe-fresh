@@ -1,2 +1,2 @@
 import { AdminWaveDetail } from "@/components/admin-wave-detail";
-export default function WavePage({ params }: { params: { id: string } }) { return <main className="page"><section className="shell operations"><AdminWaveDetail id={params.id} /></section></main>; }
+export default async function WavePage({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; return <main className="page"><section className="shell operations"><AdminWaveDetail id={id} /></section></main>; }

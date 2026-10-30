@@ -1,6 +1,12 @@
+import { fileURLToPath } from "node:url";
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "true" ? {
+    output: "standalone",
+    outputFileTracingRoot: fileURLToPath(new URL("../..", import.meta.url))
+  } : {}),
   transpilePackages: ["@dushanbe-fresh/shared"],
   async headers() {
     return ["/order/:path*", "/orders/:path*", "/admin/:path*", "/account/:path*", "/cart", "/checkout", "/api/:path*"].map(source => ({ source, headers: [

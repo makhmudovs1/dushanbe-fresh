@@ -1,0 +1,124 @@
+name: df-tarena-readiness
+x-labels: &labels
+  df.synthetic-readiness: "20261031"
+x-logs: &logs
+  driver: json-file
+  options: {max-size: 2m, max-file: "2"}
+services:
+  postgres:
+    image: postgres:16-bookworm@sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938
+    labels: *labels
+    environment:
+      POSTGRES_USER: pilot_owner
+      POSTGRES_DB: df_tarena_test
+      POSTGRES_PASSWORD: ${PILOT_DB_OWNER_PASSWORD:?new readiness secret required}
+    ports: [127.0.0.1:15436:5432]
+    command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, max_connections=20]
+    volumes: [readiness_db:/var/lib/postgresql/data]
+    networks: [private, hostlink]
+    mem_limit: 384m
+    pids_limit: 128
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U pilot_owner -d df_tarena_test]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    logging: *logs
+  bootstrap:
+    profiles: [tools]
+    image: df-security-rehearsal:20261029
+    entrypoint: [node, /ops/bootstrap.cjs]
+    environment:
+      DF_TARENA_PILOT: "1"
+      PILOT_DB_OWNER_PASSWORD: ${PILOT_DB_OWNER_PASSWORD:?new secret required}
+      PILOT_DB_API_PASSWORD: ${PILOT_DB_API_PASSWORD:?new secret required}
+      PILOT_DB_BACKUP_PASSWORD: ${PILOT_DB_BACKUP_PASSWORD:?new secret required}
+      PILOT_ADMIN_PASSWORD: ${PILOT_ADMIN_PASSWORD:?new secret required}
+      PILOT_PICKER_PASSWORD: ${PILOT_PICKER_PASSWORD:?new secret required}
+      PILOT_COURIER_PASSWORD: ${PILOT_COURIER_PASSWORD:?new secret required}
+    volumes: [./ops:/ops:ro, ./:/pilot]
+    networks: [private]
+    mem_limit: 256m
+    pids_limit: 96
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logs
+  api:
+    image: df-tarena-api-candidate:20261031
+    labels: *labels
+    network_mode: host
+    depends_on: {postgres: {condition: service_healthy}}
+    environment:
+      NODE_ENV: production
+      API_HOST: 127.0.0.1
+      API_PORT: "4000"
+      DATABASE_URL: postgresql://pilot_api:${PILOT_DB_API_PASSWORD:?new secret required}@127.0.0.1:15436/df_tarena_test?schema=public&connection_limit=5&connect_timeout=3&pool_timeout=3&socket_timeout=3
+      STAFF_JWT_SECRET: ${PILOT_STAFF_JWT_SECRET:?new secret required}
+      WEB_ORIGIN: https://localhost:8448
+      PRODUCT_IMAGES_DIR: /data/images
+      CUSTOMER_AUTH_ENABLED: "false"
+      CUSTOMER_REQUIRE_PHONE: "false"
+      MOBILE_CUSTOMER_API_ENABLED: "false"
+      CUSTOMER_TRUST_LOCAL_PROXY: "true"
+      NODE_OPTIONS: --max-old-space-size=192
+    volumes: [./images:/data/images]
+    init: true
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    mem_limit: 384m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/api/v1/health/ready',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 3
+    logging: *logs
+  web:
+    image: df-tarena-web-candidate:20261031
+    labels: *labels
+    network_mode: host
+    depends_on: {api: {condition: service_healthy}}
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 127.0.0.1
+      PORT: "3000"
+      API_URL: http://127.0.0.1:4000/api/v1
+      NODE_OPTIONS: --max-old-space-size=256
+    init: true
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777", "/app/apps/web/.next/cache:size=32m,uid=1000,gid=1000,mode=0700"]
+    mem_limit: 512m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/v1/health/ready',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 3
+    logging: *logs
+  proxy:
+    image: df-tarena-proxy-candidate:20261031
+    labels: *labels
+    user: "1000:1000"
+    network_mode: host
+    depends_on: {web: {condition: service_healthy}}
+    volumes: [./ReadinessCaddyfile:/etc/caddy/Caddyfile:ro, ./tls:/data, ./caddy-config:/config, ./proxy-logs:/logs]
+    read_only: true
+    tmpfs: ["/tmp:size=8m,mode=1777"]
+    mem_limit: 96m
+    pids_limit: 64
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging: *logs
+networks:
+  private: {internal: true}
+  hostlink: {}
+volumes:
+  readiness_db:

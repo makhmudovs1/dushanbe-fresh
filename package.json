@@ -3,11 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
   "scripts": {
     "dev:share": "ngrok http http://localhost:${WEB_PORT:-3000} --inspect=false",
     "dev": "docker compose up -d postgres && corepack pnpm --parallel --filter @dushanbe-fresh/shared --filter @dushanbe-fresh/api --filter @dushanbe-fresh/web dev",
     "lint": "corepack pnpm -r lint",
-    "typecheck": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm -r typecheck",
+    "security:audit": "corepack pnpm audit --audit-level=moderate",
+    "typecheck": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm --filter @dushanbe-fresh/web typegen && corepack pnpm -r typecheck",
     "test": "corepack pnpm -r test",
     "build": "corepack pnpm -r build",
     "build:web": "corepack pnpm --filter @dushanbe-fresh/shared build && corepack pnpm --filter @dushanbe-fresh/web build",
@@ -31,10 +35,22 @@
     "@typescript-eslint/parser": "6.21.0",
     "autoprefixer": "10.4.20",
     "eslint": "8.57.0",
-    "eslint-config-next": "13.5.6",
-    "postcss": "8.4.49",
+    "eslint-config-next": "15.5.28",
+    "postcss": "8.5.32",
     "tailwindcss": "3.4.17",
     "typescript": "5.3.3",
-    "vitest": "1.6.0"
+    "vitest": "4.1.12",
+    "vite": "6.4.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.32",
+      "minimatch@9": "9.0.9",
+      "brace-expansion@1": "1.1.21",
+      "brace-expansion@2": "2.1.7",
+      "postcss-selector-parser@6": "6.1.5",
+      "proxy-addr@2": "2.0.8",
+      "multer@2": "2.5.0"
+    }
   }
 }

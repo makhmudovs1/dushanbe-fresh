@@ -1,0 +1,13 @@
+const fs = require('node:fs');
+const {randomBytes} = require('node:crypto');
+if (process.argv[2] !== '--new-private-pilot' || process.env.DF_TARENA_PILOT !== '1') throw Error('Explicit pilot initialization required');
+const directory = '/pilot';
+if (fs.existsSync(`${directory}/pilot.env`) || fs.existsSync(`${directory}/credentials.json`)) throw Error('Existing pilot secrets must not be overwritten');
+const random = () => randomBytes(32).toString('base64url');
+const values = { PILOT_DB_OWNER_PASSWORD: random(), PILOT_DB_API_PASSWORD: random(), PILOT_DB_BACKUP_PASSWORD: random(), PILOT_RESTORE_PASSWORD: random(), PILOT_RESTORE_API_PASSWORD: random(), PILOT_RECOVERY_JWT_SECRET: random(), PILOT_STAFF_JWT_SECRET: random(), PILOT_ADMIN_PASSWORD: random(), PILOT_PICKER_PASSWORD: random(), PILOT_COURIER_PASSWORD: random(), DF_TARENA_PILOT: '1' };
+fs.writeFileSync(`${directory}/pilot.env`,Object.entries(values).map(([k,v])=>`${k}=${v}`).join('\n')+'\n',{mode:0o600,flag:'wx'});
+fs.writeFileSync(`${directory}/credentials.json`,JSON.stringify({admin:{email:'admin@tarena.invalid',password:values.PILOT_ADMIN_PASSWORD},picker:{email:'picker@tarena.invalid',password:values.PILOT_PICKER_PASSWORD},courier:{email:'courier@tarena.invalid',password:values.PILOT_COURIER_PASSWORD}}),{mode:0o600,flag:'wx'});
+fs.mkdirSync(`${directory}/images`,{recursive:true,mode:0o700});
+for (const name of ['backups', 'backup-status', 'monitoring', 'restore-input', 'recovery-images']) fs.mkdirSync(`${directory}/${name}`, { recursive: true, mode: 0o700 });
+fs.writeFileSync(`${directory}/pilot.marker`,'df-tarena-synthetic-only-20261029\n',{mode:0o600,flag:'wx'});
+console.log('Fresh synthetic-pilot credentials saved privately; no values printed.');

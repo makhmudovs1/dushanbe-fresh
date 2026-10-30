@@ -1,0 +1,144 @@
+name: df-tarena-rehearsal
+x-logs: &logs
+  driver: json-file
+  options: {max-size: 5m, max-file: "2"}
+services:
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: pilot_owner
+      POSTGRES_DB: df_tarena_test
+      POSTGRES_PASSWORD: ${PILOT_DB_OWNER_PASSWORD:?fresh rehearsal secret required}
+    command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, max_connections=20, -c, max_parallel_workers_per_gather=1]
+    volumes: [rehearsal_db:/var/lib/postgresql/data]
+    networks: [private]
+    mem_limit: 384m
+    pids_limit: 128
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U pilot_owner -d df_tarena_test]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    logging: *logs
+  api:
+    image: ${REHEARSAL_IMAGE:?reviewed image required}
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: "4000"
+      DATABASE_URL: postgresql://pilot_api:${PILOT_DB_API_PASSWORD:?fresh secret required}@postgres:5432/df_tarena_test?schema=public&connection_limit=5
+      STAFF_JWT_SECRET: ${PILOT_STAFF_JWT_SECRET:?fresh secret required}
+      WEB_ORIGIN: https://localhost:8444
+      PRODUCT_IMAGES_DIR: /data/images
+      CUSTOMER_AUTH_ENABLED: "false"
+      CUSTOMER_REQUIRE_PHONE: "false"
+      MOBILE_CUSTOMER_API_ENABLED: "false"
+      CUSTOMER_TRUST_LOCAL_PROXY: "false"
+      NODE_OPTIONS: --max-old-space-size=192
+    volumes: [./images:/data/images]
+    networks: [private]
+    depends_on: {postgres: {condition: service_healthy}}
+    init: true
+    mem_limit: 384m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logs
+  web:
+    image: ${REHEARSAL_IMAGE:?reviewed image required}
+    entrypoint: [node, node_modules/next/dist/bin/next]
+    command: [start, --hostname, 0.0.0.0, --port, "3000"]
+    working_dir: /workspace/apps/web
+    environment:
+      NODE_ENV: production
+      API_URL: http://api:4000/api/v1
+      NODE_OPTIONS: --max-old-space-size=256
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports: [127.0.0.1:18082:3000]
+    networks: [private, edge]
+    depends_on: {api: {condition: service_healthy}}
+    init: true
+    mem_limit: 512m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logs
+  proxy:
+    image: caddy:2
+    ports: [127.0.0.1:8444:8444]
+    volumes: [./RehearsalCaddyfile:/etc/caddy/Caddyfile:ro, rehearsal_tls:/data]
+    networks: [edge]
+    depends_on: {web: {condition: service_healthy}}
+    mem_limit: 96m
+    pids_limit: 128
+    restart: unless-stopped
+    logging: *logs
+  monitor:
+    image: ${REHEARSAL_IMAGE:?reviewed image required}
+    entrypoint: [node, /ops/monitor.cjs]
+    volumes:
+      - ./monitor.cjs:/ops/monitor.cjs:ro
+      - /proc/meminfo:/host/meminfo:ro
+      - /proc/stat:/host/stat:ro
+      - /proc/vmstat:/host/vmstat:ro
+      - ./monitoring:/state
+      - ./backup-status:/backup-status:ro
+    networks: [private]
+    depends_on: [api, web]
+    mem_limit: 64m
+    pids_limit: 32
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    restart: unless-stopped
+    logging: *logs
+  backup:
+    image: postgres:16-bookworm
+    profiles: [maintenance]
+    user: "1000:1000"
+    entrypoint: [/bin/sh, /ops/backup.sh]
+    environment:
+      PGHOST: postgres
+      PGUSER: rehearsal_backup
+      PGDATABASE: df_tarena_test
+      PGPASSWORD: ${PILOT_DB_BACKUP_PASSWORD:?fresh backup secret required}
+      DF_TARENA_PILOT: "1"
+    volumes:
+      - ./backup.sh:/ops/backup.sh:ro
+      - ./data-fingerprint.sql:/ops/data-fingerprint.sql:ro
+      - ./export-snapshot.sql:/ops/export-snapshot.sql:ro
+      - ./dump-held-snapshot.sh:/ops/dump-held-snapshot.sh:ro
+      - ./backups:/backups
+      - ./images:/images:ro
+      - ./backup-status:/backup-status
+    networks: [private]
+    depends_on: {postgres: {condition: service_healthy}}
+    mem_limit: 128m
+    pids_limit: 64
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logs
+  backup-scheduler:
+    extends: {service: backup}
+    profiles: [scheduled-backups]
+    command: [--loop]
+    restart: unless-stopped
+networks:
+  private: {internal: true}
+  edge:
+volumes:
+  rehearsal_db:
+  rehearsal_tls:

@@ -24,8 +24,8 @@ async function Sections() {
   return <><HomePromotions categories={categories} products={products} /><HomeQuickLinks products={products} /><HomeCategorySections categories={categories} products={products} /></>;
 }
 
-export default function HomePage() {
-  const { t } = serverI18n();
+export default async function HomePage() {
+  const { t } = await serverI18n();
   return <main className="page storefront-page"><div className="shell shop-shell storefront-layout">
     <div className="storefront-sidebar-slot"><Suspense fallback={<CategorySkeleton />}><Sidebar /></Suspense></div>
     <div className="storefront-main">

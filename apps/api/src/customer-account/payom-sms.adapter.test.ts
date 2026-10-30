@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePayomError, parsePayomReceipt, PayomSmsAdapter, PayomSmsError } from "./payom-sms.adapter";
+import { payomConfiguration } from "./payom-configuration";
 
 // These UUIDs/credentials are invented fixtures, never production configuration.
 const templateId = "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31";
@@ -84,11 +85,17 @@ describe("Payom OpenAPI template adapter", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it.each([undefined, "", "{code-1}", " code-1", "code-1 ", "code\n1", "code\u00001", "__proto__", "constructor", "prototype", "x".repeat(129)])("refuses an unconfirmed/unsafe variable name without guessing: %j", async variable => {
+  it.each([undefined, "", "{code-1}", " code-1", "code-1 ", "code\n1", "__proto__", "constructor", "prototype", "x".repeat(129)])("refuses an unconfirmed/unsafe variable name without guessing: %j", async variable => {
     vi.stubEnv("CUSTOMER_SMS_CODE_VARIABLE", variable ?? "");
     if (variable === undefined) delete process.env.CUSTOMER_SMS_CODE_VARIABLE;
     expect(new PayomSmsAdapter().configured()).toBe(false);
     await expect(new PayomSmsAdapter().send(phone, code)).rejects.toMatchObject({ kind: "configuration" });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects NUL in configuration before OS environment serialization can truncate it", () => {
+    // Node's native process.env truncates at NUL; test the validator with the intact input.
+    expect(payomConfiguration({ ...process.env, CUSTOMER_SMS_CODE_VARIABLE: "code\u00001" })).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
   });
 

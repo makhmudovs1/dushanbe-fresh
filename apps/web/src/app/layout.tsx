@@ -2,7 +2,7 @@ import "./styles.css";
 import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import { Suspense } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
 import { serverI18n } from "@/i18n/server";
 import { LanguageProvider } from "@/i18n/provider";
@@ -19,10 +19,11 @@ import { MobileProductSheetProvider } from "@/components/mobile-product-sheet-pr
 import { MobileNavigationDockProvider } from "@/components/mobile-navigation-dock";
 import { StorefrontFrame } from "@/components/storefront-frame";
 
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Dushanbe Fresh",
-  viewport: { width: "device-width", initialScale: 1, viewportFit: "cover" },
   description: SITE_DESCRIPTION,
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   icons: {
@@ -36,8 +37,8 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const { locale } = serverI18n();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { locale } = await serverI18n();
   return (
     <html lang={locale}>
       <body>

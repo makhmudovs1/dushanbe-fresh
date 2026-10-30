@@ -9,7 +9,7 @@ export function dialogViewport(viewport: Pick<VisualViewport, "height" | "offset
   };
 }
 
-export function useDialogViewport(ref: RefObject<HTMLDialogElement>, enabled: boolean) {
+export function useDialogViewport(ref: RefObject<HTMLDialogElement | null>, enabled: boolean) {
   useEffect(() => {
     if (!enabled || !ref.current) return;
     const dialog = ref.current;

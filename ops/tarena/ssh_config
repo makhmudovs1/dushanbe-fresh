@@ -1,0 +1,21 @@
+Host tarena-test
+    HostName 77.95.0.94
+    User adminj0n
+    Port 22
+    IdentityFile %d/.ssh/df-tarena-20261029
+    IdentitiesOnly yes
+    UserKnownHostsFile %d/.ssh/df-tarena-known_hosts
+    GlobalKnownHostsFile /dev/null
+    StrictHostKeyChecking yes
+    HostKeyAlgorithms ssh-ed25519
+    UpdateHostKeys no
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    ForwardAgent no
+    ForwardX11 no
+    ClearAllForwardings yes
+    ControlMaster no
+    ControlPath none
+    PermitLocalCommand no
+    ServerAliveInterval 10
+    ServerAliveCountMax 3

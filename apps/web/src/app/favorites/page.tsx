@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 async function Sidebar() { return <CategorySidebar categories={await getPublicCategories()} />; }
 async function Products() { return <FavoritesBrowser products={await getPublicProducts()} />; }
 
-export default function FavoritesPage() {
-  const { t } = serverI18n();
+export default async function FavoritesPage() {
+  const { t } = await serverI18n();
   return <main className="page storefront-page favorites-page"><div className="shell shop-shell">
     <header className="page-heading favorites-page-heading"><nav className="catalog-breadcrumbs" aria-label={t("Хлебные крошки")}><ol><li><Link href="/">{t("Главная")}</Link></li><li><ChevronRight size={13} aria-hidden="true" /><span aria-current="page">{t("Любимое")}</span></li></ol></nav><h1>{t("Любимое")}</h1></header>
     <div className="storefront-layout">

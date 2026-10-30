@@ -1141,3 +1141,72 @@
   from health or balance, never prints secrets, and cannot enable auth. Exact
   production gateway/DFRESH and valid configuration are required before enabling.
 - Production settings/services/SMS remain unchanged until separate owner approval.
+
+## 2026-10-29: Dependency Remediation And Clean TARENA Migration
+
+- Use patched Next 15 Maintenance LTS and React 19 as a bounded upgrade from
+  unsupported Next 13, not an immediate Next 16/tooling redesign. Plan Next 16
+  before the published Next 15 support deadline; recheck the deadline at release.
+- Upgrade the Nest stack together to 11 to cover core advisories; retain the
+  existing Prisma schema, OTP, checkout and weight/price contracts. Narrow
+  same-major transitive overrides are documented, never audit-ignore exceptions.
+- Build Linux-amd64 outside the 2 GB VPS with a default-deny Docker context.
+  Remediation is local; existing TARENA pilot and old production are not replaced.
+- Treat the compromised FirstVDS as an evidence/data source, never a rollback
+  destination. Migration requires quarantine, reviewed data import, fresh
+  credentials, verified restore, single-writer freeze and separate DNS approval.
+- The observed load skip was the generator's 8-in-flight safety cap, not an
+  application HTTP rate limit. Preserve OTP/auth protections and no-store prices;
+  diagnose per-endpoint header/body latency before changing runtime caching.
+
+## 2026-10-29: Closed TARENA Restore Rehearsal
+
+- Deploy the patched production build to a separate private synthetic Compose
+  project with new credentials/volumes; never replace production or change DNS.
+- Hold one exported PostgreSQL snapshot for both dump and row fingerprints;
+  exclude active sessions/OTP state. This trusted rehearsal restore is NOT an
+  importer for a compromised server's dump.
+- Authenticate/encrypt the offhost test bundle on the Mac, restore into another
+  empty volume with fresh DB/JWT secrets, verify hashes and business flows, then
+  return to the main rehearsal. Same-host logical DR is not provider failover.
+- Keep temporary Mac storage, hourly local backups and local alert logs clearly
+  separate from the still-required durable offsite retention/external monitoring.
+- Keep production cutover blocked on host hardening, real-data quarantine/restore,
+  public HTTPS and actual Safari/native acceptance. SMS remains disabled.
+
+## 2026-10-30: Production Backup Preparation
+
+- The owner confirmed paid TARENA, then explicitly withheld real-data export and
+  DNS/old-host changes until independent Tajikistan storage and recovery access
+  are established. Preserve these later restrictions.
+- Use restic encrypted daily logical snapshots with tested restore and scoped
+  retention. A synthetic local repository is not offsite protection; require
+  separate regional/independence approval, key escrow and transport acceptance.
+- Telegram carries only allowlisted operational events, never customer data or
+  application logs. It needs a fresh server-only token and an external observer
+  before claiming whole-VPS outage notification.
+- Build separate non-root API/Web candidates outside the VPS. Compare pnpm9
+  deploy versions to the frozen build tree and test actual Prisma initialization.
+  Container scanning blocked on external metadata transfer is not a passed scan.
+- Patch the newly reported Vite6.4.4 advisory to6.4.5 without changing business
+  logic, migrations, checkout or production flags.
+
+## 2026-10-31: Closed Production Readiness
+
+- Preserve liveness; add a separate bounded DB readiness endpoint with generic
+  errors. Keep guest checkout and customer/mobile auth feature flags unchanged.
+- Verify a new synthetic-only contour, never disturb the old compromised host,
+  DNS, earlier rehearsal or real customer data. Stop the extra contour afterwards.
+- Bind host-network apps explicitly to loopback; provide a separate hostlink
+  bridge for loopback PostgreSQL reachability. This does not replace firewall.
+- Use a capless non-root private proxy image, not extra privileges to fix its
+  executable file capabilities. Public port binding needs separate approval.
+- Scan Docker archives offline with no network/socket; fetch advisory DB in a
+  separate empty online container. Do not bypass rejected metadata-upload tools.
+- Treat remaining OS/Go CVEs as an open release gate; a clean npm audit is not
+  a clean container scan. Record vendor applicability per package, never broadly.
+- Docker restart policy covers process exit, not unhealthy-but-alive services.
+  Bound host watchdog restarts by contour labels, spaced failures and cooldown.
+  Persistent timers and a host reboot drill await recovery-console acceptance.
+- Telegram uses only allowlisted operational messages. A tested Mac observer
+  is not permanent independent monitoring; install that outside the production VPS.

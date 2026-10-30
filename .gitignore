@@ -12,3 +12,4 @@ apps/web/test-results.zip
 *.tsbuildinfo
 .DS_Store
 **/var/product-images/
+__pycache__/

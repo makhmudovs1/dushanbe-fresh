@@ -1,0 +1,57 @@
+name: df-tarena-recovery-v2
+services:
+  postgres:
+    extends: {file: rehearsal.compose.yml, service: postgres}
+    environment:
+      POSTGRES_USER: restore_owner
+      POSTGRES_DB: df_tarena_restore
+      POSTGRES_PASSWORD: ${PILOT_RESTORE_PASSWORD:?fresh restore secret required}
+    volumes: !override [recovery_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U restore_owner -d df_tarena_restore]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  api:
+    extends: {file: rehearsal.compose.yml, service: api}
+    environment:
+      DATABASE_URL: postgresql://pilot_api:${PILOT_RESTORE_API_PASSWORD:?fresh restore API secret required}@postgres:5432/df_tarena_restore?schema=public&connection_limit=5
+      STAFF_JWT_SECRET: ${PILOT_RECOVERY_JWT_SECRET:?fresh recovery signing secret required}
+      WEB_ORIGIN: https://localhost:8446
+    volumes: !override [./recovery-images-v2:/data/images]
+  web:
+    extends: {file: rehearsal.compose.yml, service: web}
+    ports: !override [127.0.0.1:18084:3000]
+  proxy:
+    extends: {file: rehearsal.compose.yml, service: proxy}
+    ports: !override [127.0.0.1:8446:8446]
+    volumes: !override [./RecoveryCaddyfile:/etc/caddy/Caddyfile:ro, recovery_tls:/data]
+  restore-job:
+    image: postgres:16-bookworm
+    profiles: [maintenance]
+    user: "1000:1000"
+    entrypoint: [/bin/sh, /ops/restore.sh]
+    environment:
+      PGHOST: postgres
+      PGUSER: restore_owner
+      PGDATABASE: df_tarena_restore
+      PGPASSWORD: ${PILOT_RESTORE_PASSWORD:?fresh restore secret required}
+      PILOT_RESTORE_API_PASSWORD: ${PILOT_RESTORE_API_PASSWORD:?fresh restore API secret required}
+      DF_TARENA_PILOT: "1"
+    volumes:
+      - ./restore.sh:/ops/restore.sh:ro
+      - ./data-fingerprint.sql:/ops/data-fingerprint.sql:ro
+      - ./restore-input-v2:/source:ro
+      - ./recovery-images-v2:/images
+    networks: [private]
+    mem_limit: 128m
+    pids_limit: 64
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: {driver: json-file, options: {max-size: 5m, max-file: "2"}}
+networks:
+  private: {internal: true}
+  edge:
+volumes:
+  recovery_db:
+  recovery_tls:

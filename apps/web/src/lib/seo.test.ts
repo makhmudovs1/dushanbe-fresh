@@ -39,7 +39,7 @@ describe("public SEO", () => {
 
   it("sets product-specific metadata without putting prices in search snippets", async () => {
     vi.mocked(getInitialProduct).mockResolvedValue({ slug: "tomatoes", name: "Помидоры", description: "Свежие помидоры" } as NonNullable<Awaited<ReturnType<typeof getInitialProduct>>>);
-    const meta = await generateMetadata({ params: { slug: "tomatoes" } });
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: "tomatoes" }) });
     expect(meta.title).toBe("Помидоры с доставкой в Душанбе | Dushanbe Fresh");
     expect(meta.description).toBe("Свежие помидоры");
     expect(meta.alternates?.canonical).toBe(`${SITE_URL}/products/tomatoes`);
@@ -47,6 +47,6 @@ describe("public SEO", () => {
 
   it("does not index an unavailable or failed product response", async () => {
     vi.mocked(getInitialProduct).mockResolvedValue(null);
-    expect((await generateMetadata({ params: { slug: "missing" } })).robots).toEqual({ index: false, follow: false });
+    expect((await generateMetadata({ params: Promise.resolve({ slug: "missing" }) })).robots).toEqual({ index: false, follow: false });
   });
 });

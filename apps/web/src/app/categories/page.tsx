@@ -17,8 +17,8 @@ async function Categories() {
     <div className="category-screen--mobile"><CategoryShowcase categories={categories} products={products} /></div></>;
 }
 
-export default function CategoriesPage() {
-  const { t } = serverI18n();
+export default async function CategoriesPage() {
+  const { t } = await serverI18n();
   return <main className="page mobile-categories-page"><div className="shell shop-shell">
     <header className="mobile-categories-heading"><Link href="/" aria-label={t("На главную")}><ArrowLeft size={22} aria-hidden="true" /></Link><h1>{t("Каталог")}</h1></header>
     <Suspense fallback={<CategorySkeleton />}><Categories /></Suspense>

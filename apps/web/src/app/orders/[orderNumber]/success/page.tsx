@@ -1,5 +1,6 @@
 import { OrderSuccess } from "@/components/order-success";
 
-export default function OrderSuccessPage({ params }: { params: { orderNumber: string } }) {
-  return <main className="page"><section className="shell"><OrderSuccess orderNumber={params.orderNumber} /></section></main>;
+export default async function OrderSuccessPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+  const { orderNumber } = await params;
+  return <main className="page"><section className="shell"><OrderSuccess orderNumber={orderNumber} /></section></main>;
 }

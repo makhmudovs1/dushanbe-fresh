@@ -1,0 +1,155 @@
+{
+  "syntheticOnly": true,
+  "postgresqlBenchmark": {
+    "version": "16.15",
+    "clients": 2,
+    "durationSeconds": 15,
+    "targetTps": 50,
+    "transactions": 739,
+    "failedTransactions": 0,
+    "averageLatencyMs": 0.450,
+    "latencyStddevMs": 0.177,
+    "achievedTps": 49.398577,
+    "query": "read-only indexed synthetic products/categories join",
+    "warmCache": true,
+    "maximumCapacityTest": false
+  },
+  "verification": {
+    "workspaceTestsPassed": 867,
+    "pilotSafetyTestsPassed": 5,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "linuxAmd64BuildPassedOutsideVps": true,
+    "chromiumDesktopFlowPassed": true,
+    "webkitMobileFlowPassed": true,
+    "ruTgCatalogPassed": true,
+    "runtimeDatabaseSuperuser": false,
+    "runtimeDatabaseCreateRole": false,
+    "containerRestarts": 0,
+    "containerOomKills": 0,
+    "productionOrDnsChanged": false,
+    "realSmsSent": false
+  },
+  "sourceCommit": "8bb9e75938c5ea34a37f50f61d8cb372faae1533",
+  "load": {
+    "syntheticOnly": true,
+    "base": "http://127.0.0.1:18081",
+    "stages": [
+      {
+        "rps": 1,
+        "seconds": 60,
+        "startedUTC": "2026-10-29T14:14:28.959Z",
+        "finishedUTC": "2026-10-29T14:15:28.351Z",
+        "requests": 60,
+        "errors": 0,
+        "skipped": 0,
+        "p50Ms": 446.76,
+        "p95Ms": 908.95,
+        "p99Ms": 997.16,
+        "maxMs": 997.16,
+        "elapsedSeconds": 59.39
+      },
+      {
+        "rps": 3,
+        "seconds": 60,
+        "startedUTC": "2026-10-29T14:15:33.354Z",
+        "finishedUTC": "2026-10-29T14:16:33.533Z",
+        "requests": 180,
+        "errors": 0,
+        "skipped": 0,
+        "p50Ms": 483.79,
+        "p95Ms": 917.34,
+        "p99Ms": 1253.24,
+        "maxMs": 1321.95,
+        "elapsedSeconds": 60.18
+      },
+      {
+        "rps": 5,
+        "seconds": 60,
+        "startedUTC": "2026-10-29T14:16:38.535Z",
+        "finishedUTC": "2026-10-29T14:17:38.766Z",
+        "requests": 299,
+        "errors": 0,
+        "skipped": 1,
+        "p50Ms": 603.13,
+        "p95Ms": 1545.66,
+        "p99Ms": 1973.92,
+        "maxMs": 2046.29,
+        "elapsedSeconds": 60.23
+      }
+    ],
+    "stopped": false
+  },
+  "resources": {
+    "samples": 210,
+    "from": "2026-10-29T14:14:27.732233+00:00",
+    "to": "2026-10-29T14:17:57.112326+00:00",
+    "ramTotalMiB": 1967.62109375,
+    "peakNonAvailableMiB": 717.59765625,
+    "minAvailableMiB": 1250.0234375,
+    "maxCpuPercent": 62.63,
+    "meanCpuPercent": 13.339473684210525,
+    "maxStealPercent": 0.5,
+    "maxSwapUsedKiB": 268,
+    "swapInPages": 0,
+    "swapOutPages": 0,
+    "containers": {
+      "df-tarena-pilot-proxy-1": {
+        "peakMiB": 15.18,
+        "currentMaxMiB": 13.46,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-web-1": {
+        "peakMiB": 159.23,
+        "currentMaxMiB": 158.17,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-api-1": {
+        "peakMiB": 67.27,
+        "currentMaxMiB": 66.46,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-postgres-1": {
+        "peakMiB": 130.3,
+        "currentMaxMiB": 126.63,
+        "oomKills": 0
+      }
+    }
+  },
+  "functionalResources": {
+    "samples": 300,
+    "from": "2026-10-29T14:10:33.177169+00:00",
+    "to": "2026-10-29T14:15:32.741081+00:00",
+    "ramTotalMiB": 1967.62109375,
+    "peakNonAvailableMiB": 692.69921875,
+    "minAvailableMiB": 1274.921875,
+    "maxCpuPercent": 32.66,
+    "meanCpuPercent": 3.938060200668896,
+    "maxStealPercent": 0,
+    "maxSwapUsedKiB": 268,
+    "swapInPages": 0,
+    "swapOutPages": 0,
+    "containers": {
+      "df-tarena-pilot-proxy-1": {
+        "peakMiB": 15.18,
+        "currentMaxMiB": 14.55,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-web-1": {
+        "peakMiB": 141.52,
+        "currentMaxMiB": 138.98,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-api-1": {
+        "peakMiB": 66.34,
+        "currentMaxMiB": 65.8,
+        "oomKills": 0
+      },
+      "df-tarena-pilot-postgres-1": {
+        "peakMiB": 129.4,
+        "currentMaxMiB": 127.58,
+        "oomKills": 0
+      }
+    }
+  }
+}

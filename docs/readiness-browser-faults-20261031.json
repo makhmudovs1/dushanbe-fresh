@@ -1,0 +1,106 @@
+{
+  "recordedAtUTC": "2026-10-30T22:50:36.295Z",
+  "syntheticOnly": true,
+  "tls": {
+    "status": 200,
+    "authorized": true,
+    "protocol": "TLSv1.3",
+    "servername": "localhost",
+    "noStore": true,
+    "body": {
+      "status": "ok",
+      "service": "api",
+      "database": "ok"
+    }
+  },
+  "realDomainSni": {
+    "status": 200,
+    "authorized": true,
+    "protocol": "TLSv1.3",
+    "servername": "dushanbefresh.tj",
+    "noStore": true,
+    "body": {
+      "status": "ok",
+      "service": "api",
+      "database": "ok"
+    }
+  },
+  "wrongNameRejected": true,
+  "publicAcmeIssued": false,
+  "browsers": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "width": 375,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "passed": true
+    }
+  ],
+  "independentObserver": {
+    "outsideHealthy": {
+      "enabled": true,
+      "healthy": true,
+      "status": 200,
+      "latencyMs": 647,
+      "tlsVerified": true
+    },
+    "outsideFailure": {
+      "enabled": true,
+      "healthy": false,
+      "status": 0,
+      "latencyMs": 202,
+      "tlsVerified": false
+    },
+    "outsideRecovery": {
+      "enabled": true,
+      "healthy": true,
+      "status": 200,
+      "latencyMs": 654,
+      "tlsVerified": true
+    },
+    "location": "Mac outside VPS via pinned SSH tunnel; not an always-on production observer"
+  },
+  "faults": {
+    "syntheticOnly": true,
+    "newContourOnly": true,
+    "crashRecovery": {
+      "api": {
+        "secondsAfterInitialSecond": 5.32,
+        "restartDelta": 1
+      },
+      "web": {
+        "secondsAfterInitialSecond": 5.31,
+        "restartDelta": 1
+      }
+    },
+    "databaseUnavailableReadiness": 503,
+    "databaseUnavailableLiveness": 200,
+    "postgresTriggerExitCode": 137,
+    "postgresRecoverySecondsAfterInitialSecond": 5.34,
+    "postgresRestartDelta": 1,
+    "dataFingerprintsPreserved": true,
+    "hungWebRecoverySeconds": 68.55,
+    "boundedWatchdogRecoveredHungWeb": true
+  },
+  "realDeviceTested": false,
+  "productionTouched": false,
+  "realSmsSent": false
+}

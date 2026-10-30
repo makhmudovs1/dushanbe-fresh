@@ -1,0 +1,39 @@
+{
+    admin off
+    auto_https disable_redirects
+    log default {
+        format filter {
+            wrap json
+            fields {
+                request delete
+                resp_headers delete
+            }
+        }
+    }
+}
+https://localhost:8448, https://dushanbefresh.tj:8448, https://www.dushanbefresh.tj:8448 {
+    bind 127.0.0.1
+    tls internal
+    encode zstd gzip
+    header X-Robots-Tag "noindex, nofollow"
+    header X-Content-Type-Options nosniff
+    log {
+        output file /logs/access.json {
+            roll_size 2MiB
+            roll_keep 2
+        }
+        format filter {
+            wrap json
+            fields {
+                request delete
+                resp_headers delete
+                user_id delete
+            }
+        }
+    }
+    reverse_proxy 127.0.0.1:3000 {
+        header_up X-Forwarded-For {remote_host}
+        header_up -Forwarded
+        header_up -X-Real-IP
+    }
+}

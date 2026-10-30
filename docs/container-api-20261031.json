@@ -1,0 +1,2310 @@
+{
+  "recordedAtUTC": "2026-10-30T21:34:03.934Z",
+  "target": "api",
+  "image": "df-tarena-api-candidate:20261031",
+  "receipt": {
+    "id": "sha256:1e9b794d875ffdce4508c68e41a8b0cbd5cd18e736f9404176a0951be9365b75",
+    "layers": [
+      "sha256:9b35de7893378218e365c34c2c735fb0032a859112fb7345ca8ea73f9aa1db70",
+      "sha256:f0f61d9e9a7d5d2d29443c2f95d7b72efdabe7deda5f22966a47fb7562c9c578",
+      "sha256:9dbd0b23461d7b911915e0fb50a3d7ec0724eade9dd4a5f330629e48b9e1e5c4",
+      "sha256:68c748ee0ff2dbec5e3cf37b4f97e96e41cf3a5b3bcb3c7381525acde8804fb7",
+      "sha256:e52a180b9ae11a9ac546cefe561f41dad71de8861f39df663b1d63052e673428",
+      "sha256:d939a1abf343d8aea9c965f3206b596137f82c468cf4360184f3e5b342b85991",
+      "sha256:c17f208184f99e501e5b533a280d391b600a3d724a5265fd97543d3c68b8219b",
+      "sha256:ddc83737738bfa965f1c93deb1be9e001ddcefe2a9d9b7954be1a93f669dfb4d",
+      "sha256:bac491afb63c4028af85bb5936ca48e9288af8f168a20126f0a3c97cbb80bc56",
+      "sha256:34ffb3768544b093a8d1013c01478857d147136bcddecc601ea4aa8e62224311",
+      "sha256:392ae8b84e89578abf3202c105917a06b43607c7c2378c5c6cf06d8f221d3865"
+    ],
+    "platform": "amd64"
+  },
+  "scanner": "aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c",
+  "offline": true,
+  "network": "none",
+  "counts": {
+    "LOW": 86,
+    "HIGH": 66,
+    "MEDIUM": 97,
+    "UNKNOWN": 3,
+    "CRITICAL": 1
+  },
+  "findings": [
+    {
+      "id": "CVE-2011-3374",
+      "package": "apt",
+      "installed": "2.6.1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2011-3374"
+    },
+    {
+      "id": "TEMP-0841856-B18BAF",
+      "package": "bash",
+      "installed": "5.2.15-2+b13",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "bsdutils",
+      "installed": "1:2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2016-2781",
+      "package": "coreutils",
+      "installed": "9.1-1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2016-2781"
+    },
+    {
+      "id": "CVE-2017-18018",
+      "package": "coreutils",
+      "installed": "9.1-1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2017-18018"
+    },
+    {
+      "id": "CVE-2025-5278",
+      "package": "coreutils",
+      "installed": "9.1-1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-5278"
+    },
+    {
+      "id": "CVE-2026-56391",
+      "package": "coreutils",
+      "installed": "9.1-1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-56391"
+    },
+    {
+      "id": "CVE-2026-56392",
+      "package": "coreutils",
+      "installed": "9.1-1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-56392"
+    },
+    {
+      "id": "CVE-2026-102473",
+      "package": "dash",
+      "installed": "0.5.12-2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102473"
+    },
+    {
+      "id": "CVE-2026-102474",
+      "package": "dash",
+      "installed": "0.5.12-2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102474"
+    },
+    {
+      "id": "CVE-2026-53910",
+      "package": "diffutils",
+      "installed": "1:3.8-4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53910"
+    },
+    {
+      "id": "CVE-2026-102010",
+      "package": "gcc-12-base",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102010"
+    },
+    {
+      "id": "CVE-2026-95619",
+      "package": "gcc-12-base",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95619"
+    },
+    {
+      "id": "CVE-2022-27943",
+      "package": "gcc-12-base",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-27943"
+    },
+    {
+      "id": "CVE-2025-30258",
+      "package": "gpgv",
+      "installed": "2.2.40-1.1+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-30258"
+    },
+    {
+      "id": "CVE-2025-68972",
+      "package": "gpgv",
+      "installed": "2.2.40-1.1+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-68972"
+    },
+    {
+      "id": "CVE-2022-3219",
+      "package": "gpgv",
+      "installed": "2.2.40-1.1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-3219"
+    },
+    {
+      "id": "CVE-2026-105712",
+      "package": "gpgv",
+      "installed": "2.2.40-1.1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-105712"
+    },
+    {
+      "id": "CVE-2026-57062",
+      "package": "gpgv",
+      "installed": "2.2.40-1.1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-57062"
+    },
+    {
+      "id": "CVE-2026-41992",
+      "package": "gzip",
+      "installed": "1.12-1",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-41992"
+    },
+    {
+      "id": "CVE-2026-41991",
+      "package": "gzip",
+      "installed": "1.12-1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-41991"
+    },
+    {
+      "id": "CVE-2026-54369",
+      "package": "libacl1",
+      "installed": "2.3.1-3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54369"
+    },
+    {
+      "id": "CVE-2026-54370",
+      "package": "libacl1",
+      "installed": "2.3.1-3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54370"
+    },
+    {
+      "id": "CVE-2011-3374",
+      "package": "libapt-pkg6.0",
+      "installed": "2.6.1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2011-3374"
+    },
+    {
+      "id": "CVE-2026-54371",
+      "package": "libattr1",
+      "installed": "1:2.5.1-4",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54371"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "libblkid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2026-42250",
+      "package": "libbz2-1.0",
+      "installed": "1.0.8-5+b1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-42250"
+    },
+    {
+      "id": "CVE-2026-18374",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-18374"
+    },
+    {
+      "id": "CVE-2026-19499",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-19499"
+    },
+    {
+      "id": "CVE-2026-19542",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-19542"
+    },
+    {
+      "id": "CVE-2026-5435",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5435"
+    },
+    {
+      "id": "CVE-2026-5450",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5450"
+    },
+    {
+      "id": "CVE-2026-5928",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5928"
+    },
+    {
+      "id": "CVE-2026-6238",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6238"
+    },
+    {
+      "id": "CVE-2026-6368",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6368"
+    },
+    {
+      "id": "CVE-2026-6791",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6791"
+    },
+    {
+      "id": "CVE-2026-77117",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-77117"
+    },
+    {
+      "id": "CVE-2026-80489",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-80489"
+    },
+    {
+      "id": "CVE-2026-8674",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-8674"
+    },
+    {
+      "id": "CVE-2026-86805",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-86805"
+    },
+    {
+      "id": "CVE-2026-89092",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-89092"
+    },
+    {
+      "id": "CVE-2026-95818",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95818"
+    },
+    {
+      "id": "CVE-2010-4756",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2010-4756"
+    },
+    {
+      "id": "CVE-2018-20796",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2018-20796"
+    },
+    {
+      "id": "CVE-2019-1010022",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010022"
+    },
+    {
+      "id": "CVE-2019-1010023",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010023"
+    },
+    {
+      "id": "CVE-2019-1010024",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010024"
+    },
+    {
+      "id": "CVE-2019-1010025",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010025"
+    },
+    {
+      "id": "CVE-2019-9192",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-9192"
+    },
+    {
+      "id": "CVE-2026-97399",
+      "package": "libc-bin",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97399"
+    },
+    {
+      "id": "CVE-2026-18374",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-18374"
+    },
+    {
+      "id": "CVE-2026-19499",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-19499"
+    },
+    {
+      "id": "CVE-2026-19542",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-19542"
+    },
+    {
+      "id": "CVE-2026-5435",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5435"
+    },
+    {
+      "id": "CVE-2026-5450",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5450"
+    },
+    {
+      "id": "CVE-2026-5928",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5928"
+    },
+    {
+      "id": "CVE-2026-6238",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6238"
+    },
+    {
+      "id": "CVE-2026-6368",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6368"
+    },
+    {
+      "id": "CVE-2026-6791",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-6791"
+    },
+    {
+      "id": "CVE-2026-77117",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-77117"
+    },
+    {
+      "id": "CVE-2026-80489",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-80489"
+    },
+    {
+      "id": "CVE-2026-8674",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-8674"
+    },
+    {
+      "id": "CVE-2026-86805",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-86805"
+    },
+    {
+      "id": "CVE-2026-89092",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-89092"
+    },
+    {
+      "id": "CVE-2026-95818",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95818"
+    },
+    {
+      "id": "CVE-2010-4756",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2010-4756"
+    },
+    {
+      "id": "CVE-2018-20796",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2018-20796"
+    },
+    {
+      "id": "CVE-2019-1010022",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010022"
+    },
+    {
+      "id": "CVE-2019-1010023",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010023"
+    },
+    {
+      "id": "CVE-2019-1010024",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010024"
+    },
+    {
+      "id": "CVE-2019-1010025",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-1010025"
+    },
+    {
+      "id": "CVE-2019-9192",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2019-9192"
+    },
+    {
+      "id": "CVE-2026-97399",
+      "package": "libc6",
+      "installed": "2.36-9+deb12u14",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97399"
+    },
+    {
+      "id": "CVE-2026-102010",
+      "package": "libgcc-s1",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102010"
+    },
+    {
+      "id": "CVE-2026-95619",
+      "package": "libgcc-s1",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95619"
+    },
+    {
+      "id": "CVE-2022-27943",
+      "package": "libgcc-s1",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-27943"
+    },
+    {
+      "id": "CVE-2018-6829",
+      "package": "libgcrypt20",
+      "installed": "1.10.1-3+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2018-6829"
+    },
+    {
+      "id": "CVE-2024-2236",
+      "package": "libgcrypt20",
+      "installed": "1.10.1-3+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-2236"
+    },
+    {
+      "id": "CVE-2011-3389",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2011-3389"
+    },
+    {
+      "id": "CVE-2026-67693",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-67693"
+    },
+    {
+      "id": "CVE-2026-88647",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-88647"
+    },
+    {
+      "id": "CVE-2026-88648",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-88648"
+    },
+    {
+      "id": "CVE-2026-95184",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95184"
+    },
+    {
+      "id": "CVE-2026-95209",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95209"
+    },
+    {
+      "id": "CVE-2026-95210",
+      "package": "libgnutls30",
+      "installed": "3.7.9-2+deb12u7",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95210"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "libmount1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2026-13757",
+      "package": "libp11-kit0",
+      "installed": "0.24.1-2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13757"
+    },
+    {
+      "id": "CVE-2026-18938",
+      "package": "libp11-kit0",
+      "installed": "0.24.1-2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-18938"
+    },
+    {
+      "id": "CVE-2024-10041",
+      "package": "libpam-modules",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-10041"
+    },
+    {
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54411"
+    },
+    {
+      "id": "CVE-2024-10041",
+      "package": "libpam-modules-bin",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-10041"
+    },
+    {
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules-bin",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54411"
+    },
+    {
+      "id": "CVE-2024-10041",
+      "package": "libpam-runtime",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-10041"
+    },
+    {
+      "id": "CVE-2026-54411",
+      "package": "libpam-runtime",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54411"
+    },
+    {
+      "id": "CVE-2024-10041",
+      "package": "libpam0g",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-10041"
+    },
+    {
+      "id": "CVE-2026-54411",
+      "package": "libpam0g",
+      "installed": "1.5.2-6+deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-54411"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "libsmartcols1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2025-27587",
+      "package": "libssl3",
+      "installed": "3.0.22-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-27587"
+    },
+    {
+      "id": "CVE-2026-102010",
+      "package": "libstdc++6",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102010"
+    },
+    {
+      "id": "CVE-2026-95619",
+      "package": "libstdc++6",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-95619"
+    },
+    {
+      "id": "CVE-2022-27943",
+      "package": "libstdc++6",
+      "installed": "12.2.0-14+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-27943"
+    },
+    {
+      "id": "CVE-2026-16742",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-16742"
+    },
+    {
+      "id": "CVE-2026-15059",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-15059"
+    },
+    {
+      "id": "CVE-2013-4392",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2013-4392"
+    },
+    {
+      "id": "CVE-2023-31437",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31437"
+    },
+    {
+      "id": "CVE-2023-31438",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31438"
+    },
+    {
+      "id": "CVE-2023-31439",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31439"
+    },
+    {
+      "id": "CVE-2026-40228",
+      "package": "libsystemd0",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-40228"
+    },
+    {
+      "id": "CVE-2025-13151",
+      "package": "libtasn1-6",
+      "installed": "4.19.0-2+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-13151"
+    },
+    {
+      "id": "CVE-2025-69720",
+      "package": "libtinfo6",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-69720"
+    },
+    {
+      "id": "CVE-2023-50495",
+      "package": "libtinfo6",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-50495"
+    },
+    {
+      "id": "CVE-2025-6141",
+      "package": "libtinfo6",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-6141"
+    },
+    {
+      "id": "CVE-2026-16742",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-16742"
+    },
+    {
+      "id": "CVE-2026-15059",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-15059"
+    },
+    {
+      "id": "CVE-2013-4392",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2013-4392"
+    },
+    {
+      "id": "CVE-2023-31437",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31437"
+    },
+    {
+      "id": "CVE-2023-31438",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31438"
+    },
+    {
+      "id": "CVE-2023-31439",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31439"
+    },
+    {
+      "id": "CVE-2026-40228",
+      "package": "libudev1",
+      "installed": "252.39-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-40228"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "libuuid1",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2007-5686",
+      "package": "login",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2007-5686"
+    },
+    {
+      "id": "CVE-2024-56433",
+      "package": "login",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-56433"
+    },
+    {
+      "id": "TEMP-0628843-DBAD28",
+      "package": "login",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://security-tracker.debian.org/tracker/TEMP-0628843-DBAD28"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "mount",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2025-69720",
+      "package": "ncurses-base",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-69720"
+    },
+    {
+      "id": "CVE-2023-50495",
+      "package": "ncurses-base",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-50495"
+    },
+    {
+      "id": "CVE-2025-6141",
+      "package": "ncurses-base",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-6141"
+    },
+    {
+      "id": "CVE-2025-69720",
+      "package": "ncurses-bin",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-69720"
+    },
+    {
+      "id": "CVE-2023-50495",
+      "package": "ncurses-bin",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-50495"
+    },
+    {
+      "id": "CVE-2025-6141",
+      "package": "ncurses-bin",
+      "installed": "6.4-4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-6141"
+    },
+    {
+      "id": "CVE-2025-27587",
+      "package": "openssl",
+      "installed": "3.0.22-1~deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-27587"
+    },
+    {
+      "id": "CVE-2007-5686",
+      "package": "passwd",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2007-5686"
+    },
+    {
+      "id": "CVE-2024-56433",
+      "package": "passwd",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2024-56433"
+    },
+    {
+      "id": "TEMP-0628843-DBAD28",
+      "package": "passwd",
+      "installed": "1:4.13+dfsg1-1+deb12u2",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://security-tracker.debian.org/tracker/TEMP-0628843-DBAD28"
+    },
+    {
+      "id": "CVE-2026-9538",
+      "package": "perl-base",
+      "installed": "5.36.0-7+deb12u4",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-9538"
+    },
+    {
+      "id": "CVE-2026-15534",
+      "package": "perl-base",
+      "installed": "5.36.0-7+deb12u4",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-15534"
+    },
+    {
+      "id": "CVE-2011-4116",
+      "package": "perl-base",
+      "installed": "5.36.0-7+deb12u4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2011-4116"
+    },
+    {
+      "id": "CVE-2023-31486",
+      "package": "perl-base",
+      "installed": "5.36.0-7+deb12u4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-31486"
+    },
+    {
+      "id": "CVE-2026-82560",
+      "package": "perl-base",
+      "installed": "5.36.0-7+deb12u4",
+      "fixed": null,
+      "severity": "UNKNOWN",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-82560"
+    },
+    {
+      "id": "TEMP-0517018-A83CE6",
+      "package": "sysvinit-utils",
+      "installed": "3.06-4",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://security-tracker.debian.org/tracker/TEMP-0517018-A83CE6"
+    },
+    {
+      "id": "CVE-2026-18477",
+      "package": "tar",
+      "installed": "1.34+dfsg-1.2+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-18477"
+    },
+    {
+      "id": "CVE-2026-18508",
+      "package": "tar",
+      "installed": "1.34+dfsg-1.2+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "fix_deferred",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-18508"
+    },
+    {
+      "id": "CVE-2026-5704",
+      "package": "tar",
+      "installed": "1.34+dfsg-1.2+deb12u1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-5704"
+    },
+    {
+      "id": "CVE-2005-2541",
+      "package": "tar",
+      "installed": "1.34+dfsg-1.2+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2005-2541"
+    },
+    {
+      "id": "TEMP-0290435-0B57B5",
+      "package": "tar",
+      "installed": "1.34+dfsg-1.2+deb12u1",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://security-tracker.debian.org/tracker/TEMP-0290435-0B57B5"
+    },
+    {
+      "id": "DLA-4854-1",
+      "package": "tzdata",
+      "installed": "2026c-0+deb12u1",
+      "fixed": "2026e-0+deb12u1",
+      "severity": "UNKNOWN",
+      "status": "fixed"
+    },
+    {
+      "id": "DLA-4867-1",
+      "package": "tzdata",
+      "installed": "2026c-0+deb12u1",
+      "fixed": "2026f-0+deb12u1",
+      "severity": "UNKNOWN",
+      "status": "fixed"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "util-linux",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2026-53613",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53613"
+    },
+    {
+      "id": "CVE-2026-53615",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-53615"
+    },
+    {
+      "id": "CVE-2026-76642",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-76642"
+    },
+    {
+      "id": "CVE-2026-78408",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78408"
+    },
+    {
+      "id": "CVE-2026-78409",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78409"
+    },
+    {
+      "id": "CVE-2026-78410",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78410"
+    },
+    {
+      "id": "CVE-2026-13595",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13595"
+    },
+    {
+      "id": "CVE-2026-27456",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27456"
+    },
+    {
+      "id": "CVE-2026-3184",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-3184"
+    },
+    {
+      "id": "CVE-2022-0563",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2022-0563"
+    },
+    {
+      "id": "CVE-2025-14104",
+      "package": "util-linux-extra",
+      "installed": "2.38.1-5+deb12u3",
+      "fixed": null,
+      "severity": "LOW",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2025-14104"
+    },
+    {
+      "id": "CVE-2023-45853",
+      "package": "zlib1g",
+      "installed": "1:1.2.13.dfsg-1",
+      "fixed": null,
+      "severity": "CRITICAL",
+      "status": "will_not_fix",
+      "source": "https://avd.aquasec.com/nvd/cve-2023-45853"
+    },
+    {
+      "id": "CVE-2026-27171",
+      "package": "zlib1g",
+      "installed": "1:1.2.13.dfsg-1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-27171"
+    },
+    {
+      "id": "CVE-2026-85091",
+      "package": "zlib1g",
+      "installed": "1:1.2.13.dfsg-1",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-85091"
+    },
+    {
+      "id": "CVE-2026-48758",
+      "package": "@sigstore/core",
+      "installed": "2.0.0",
+      "fixed": "3.2.1",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-48758"
+    },
+    {
+      "id": "CVE-2026-102276",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.10, 3.0.7, 2.1.5, 1.1.19",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102276"
+    },
+    {
+      "id": "CVE-2026-102278",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.11, 3.0.8, 2.1.6, 1.1.20",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102278"
+    },
+    {
+      "id": "CVE-2026-13149",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.7, 1.1.16, 2.1.2",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-13149"
+    },
+    {
+      "id": "CVE-2026-14257",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.8, 3.0.3, 2.1.3, 1.1.17",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-14257"
+    },
+    {
+      "id": "CVE-2026-69152",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "1.1.18, 2.1.4, 3.0.6, 5.0.9",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-69152"
+    },
+    {
+      "id": "CVE-2026-102277",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.12, 3.0.9, 2.1.7, 1.1.21",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-102277"
+    },
+    {
+      "id": "CVE-2026-33750",
+      "package": "brace-expansion",
+      "installed": "2.0.2",
+      "fixed": "5.0.5, 3.0.2, 2.0.3, 1.1.13",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-33750"
+    },
+    {
+      "id": "CVE-2026-69192",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.3.1",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-69192"
+    },
+    {
+      "id": "CVE-2026-101911",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.7.1",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-101911"
+    },
+    {
+      "id": "CVE-2026-101912",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.7.1",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-101912"
+    },
+    {
+      "id": "CVE-2026-101913",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.5.1",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-101913"
+    },
+    {
+      "id": "CVE-2026-111997",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.7.4",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-111997"
+    },
+    {
+      "id": "CVE-2026-42338",
+      "package": "ip-address",
+      "installed": "10.1.0",
+      "fixed": "10.1.1",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-42338"
+    },
+    {
+      "id": "CVE-2026-9496",
+      "package": "pacote",
+      "installed": "19.0.2",
+      "fixed": "21.5.1",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-9496"
+    },
+    {
+      "id": "CVE-2026-9496",
+      "package": "pacote",
+      "installed": "20.0.1",
+      "fixed": "21.5.1",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-9496"
+    },
+    {
+      "id": "CVE-2026-33671",
+      "package": "picomatch",
+      "installed": "4.0.3",
+      "fixed": "4.0.4, 3.0.2, 2.3.2",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-33671"
+    },
+    {
+      "id": "CVE-2026-33672",
+      "package": "picomatch",
+      "installed": "4.0.3",
+      "fixed": "4.0.4, 3.0.2, 2.3.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-33672"
+    },
+    {
+      "id": "CVE-2026-104844",
+      "package": "postcss-selector-parser",
+      "installed": "7.1.1",
+      "fixed": "7.1.6, 6.1.5",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-104844"
+    },
+    {
+      "id": "CVE-2026-9358",
+      "package": "postcss-selector-parser",
+      "installed": "7.1.1",
+      "fixed": "6.1.3, 7.1.3",
+      "severity": "LOW",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-9358"
+    },
+    {
+      "id": "CVE-2026-48815",
+      "package": "sigstore",
+      "installed": "3.1.0",
+      "fixed": "4.1.1",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-48815"
+    }
+  ],
+  "projectMetadataTransmitted": false
+}

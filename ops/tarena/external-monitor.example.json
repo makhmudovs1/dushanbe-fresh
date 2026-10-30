@@ -1,0 +1,6 @@
+{
+  "enabled": false,
+  "mode": "production",
+  "dnsCutoverAccepted": false,
+  "url": "https://dushanbefresh.tj/api/v1/health/ready"
+}

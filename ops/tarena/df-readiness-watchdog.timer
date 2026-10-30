@@ -1,0 +1,10 @@
+[Unit]
+Description=Check closed Dushanbe Fresh services every 15 seconds
+
+[Timer]
+OnBootSec=90
+OnUnitActiveSec=15
+AccuracySec=1
+
+[Install]
+WantedBy=timers.target

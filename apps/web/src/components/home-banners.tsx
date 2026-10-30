@@ -4,8 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { serverI18n } from "@/i18n/server";
 import { homeBanners } from "@/lib/storefront";
 
-export function HomeBanners() {
-  const { t } = serverI18n();
+export async function HomeBanners() {
+  const { t } = await serverI18n();
   return <section className="home-banners" aria-label={t("Выбор продуктов")}>
     {homeBanners.map(banner => <article key={banner.id} className={`home-banner${banner.primary ? " home-banner--primary" : " home-banner--secondary"}`}>
       <Image src={banner.image} alt={t(banner.alt)} fill priority={banner.primary}

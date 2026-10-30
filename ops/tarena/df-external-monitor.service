@@ -1,0 +1,22 @@
+[Unit]
+Description=Dushanbe Fresh independent observer (install outside TARENA)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=df-monitor
+WorkingDirectory=/opt/df-monitor
+ExecStart=/usr/bin/python3 -u /opt/df-monitor/external-monitor.py /etc/df-monitor/config.json --loop
+Restart=on-failure
+RestartSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+MemoryMax=64M
+TasksMax=16
+BindReadOnlyPaths=/etc/df-monitor/telegram:/run/secrets
+
+[Install]
+WantedBy=multi-user.target

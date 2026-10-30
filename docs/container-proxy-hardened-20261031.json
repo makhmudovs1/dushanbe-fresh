@@ -1,0 +1,298 @@
+{
+  "recordedAtUTC": "2026-10-30T22:10:43.693Z",
+  "target": "proxy-hardened",
+  "image": "df-tarena-proxy-candidate:20261031",
+  "receipt": {
+    "id": "sha256:397e75c27f620f794fe0228cb3a2766d13dd37b1dc1ecbfb20fd8aa36a9f76de",
+    "layers": [
+      "sha256:54ea9baa1bbd7651dbda5c61569dad60fa601c73e5b784e154e8ba0f314e84fd",
+      "sha256:ffe3f66a572836b76678fc7bd0f6cc19a2ef8585cca6fe0ba7c2e1037d2e1159",
+      "sha256:4bb692fe970995252617470d76a9c95d18cd822a52a59558822b5f1d29d6cf2f",
+      "sha256:d08f1a0adb5011e488b16040328bb140738ff8248022d359170147464b656e5b",
+      "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "sha256:0d7d1b60e96f763527f29734a906feb1f1214c4a2bbb97171894724ece7cd2a8"
+    ],
+    "platform": "amd64"
+  },
+  "scanner": "aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c",
+  "offline": true,
+  "network": "none",
+  "counts": {
+    "MEDIUM": 16,
+    "HIGH": 7,
+    "UNKNOWN": 3,
+    "LOW": 1
+  },
+  "findings": [
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-114437",
+      "package": "github.com/go-chi/chi/v5",
+      "installed": "v5.3.2",
+      "fixed": "5.4.0",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-114437"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-116587",
+      "package": "github.com/go-jose/go-jose/v3",
+      "installed": "v3.0.5",
+      "fixed": null,
+      "severity": "HIGH",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-116587"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-116585",
+      "package": "github.com/go-jose/go-jose/v3",
+      "installed": "v3.0.5",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-116585"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-116586",
+      "package": "github.com/go-jose/go-jose/v3",
+      "installed": "v3.0.5",
+      "fixed": null,
+      "severity": "MEDIUM",
+      "status": "affected",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-116586"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-116587",
+      "package": "github.com/go-jose/go-jose/v4",
+      "installed": "v4.1.5",
+      "fixed": "4.1.6",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-116587"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "GO-2026-5932",
+      "package": "golang.org/x/crypto",
+      "installed": "v0.57.0",
+      "fixed": null,
+      "severity": "UNKNOWN",
+      "status": "affected"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78669",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.60.0",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78669"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78659",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.60.0",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78659"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78660",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.60.0",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78660"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78663",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.60.0",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78663"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-97032",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.60.0",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97032"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78661",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.62.0",
+      "severity": "UNKNOWN",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78661"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-97045",
+      "package": "golang.org/x/net",
+      "installed": "v0.59.0",
+      "fixed": "0.62.0",
+      "severity": "UNKNOWN",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97045"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-111943",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.10, 1.27.3",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-111943"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78667",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78667"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78669",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78669"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-97031",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "HIGH",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97031"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-56866",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-56866"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78659",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78659"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78660",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78660"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-78663",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-78663"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-94439",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-94439"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-94440",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-94440"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-94448",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-94448"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-97030",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97030"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-97032",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-97032"
+    },
+    {
+      "target": "usr/bin/caddy",
+      "id": "CVE-2026-56857",
+      "package": "stdlib",
+      "installed": "v1.26.8",
+      "fixed": "1.26.9, 1.27.2",
+      "severity": "LOW",
+      "status": "fixed",
+      "source": "https://avd.aquasec.com/nvd/cve-2026-56857"
+    }
+  ],
+  "projectMetadataTransmitted": false
+}

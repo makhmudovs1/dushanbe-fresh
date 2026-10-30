@@ -1,0 +1,763 @@
+{
+  "date": "2026-10-29",
+  "scope": "npm advisories only; not exploitation evidence",
+  "before": {
+    "info": 0,
+    "low": 11,
+    "moderate": 37,
+    "high": 40,
+    "critical": 9
+  },
+  "afterAll": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "afterProduction": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "resolved": [
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js Server-Side Request Forgery in Server Actions",
+      "url": "https://github.com/advisories/GHSA-fr5h-rqp8-mj6g",
+      "vulnerable": ">=13.4.0 <14.1.1",
+      "patched": ">=14.1.1"
+    },
+    {
+      "module": "body-parser",
+      "severity": "high",
+      "title": "body-parser vulnerable to denial of service when url encoding is enabled",
+      "url": "https://github.com/advisories/GHSA-qwcr-r2fm-qrc7",
+      "vulnerable": "<1.20.3",
+      "patched": ">=1.20.3"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js Cache Poisoning",
+      "url": "https://github.com/advisories/GHSA-gp8f-8m3g-qvj9",
+      "vulnerable": ">=13.5.1 <13.5.7",
+      "patched": ">=13.5.7"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Denial of Service condition in Next.js image optimization",
+      "url": "https://github.com/advisories/GHSA-g77x-44xx-532m",
+      "vulnerable": ">=10.0.0 <14.2.7",
+      "patched": ">=14.2.7"
+    },
+    {
+      "module": "serve-static",
+      "severity": "low",
+      "title": "serve-static vulnerable to template injection that can lead to XSS",
+      "url": "https://github.com/advisories/GHSA-cm22-4g7w-348p",
+      "vulnerable": "<1.16.0",
+      "patched": ">=1.16.0"
+    },
+    {
+      "module": "express",
+      "severity": "low",
+      "title": "express vulnerable to XSS via response.redirect()",
+      "url": "https://github.com/advisories/GHSA-qw6h-vgh9-j6wx",
+      "vulnerable": "<4.20.0",
+      "patched": ">=4.20.0"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js Allows a Denial of Service (DoS) with Server Actions",
+      "url": "https://github.com/advisories/GHSA-7m27-7ghc-44w9",
+      "vulnerable": ">=13.0.0 <13.5.8",
+      "patched": ">=13.5.8"
+    },
+    {
+      "module": "path-to-regexp",
+      "severity": "high",
+      "title": "path-to-regexp outputs backtracking regular expressions",
+      "url": "https://github.com/advisories/GHSA-9wv6-86v2-598j",
+      "vulnerable": ">=2.0.0 <3.3.0",
+      "patched": ">=3.3.0"
+    },
+    {
+      "module": "path-to-regexp",
+      "severity": "high",
+      "title": "path-to-regexp outputs backtracking regular expressions",
+      "url": "https://github.com/advisories/GHSA-9wv6-86v2-598j",
+      "vulnerable": "<0.1.10",
+      "patched": ">=0.1.10"
+    },
+    {
+      "module": "esbuild",
+      "severity": "moderate",
+      "title": "esbuild enables any website to send any requests to the development server and read the response",
+      "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+      "vulnerable": "<=0.24.2",
+      "patched": ">=0.25.0"
+    },
+    {
+      "module": "@nestjs/common",
+      "severity": "moderate",
+      "title": "nest allows a remote attacker to execute arbitrary code via the Content-Type header",
+      "url": "https://github.com/advisories/GHSA-cj7v-w2c7-cp7c",
+      "vulnerable": "<10.4.16",
+      "patched": ">=10.4.16"
+    },
+    {
+      "module": "cookie",
+      "severity": "low",
+      "title": "cookie accepts cookie name, path, and domain with out of bounds characters",
+      "url": "https://github.com/advisories/GHSA-pxg6-pf52-xh8x",
+      "vulnerable": "<0.7.0",
+      "patched": ">=0.7.0"
+    },
+    {
+      "module": "multer",
+      "severity": "high",
+      "title": "Multer vulnerable to Denial of Service from maliciously crafted requests",
+      "url": "https://github.com/advisories/GHSA-4pg4-qvpc-4q3h",
+      "vulnerable": ">=1.4.4-lts.1 <2.0.0",
+      "patched": ">=2.0.0"
+    },
+    {
+      "module": "path-to-regexp",
+      "severity": "high",
+      "title": "path-to-regexp contains a ReDoS",
+      "url": "https://github.com/advisories/GHSA-rhx6-c78j-4q9w",
+      "vulnerable": "<0.1.12",
+      "patched": ">=0.1.12"
+    },
+    {
+      "module": "multer",
+      "severity": "high",
+      "title": "Multer vulnerable to Denial of Service via unhandled exception",
+      "url": "https://github.com/advisories/GHSA-g5hg-p3ph-g8qg",
+      "vulnerable": ">=1.4.4-lts.1 <2.0.1",
+      "patched": ">=2.0.1"
+    },
+    {
+      "module": "next",
+      "severity": "low",
+      "title": "Information exposure in Next.js dev server due to lack of origin verification",
+      "url": "https://github.com/advisories/GHSA-3h52-269p-cp9r",
+      "vulnerable": ">=13.0 <14.2.30",
+      "patched": ">=14.2.30"
+    },
+    {
+      "module": "multer",
+      "severity": "high",
+      "title": "Multer vulnerable to Denial of Service via unhandled exception from malformed request",
+      "url": "https://github.com/advisories/GHSA-fjgf-rc76-4x9p",
+      "vulnerable": ">=1.4.4-lts.1 <2.0.2",
+      "patched": ">=2.0.2"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js Affected by Cache Key Confusion for Image Optimization API Routes",
+      "url": "https://github.com/advisories/GHSA-g5qg-72qw-gw5v",
+      "vulnerable": ">=0.9.9 <14.2.31",
+      "patched": ">=14.2.31"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js authorization bypass vulnerability",
+      "url": "https://github.com/advisories/GHSA-7gfc-8cq8-jh5f",
+      "vulnerable": ">=9.5.5 <14.2.15",
+      "patched": ">=14.2.15"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js Improper Middleware Redirect Handling Leads to SSRF",
+      "url": "https://github.com/advisories/GHSA-4342-x723-ch2f",
+      "vulnerable": ">=0.9.9 <14.2.32",
+      "patched": ">=14.2.32"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js Content Injection Vulnerability for Image Optimization",
+      "url": "https://github.com/advisories/GHSA-xv57-4mr9-wg8v",
+      "vulnerable": ">=0.9.9 <14.2.31",
+      "patched": ">=14.2.31"
+    },
+    {
+      "module": "next",
+      "severity": "low",
+      "title": "Next.js Race Condition to Cache Poisoning",
+      "url": "https://github.com/advisories/GHSA-qpjv-v59x-3qc4",
+      "vulnerable": ">=0.9.9 <14.2.24",
+      "patched": ">=14.2.24"
+    },
+    {
+      "module": "playwright",
+      "severity": "high",
+      "title": "Playwright downloads and installs browsers without verifying the authenticity of the SSL certificate",
+      "url": "https://github.com/advisories/GHSA-7mvr-c777-76hp",
+      "vulnerable": "<1.55.1",
+      "patched": ">=1.55.1"
+    },
+    {
+      "module": "send",
+      "severity": "low",
+      "title": "send vulnerable to template injection that can lead to XSS",
+      "url": "https://github.com/advisories/GHSA-m6fv-jmcg-4jfg",
+      "vulnerable": "<0.19.0",
+      "patched": ">=0.19.0"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next Vulnerable to Denial of Service with Server Components",
+      "url": "https://github.com/advisories/GHSA-mwv6-3258-q52c",
+      "vulnerable": ">=13.3.0 <14.2.34",
+      "patched": ">=14.2.34"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next has a Denial of Service with Server Components - Incomplete Fix Follow-Up",
+      "url": "https://github.com/advisories/GHSA-5j59-xgg2-r9c4",
+      "vulnerable": ">=13.3.1-canary.0 <14.2.35",
+      "patched": ">=14.2.35"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration",
+      "url": "https://github.com/advisories/GHSA-9g9p-9gw9-jx7f",
+      "vulnerable": ">=10.0.0 <15.5.10",
+      "patched": ">=15.5.10"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components",
+      "url": "https://github.com/advisories/GHSA-h25m-26qc-wcjf",
+      "vulnerable": ">=13.0.0 <15.0.8",
+      "patched": ">=15.0.8"
+    },
+    {
+      "module": "qs",
+      "severity": "low",
+      "title": "qs's arrayLimit bypass in comma parsing allows denial of service",
+      "url": "https://github.com/advisories/GHSA-w7fw-mjwx-w883",
+      "vulnerable": ">=6.7.0 <=6.14.1",
+      "patched": ">=6.14.2"
+    },
+    {
+      "module": "minimatch",
+      "severity": "high",
+      "title": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern",
+      "url": "https://github.com/advisories/GHSA-3ppc-4f35-3m26",
+      "vulnerable": ">=9.0.0 <9.0.6",
+      "patched": ">=9.0.6"
+    },
+    {
+      "module": "minimatch",
+      "severity": "high",
+      "title": "minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments",
+      "url": "https://github.com/advisories/GHSA-7r86-cg39-jmmj",
+      "vulnerable": ">=9.0.0 <9.0.7",
+      "patched": ">=9.0.7"
+    },
+    {
+      "module": "minimatch",
+      "severity": "high",
+      "title": "minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions",
+      "url": "https://github.com/advisories/GHSA-23c5-xmqv-rm74",
+      "vulnerable": ">=9.0.0 <9.0.7",
+      "patched": ">=9.0.7"
+    },
+    {
+      "module": "next",
+      "severity": "critical",
+      "title": "Authorization Bypass in Next.js Middleware",
+      "url": "https://github.com/advisories/GHSA-f82v-jwr5-mffw",
+      "vulnerable": ">=13.0.0 <13.5.9",
+      "patched": ">=13.5.9"
+    },
+    {
+      "module": "qs",
+      "severity": "moderate",
+      "title": "qs's arrayLimit bypass in its bracket notation allows DoS via memory exhaustion",
+      "url": "https://github.com/advisories/GHSA-6rw7-vpxm-498p",
+      "vulnerable": "<6.14.1",
+      "patched": ">=6.14.1"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: HTTP request smuggling in rewrites",
+      "url": "https://github.com/advisories/GHSA-ggv3-7p47-pfv8",
+      "vulnerable": ">=9.5.0 <15.5.13",
+      "patched": ">=15.5.13"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: Unbounded next/image disk cache growth can exhaust storage",
+      "url": "https://github.com/advisories/GHSA-3x4c-7xq6-9pq8",
+      "vulnerable": ">=10.0.0 <15.5.14",
+      "patched": ">=15.5.14"
+    },
+    {
+      "module": "path-to-regexp",
+      "severity": "high",
+      "title": "path-to-regexp vulnerable to Regular Expression Denial of Service via multiple route parameters",
+      "url": "https://github.com/advisories/GHSA-37ch-88jc-xwx2",
+      "vulnerable": "<0.1.13",
+      "patched": ">=0.1.13"
+    },
+    {
+      "module": "lodash",
+      "severity": "high",
+      "title": "lodash vulnerable to Code Injection via `_.template` imports key names",
+      "url": "https://github.com/advisories/GHSA-r5fr-rjxr-66jc",
+      "vulnerable": ">=4.0.0 <=4.17.23",
+      "patched": ">=4.18.0"
+    },
+    {
+      "module": "lodash",
+      "severity": "moderate",
+      "title": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`",
+      "url": "https://github.com/advisories/GHSA-f23m-r3pf-42rh",
+      "vulnerable": "<=4.17.23",
+      "patched": ">=4.18.0"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "Vite Vulnerable to Path Traversal in Optimized Deps `.map` Handling",
+      "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+      "vulnerable": "<=6.4.1",
+      "patched": ">=6.4.2"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js has a Denial of Service with Server Components",
+      "url": "https://github.com/advisories/GHSA-q4gf-8mx6-v5v3",
+      "vulnerable": ">=13.0.0 <15.5.15",
+      "patched": ">=15.5.15"
+    },
+    {
+      "module": "postcss",
+      "severity": "moderate",
+      "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output",
+      "url": "https://github.com/advisories/GHSA-qx2v-qp2m-jg93",
+      "vulnerable": "<8.5.10",
+      "patched": ">=8.5.10"
+    },
+    {
+      "module": "@nestjs/core",
+      "severity": "moderate",
+      "title": "@nestjs/core Improperly Neutralizes Special Elements in Output Used by a Downstream Component ('Injection')",
+      "url": "https://github.com/advisories/GHSA-36xv-jgw5-4q75",
+      "vulnerable": "<=11.1.17",
+      "patched": ">=11.1.18"
+    },
+    {
+      "module": "vitest",
+      "severity": "critical",
+      "title": "Vitest allows Remote Code Execution when accessing a malicious website while Vitest API server is listening",
+      "url": "https://github.com/advisories/GHSA-9crc-q9x8-hgqq",
+      "vulnerable": ">=1.0.0 <1.6.1",
+      "patched": ">=1.6.1"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js Vulnerable to Denial of Service with Server Components",
+      "url": "https://github.com/advisories/GHSA-8h8q-6873-q5fj",
+      "vulnerable": ">=13.0.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "low",
+      "title": "Next.js's Middleware / Proxy redirects can be cache-poisoned",
+      "url": "https://github.com/advisories/GHSA-3g8h-86w9-wvmq",
+      "vulnerable": ">=12.2.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js vulnerable to cross-site scripting in App Router applications using CSP nonces",
+      "url": "https://github.com/advisories/GHSA-ffhc-5mcf-pf4q",
+      "vulnerable": ">=13.4.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "low",
+      "title": "Next.js vulnerable to cache poisoning via collisions in React Server Component cache-busting",
+      "url": "https://github.com/advisories/GHSA-vfv6-92ff-j949",
+      "vulnerable": ">=13.4.6 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js has cross-site scripting in beforeInteractive scripts with untrusted input",
+      "url": "https://github.com/advisories/GHSA-gx5p-jg67-6x7h",
+      "vulnerable": ">=13.0.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js has a Denial of Service in the Image Optimization API",
+      "url": "https://github.com/advisories/GHSA-h64f-5h5j-jqjh",
+      "vulnerable": ">=10.0.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js vulnerable to server-side request forgery in applications using WebSocket upgrades",
+      "url": "https://github.com/advisories/GHSA-c4j6-fc7j-m34r",
+      "vulnerable": ">=13.4.13 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js has a Middleware / Proxy bypass in Pages Router applications using i18n",
+      "url": "https://github.com/advisories/GHSA-36qx-fr4f-26g5",
+      "vulnerable": ">=12.2.0 <15.5.16",
+      "patched": ">=15.5.16"
+    },
+    {
+      "module": "lodash",
+      "severity": "moderate",
+      "title": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions",
+      "url": "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg",
+      "vulnerable": ">=4.0.0 <=4.17.22",
+      "patched": ">=4.17.23"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows",
+      "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+      "vulnerable": "<=6.4.2",
+      "patched": ">=6.4.3"
+    },
+    {
+      "module": "body-parser",
+      "severity": "low",
+      "title": "body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement",
+      "url": "https://github.com/advisories/GHSA-v422-hmwv-36x6",
+      "vulnerable": "<1.20.6",
+      "patched": ">=1.20.6"
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "title": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591",
+      "url": "https://github.com/advisories/GHSA-f88m-g3jw-g9cj",
+      "vulnerable": "<0.35.0",
+      "patched": ">=0.35.0"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js: Denial of Service in App Router using Server Actions",
+      "url": "https://github.com/advisories/GHSA-m99w-x7hq-7vfj",
+      "vulnerable": ">=13.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: Cache confusion of response bodies for requests with bodies",
+      "url": "https://github.com/advisories/GHSA-68g3-v927-f742",
+      "vulnerable": ">=13.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: Cache confusion of response bodies for requests with bodies containing invalid UTF-8 byte sequences",
+      "url": "https://github.com/advisories/GHSA-4633-3j49-mh5q",
+      "vulnerable": ">=13.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: Unbounded Server Action payload in Edge runtime",
+      "url": "https://github.com/advisories/GHSA-4c39-4ccg-62r3",
+      "vulnerable": ">=13.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js: Server-Side Request Forgery in rewrites via attacker-controlled destination hostname",
+      "url": "https://github.com/advisories/GHSA-p9j2-gv94-2wf4",
+      "vulnerable": ">=12.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "next",
+      "severity": "moderate",
+      "title": "Next.js: Unauthenticated disclosure of internal Server Function endpoints",
+      "url": "https://github.com/advisories/GHSA-955p-x3mx-jcvp",
+      "vulnerable": ">=13.0.0 <15.5.21",
+      "patched": ">=15.5.21"
+    },
+    {
+      "module": "postcss",
+      "severity": "high",
+      "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments",
+      "url": "https://github.com/advisories/GHSA-6g55-p6wh-862q",
+      "vulnerable": "<=8.5.11",
+      "patched": ">=8.5.12"
+    },
+    {
+      "module": "postcss",
+      "severity": "moderate",
+      "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+      "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp",
+      "vulnerable": "<=8.5.22",
+      "patched": ">=8.5.23"
+    },
+    {
+      "module": "postcss",
+      "severity": "high",
+      "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+      "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+      "vulnerable": "<=8.5.17",
+      "patched": ">=8.5.18"
+    },
+    {
+      "module": "vitest",
+      "severity": "critical",
+      "title": "When Vitest UI server is listening, arbitrary file can be read and executed",
+      "url": "https://github.com/advisories/GHSA-5xrq-8626-4rwp",
+      "vulnerable": "<3.2.6",
+      "patched": ">=3.2.6"
+    },
+    {
+      "module": "qs",
+      "severity": "moderate",
+      "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+      "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+      "vulnerable": ">=2.2.5 <6.16.0",
+      "patched": ">=6.16.0"
+    },
+    {
+      "module": "next",
+      "severity": "critical",
+      "title": "Next.js: Unauthenticated Remote Code Execution on windows-hosted servers",
+      "url": "https://github.com/advisories/GHSA-p293-qw3h-jr36",
+      "vulnerable": ">=13.4.0 <15.5.24",
+      "patched": ">=15.5.24"
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+      "url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+      "vulnerable": "<0.35.4",
+      "patched": ">=0.35.4"
+    },
+    {
+      "module": "next",
+      "severity": "critical",
+      "title": "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when AVIF files are used",
+      "url": "https://github.com/advisories/GHSA-2xp9-vwfh-vxw4",
+      "vulnerable": ">=10.0.0 <15.5.24",
+      "patched": ">=15.5.24"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "moderate",
+      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "vulnerable": "<1.1.21",
+      "patched": ">=1.1.21"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "moderate",
+      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "vulnerable": ">=2.0.0 <2.1.7",
+      "patched": ">=2.1.7"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "vulnerable": "<1.1.20",
+      "patched": ">=1.1.20"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "vulnerable": ">=2.0.0 <2.1.6",
+      "patched": ">=2.1.6"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "vulnerable": "<1.1.19",
+      "patched": ">=1.1.19"
+    },
+    {
+      "module": "brace-expansion",
+      "severity": "high",
+      "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "vulnerable": ">=2.0.0 <2.1.5",
+      "patched": ">=2.1.5"
+    },
+    {
+      "module": "source-map-js",
+      "severity": "high",
+      "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+      "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+      "vulnerable": ">=1.0.0 <1.2.2",
+      "patched": ">=1.2.2"
+    },
+    {
+      "module": "proxy-addr",
+      "severity": "critical",
+      "title": "proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet",
+      "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h",
+      "vulnerable": ">=1.1.0 <2.0.8",
+      "patched": ">=2.0.8"
+    },
+    {
+      "module": "tinypool",
+      "severity": "critical",
+      "title": "Tinypool: Prototype Pollution gadget in worker options leads to Remote Code Execution",
+      "url": "https://github.com/advisories/GHSA-5gmw-xhrv-c9v3",
+      "vulnerable": "<=2.1.0",
+      "patched": ">=2.1.1"
+    },
+    {
+      "module": "tinypool",
+      "severity": "critical",
+      "title": "Tinypool: Prototype Pollution Gadget to RCE in run() options",
+      "url": "https://github.com/advisories/GHSA-85c8-ppgw-ccpr",
+      "vulnerable": "<2.1.2",
+      "patched": ">=2.1.2"
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "title": "sharp : Vulnerability in librsvg dependency CVE-2026-96889",
+      "url": "https://github.com/advisories/GHSA-wq5f-xc86-pv6w",
+      "vulnerable": "<0.35.5",
+      "patched": ">=0.35.5"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+      "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+      "vulnerable": "<=6.4.3",
+      "patched": ">=6.4.4"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+      "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+      "vulnerable": "<=6.4.3",
+      "patched": ">=6.4.4"
+    },
+    {
+      "module": "vite",
+      "severity": "high",
+      "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+      "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+      "vulnerable": "<=6.4.3",
+      "patched": ">=6.4.4"
+    },
+    {
+      "module": "vite",
+      "severity": "low",
+      "title": "Vite: Cross origin script execution through Vite custom middleware",
+      "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+      "vulnerable": "<=6.4.3",
+      "patched": ">=6.4.4"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+      "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+      "vulnerable": "<=6.4.3",
+      "patched": ">=6.4.4"
+    },
+    {
+      "module": "next",
+      "severity": "critical",
+      "title": "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when SVG files are used",
+      "url": "https://github.com/advisories/GHSA-2464-fhr4-w9xw",
+      "vulnerable": ">=10.0.0 <=15.5.27",
+      "patched": ">=15.5.28"
+    },
+    {
+      "module": "next",
+      "severity": "high",
+      "title": "Next.js: Denial of Service in App Router using Server Actions",
+      "url": "https://github.com/advisories/GHSA-p3m5-59mp-jv5r",
+      "vulnerable": ">=13.0.0 <=15.5.27",
+      "patched": ">=15.5.28"
+    },
+    {
+      "module": "body-parser",
+      "severity": "high",
+      "title": "body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body",
+      "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+      "vulnerable": "<1.20.9",
+      "patched": ">=1.20.9"
+    },
+    {
+      "module": "postcss-selector-parser",
+      "severity": "moderate",
+      "title": "PostCSS: Quadratic complexity in flat selector parsing allows CPU exhaustion",
+      "url": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf",
+      "vulnerable": "<6.1.5",
+      "patched": ">=6.1.5"
+    },
+    {
+      "module": "vite",
+      "severity": "moderate",
+      "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+      "vulnerable": "<=6.4.2",
+      "patched": ">=6.4.3"
+    },
+    {
+      "module": "qs",
+      "severity": "moderate",
+      "title": "qs : qs.stringify with arrayFormat 'comma' throws an uncaught TypeError on array elements carrying a non-callable own toString (DoS)",
+      "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
+      "vulnerable": ">=6.7.0 <=6.16.0",
+      "patched": ">=6.16.1"
+    }
+  ]
+}

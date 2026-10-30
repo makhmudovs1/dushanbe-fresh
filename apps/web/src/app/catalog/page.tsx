@@ -7,16 +7,19 @@ export const metadata = publicMetadata("/catalog", "Каталог свежих 
 
 export const dynamic = "force-dynamic";
 
-export default function CatalogPage({
+export default async function CatalogPage({
   searchParams
 }: {
-  searchParams?: { category?: string; search?: string };
+  searchParams?: Promise<{ category?: string | string[]; search?: string | string[] }>;
 }) {
+  const query = await searchParams;
+  const category = typeof query?.category === "string" ? query.category : "";
+  const search = typeof query?.search === "string" ? query.search : "";
   return (
     <main className="page storefront-page">
       <section className="shell shop-shell">
-        <Suspense key={`${searchParams?.category}:${searchParams?.search}`} fallback={<ProductGridSkeleton />}>
-          <CatalogData category={searchParams?.category ?? ""} search={searchParams?.search ?? ""} withSidebar />
+        <Suspense key={`${category}:${search}`} fallback={<ProductGridSkeleton />}>
+          <CatalogData category={category} search={search} withSidebar />
         </Suspense>
       </section>
     </main>
