@@ -29,6 +29,9 @@
 !packages/shared/tsconfig*.json
 !packages/shared/src/
 !packages/shared/src/**
+!ops/
+!ops/tarena/
+!ops/tarena/collect-prisma-tool.cjs
 **/.env*
 **/*.pem
 **/*.key

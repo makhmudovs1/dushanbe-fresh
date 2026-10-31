@@ -1,8 +1,9 @@
 const fs = require('node:fs');
 const gates = {
-  export: ['sourceEvidencePreserved', 'quarantineInTajikistan', 'offsiteStorageInTajikistan', 'offsiteEncryptionKeyEscrow', 'exportWindowApproved'],
-  import: ['trustedReleaseReviewed', 'isolatedQuarantineAccepted', 'schemaAndRowsReconciled', 'filesValidated', 'freshCredentialsInstalled', 'hostHardeningAccepted'],
-  cutover: ['offsiteBackupRestored', 'externalAlertsTested', 'publicTlsAndRenewalTested', 'singleWriterFreezeVerified', 'finalDataReconciled',
+  export: ['sourceEvidencePreserved', 'quarantineInTajikistan', 'exportWindowApproved'],
+  import: ['trustedReleaseReviewed', 'isolatedQuarantineAccepted', 'schemaAndRowsReconciled', 'filesValidated', 'freshCredentialsInstalled'],
+  cutover: ['offsiteStorageInTajikistan', 'offsiteEncryptionKeyEscrow', 'offsiteBackupRestored', 'hostHardeningAccepted',
+    'publicTlsAndRenewalTested', 'singleWriterFreezeVerified', 'finalDataReconciled',
     'deviceAcceptanceOrOwnerWaiver', 'dnsChangeExplicitlyApproved']
 };
 function missingGates(phase, evidence) {

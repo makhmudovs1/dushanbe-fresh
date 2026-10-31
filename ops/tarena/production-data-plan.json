@@ -1,0 +1,3142 @@
+{
+  "format": "df-neutral-catalog-v1",
+  "source": "91.207.75.174",
+  "destination": "77.95.0.94",
+  "excludedModels": [
+    "RefreshSession",
+    "CustomerSession",
+    "CustomerOtpChallenge",
+    "CustomerAuthLimit",
+    "MobileCustomerSession",
+    "MobileRefreshToken",
+    "MobileApiLimit"
+  ],
+  "models": [
+    {
+      "name": "User",
+      "table": "users",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "phone",
+          "column": "phone",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "email",
+          "column": "email",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "phoneVerifiedAt",
+          "column": "phone_verified_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "role",
+          "column": "role",
+          "type": "UserRole",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "roles",
+          "column": "roles",
+          "type": "StaffRole",
+          "kind": "enum",
+          "list": true,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "UserStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "OperationalAudit",
+      "table": "operational_audit",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "action",
+          "column": "action",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "entityId",
+          "column": "entity_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "details",
+          "column": "details",
+          "type": "Json",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CustomerAddress",
+      "table": "customer_addresses",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "label",
+          "column": "label",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "recipientName",
+          "column": "recipient_name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "phone",
+          "column": "phone",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "city",
+          "column": "city",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "street",
+          "column": "street",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "building",
+          "column": "building",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "apartment",
+          "column": "apartment",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "entrance",
+          "column": "entrance",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "floor",
+          "column": "floor",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "instructions",
+          "column": "instructions",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "intercom",
+          "column": "intercom",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "housingType",
+          "column": "housing_type",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "latitude",
+          "column": "latitude",
+          "type": "Float",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "longitude",
+          "column": "longitude",
+          "type": "Float",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "deletedAt",
+          "column": "deleted_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "isDefault",
+          "column": "is_default",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CustomerFavorite",
+      "table": "customer_favorites",
+      "allowNonempty": false,
+      "primary": [
+        "userId",
+        "productId"
+      ],
+      "fields": [
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CustomerCart",
+      "table": "customer_carts",
+      "allowNonempty": false,
+      "primary": [
+        "userId"
+      ],
+      "fields": [
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "revision",
+          "column": "revision",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "items",
+          "column": "items",
+          "type": "Json",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CustomerCartImport",
+      "table": "customer_cart_imports",
+      "allowNonempty": false,
+      "primary": [
+        "userId",
+        "sourceId"
+      ],
+      "fields": [
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "sourceId",
+          "column": "source_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "Category",
+      "table": "categories",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "nameTj",
+          "column": "name_tj",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "slug",
+          "column": "slug",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "sortOrder",
+          "column": "sort_order",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isActive",
+          "column": "is_active",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isVisible",
+          "column": "is_visible",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "imageUrl",
+          "column": "image_url",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "iconUrl",
+          "column": "icon_url",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "parentId",
+          "column": "parent_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "deletedAt",
+          "column": "deleted_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "table": "products",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "categoryId",
+          "column": "category_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "nameTj",
+          "column": "name_tj",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "slug",
+          "column": "slug",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "description",
+          "column": "description",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "descriptionTj",
+          "column": "description_tj",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "imageUrl",
+          "column": "image_url",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "unit",
+          "column": "unit",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "currentPurchasePrice",
+          "column": "current_purchase_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "currentSalePrice",
+          "column": "current_sale_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isWeighted",
+          "column": "is_weighted",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "minQuantity",
+          "column": "min_quantity",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "quantityStep",
+          "column": "quantity_step",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isActive",
+          "column": "is_active",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isAvailableToday",
+          "column": "is_available_today",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deletedAt",
+          "column": "deleted_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "sortOrder",
+          "column": "sort_order",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "ProductImage",
+      "table": "product_images",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "url",
+          "column": "url",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "sortOrder",
+          "column": "sort_order",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isPrimary",
+          "column": "is_primary",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "ProductPriceHistory",
+      "table": "product_price_history",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "oldSalePrice",
+          "column": "old_sale_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "newSalePrice",
+          "column": "new_sale_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "changedAt",
+          "column": "changed_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "changedByUserId",
+          "column": "changed_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "ProductQualityOption",
+      "table": "product_quality_options",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "label",
+          "column": "label",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "labelTj",
+          "column": "label_tj",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "sortOrder",
+          "column": "sort_order",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isActive",
+          "column": "is_active",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "DeliverySlot",
+      "table": "delivery_slots",
+      "allowNonempty": true,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "date",
+          "column": "date",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "startsAt",
+          "column": "starts_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "endsAt",
+          "column": "ends_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "capacityOrders",
+          "column": "capacity_orders",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isActive",
+          "column": "is_active",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "DeliveryWave",
+      "table": "delivery_waves",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "deliverySlotId",
+          "column": "delivery_slot_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "pickerUserId",
+          "column": "picker_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "courierUserId",
+          "column": "courier_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "WaveItem",
+      "table": "wave_items",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "deliveryWaveId",
+          "column": "delivery_wave_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productNameSnapshot",
+          "column": "product_name_snapshot",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "unit",
+          "column": "unit",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requestedQuantityTotal",
+          "column": "requested_quantity_total",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "purchasedQuantity",
+          "column": "purchased_quantity",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "purchaseUnitPrice",
+          "column": "purchase_unit_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "referencePurchasePrice",
+          "column": "reference_purchase_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "purchaseTotal",
+          "column": "purchase_total",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "supplierNote",
+          "column": "supplier_note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "table": "orders",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderNumber",
+          "column": "order_number",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "publicTrackingToken",
+          "column": "public_tracking_token",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "checkoutRequestId",
+          "column": "checkout_request_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "checkoutRequestHash",
+          "column": "checkout_request_hash",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "legacyCustomerId",
+          "column": "customer_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "accountUserId",
+          "column": "account_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "customerId",
+          "column": "guest_customer_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "addressId",
+          "column": "address_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "deliveryAddressSnapshot",
+          "column": "delivery_address_snapshot",
+          "type": "Json",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliverySlotId",
+          "column": "delivery_slot_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryWaveId",
+          "column": "delivery_wave_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "OrderStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "paymentMethod",
+          "column": "payment_method",
+          "type": "PaymentMethod",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "paymentStatus",
+          "column": "payment_status",
+          "type": "PaymentStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "substitutionPolicy",
+          "column": "substitution_policy",
+          "type": "SubstitutionPolicy",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "qualityComment",
+          "column": "quality_comment",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "itemsSubtotal",
+          "column": "items_subtotal",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryFee",
+          "column": "delivery_fee",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "serviceFee",
+          "column": "service_fee",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "discountTotal",
+          "column": "discount_total",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "totalEstimated",
+          "column": "total_estimated",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "totalFinal",
+          "column": "total_final",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "customerComment",
+          "column": "customer_comment",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "serviceFeePercentSnapshot",
+          "column": "service_fee_percent_snapshot",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "fulfillmentOutcome",
+          "column": "fulfillment_outcome",
+          "type": "FulfillmentOutcome",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "financialVersion",
+          "column": "financial_version",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryClosedAt",
+          "column": "delivery_closed_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "legacyPaidAmount",
+          "column": "legacy_paid_amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "orderKind",
+          "column": "order_kind",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requiresPicking",
+          "column": "requires_picking",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "OrderItem",
+      "table": "order_items",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productId",
+          "column": "product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productNameSnapshot",
+          "column": "product_name_snapshot",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "productNameTjSnapshot",
+          "column": "product_name_tj_snapshot",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "unit",
+          "column": "unit",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requestedQuantity",
+          "column": "requested_quantity",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "saleUnitPriceSnapshot",
+          "column": "sale_unit_price_snapshot",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "estimatedTotal",
+          "column": "estimated_total",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "purchaseUnitPriceSnapshot",
+          "column": "purchase_unit_price_snapshot",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "qualityOptionId",
+          "column": "quality_option_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "qualityOptionLabelSnapshot",
+          "column": "quality_option_label_snapshot",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "finalQuantity",
+          "column": "final_quantity",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "finalUnitPrice",
+          "column": "final_unit_price",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "finalTotal",
+          "column": "final_total",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "OrderItemStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "replacementProductId",
+          "column": "replacement_product_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "pickerNote",
+          "column": "picker_note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "AppSetting",
+      "table": "app_settings",
+      "allowNonempty": true,
+      "primary": [
+        "key"
+      ],
+      "fields": [
+        {
+          "name": "key",
+          "column": "key",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "value",
+          "column": "value",
+          "type": "Json",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "table": "customers",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "phoneNormalized",
+          "column": "phone_normalized",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "userId",
+          "column": "user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "displayName",
+          "column": "display_name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "riskStatus",
+          "column": "risk_status",
+          "type": "CustomerRisk",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "codPolicy",
+          "column": "cod_policy",
+          "type": "CodPolicy",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "isActive",
+          "column": "is_active",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "confirmedCustomerFaultIncidents",
+          "column": "confirmed_customer_fault_incidents",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "unpaidIncidents",
+          "column": "unpaid_incidents",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "adminNote",
+          "column": "admin_note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "updatedAt",
+          "column": "updated_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "DeliveryIssue",
+      "table": "delivery_issues",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdByUserId",
+          "column": "created_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requestId",
+          "column": "request_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "type": "IssueReason",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "responsibility",
+          "column": "responsibility",
+          "type": "Responsibility",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "IssueStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "reviewStatus",
+          "column": "review_status",
+          "type": "ReviewStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "resolution",
+          "column": "resolution",
+          "type": "IssueResolution",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "note",
+          "column": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "reviewedAt",
+          "column": "reviewed_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "reviewedByUserId",
+          "column": "reviewed_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "reviewNote",
+          "column": "review_note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "customerVerification",
+          "column": "customer_verification",
+          "type": "CustomerVerification",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "applied",
+          "column": "applied",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "DeliveryIssueItem",
+      "table": "delivery_issue_items",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "issueId",
+          "column": "issue_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "orderItemId",
+          "column": "order_item_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "quantityAffected",
+          "column": "quantity_affected",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "DeliveryAttempt",
+      "table": "delivery_attempts",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "courierId",
+          "column": "courier_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "attemptedAt",
+          "column": "attempted_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "type": "IssueReason",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "note",
+          "column": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "nextAction",
+          "column": "next_action",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "proposedSlotId",
+          "column": "proposed_slot_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "requestId",
+          "column": "request_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "OrderFinancialAdjustment",
+      "table": "order_financial_adjustments",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryIssueId",
+          "column": "delivery_issue_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "type": "AdjustmentType",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "amount",
+          "column": "amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdByUserId",
+          "column": "created_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requestId",
+          "column": "request_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "PaymentIssue",
+      "table": "payment_issues",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "courierId",
+          "column": "courier_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryIssueId",
+          "column": "delivery_issue_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "expectedAmount",
+          "column": "expected_amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "collectedAmount",
+          "column": "collected_amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "variance",
+          "column": "variance",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CourierShift",
+      "table": "courier_shifts",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "courierId",
+          "column": "courier_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "openedAt",
+          "column": "opened_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "closedAt",
+          "column": "closed_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "type": "ShiftStatus",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "expectedCash",
+          "column": "expected_cash",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "declaredCash",
+          "column": "declared_cash",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "variance",
+          "column": "variance",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "note",
+          "column": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "reviewedByUserId",
+          "column": "reviewed_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "reviewedAt",
+          "column": "reviewed_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "reviewNote",
+          "column": "review_note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "CashTransaction",
+      "table": "cash_transactions",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "courierId",
+          "column": "courier_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "shiftId",
+          "column": "shift_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "type": "CashType",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "amount",
+          "column": "amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "expectedAmount",
+          "column": "expected_amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdByUserId",
+          "column": "created_by_user_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "note",
+          "column": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "requestId",
+          "column": "request_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    },
+    {
+      "name": "ReplacementDelivery",
+      "table": "replacement_deliveries",
+      "allowNonempty": false,
+      "primary": [
+        "id"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": true
+        },
+        {
+          "name": "originalOrderId",
+          "column": "original_order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "deliveryIssueId",
+          "column": "delivery_issue_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "fulfillmentOrderId",
+          "column": "fulfillment_order_id",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "prepaid",
+          "column": "prepaid",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        },
+        {
+          "name": "createdAt",
+          "column": "created_at",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "id": false
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "UserRole",
+      "values": [
+        {
+          "name": "customer",
+          "dbName": null
+        },
+        {
+          "name": "admin",
+          "dbName": null
+        },
+        {
+          "name": "picker",
+          "dbName": null
+        },
+        {
+          "name": "courier",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "UserStatus",
+      "values": [
+        {
+          "name": "active",
+          "dbName": null
+        },
+        {
+          "name": "inactive",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "StaffRole",
+      "values": [
+        {
+          "name": "admin",
+          "dbName": null
+        },
+        {
+          "name": "picker",
+          "dbName": null
+        },
+        {
+          "name": "courier",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "OrderStatus",
+      "values": [
+        {
+          "name": "pending_review",
+          "dbName": null
+        },
+        {
+          "name": "draft",
+          "dbName": null
+        },
+        {
+          "name": "placed",
+          "dbName": null
+        },
+        {
+          "name": "confirmed",
+          "dbName": null
+        },
+        {
+          "name": "picking",
+          "dbName": null
+        },
+        {
+          "name": "picked",
+          "dbName": null
+        },
+        {
+          "name": "out_for_delivery",
+          "dbName": null
+        },
+        {
+          "name": "delivered",
+          "dbName": null
+        },
+        {
+          "name": "cancelled",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "PaymentMethod",
+      "values": [
+        {
+          "name": "cash_on_delivery",
+          "dbName": null
+        },
+        {
+          "name": "manual_card_or_transfer",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "PaymentStatus",
+      "values": [
+        {
+          "name": "unpaid",
+          "dbName": null
+        },
+        {
+          "name": "partial",
+          "dbName": null
+        },
+        {
+          "name": "pending",
+          "dbName": null
+        },
+        {
+          "name": "paid",
+          "dbName": null
+        },
+        {
+          "name": "failed",
+          "dbName": null
+        },
+        {
+          "name": "refunded",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "SubstitutionPolicy",
+      "values": [
+        {
+          "name": "replace_similar",
+          "dbName": null
+        },
+        {
+          "name": "contact_me",
+          "dbName": null
+        },
+        {
+          "name": "remove_item",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "OrderItemStatus",
+      "values": [
+        {
+          "name": "requested",
+          "dbName": null
+        },
+        {
+          "name": "picked",
+          "dbName": null
+        },
+        {
+          "name": "replaced",
+          "dbName": null
+        },
+        {
+          "name": "removed",
+          "dbName": null
+        },
+        {
+          "name": "unavailable",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "CustomerRisk",
+      "values": [
+        {
+          "name": "normal",
+          "dbName": null
+        },
+        {
+          "name": "watch",
+          "dbName": null
+        },
+        {
+          "name": "restricted",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "CodPolicy",
+      "values": [
+        {
+          "name": "allowed",
+          "dbName": null
+        },
+        {
+          "name": "manual_review",
+          "dbName": null
+        },
+        {
+          "name": "blocked",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "IssueReason",
+      "values": [
+        {
+          "name": "quality_problem",
+          "dbName": null
+        },
+        {
+          "name": "damaged_item",
+          "dbName": null
+        },
+        {
+          "name": "wrong_item",
+          "dbName": null
+        },
+        {
+          "name": "missing_item_or_quantity",
+          "dbName": null
+        },
+        {
+          "name": "customer_changed_mind",
+          "dbName": null
+        },
+        {
+          "name": "customer_unreachable",
+          "dbName": null
+        },
+        {
+          "name": "customer_not_home",
+          "dbName": null
+        },
+        {
+          "name": "wrong_address",
+          "dbName": null
+        },
+        {
+          "name": "delivery_delay",
+          "dbName": null
+        },
+        {
+          "name": "payment_problem",
+          "dbName": null
+        },
+        {
+          "name": "price_dispute",
+          "dbName": null
+        },
+        {
+          "name": "other",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "Responsibility",
+      "values": [
+        {
+          "name": "service",
+          "dbName": null
+        },
+        {
+          "name": "customer",
+          "dbName": null
+        },
+        {
+          "name": "disputed",
+          "dbName": null
+        },
+        {
+          "name": "unknown",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "IssueStatus",
+      "values": [
+        {
+          "name": "open",
+          "dbName": null
+        },
+        {
+          "name": "awaiting_admin",
+          "dbName": null
+        },
+        {
+          "name": "resolved",
+          "dbName": null
+        },
+        {
+          "name": "rejected",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "ReviewStatus",
+      "values": [
+        {
+          "name": "pending",
+          "dbName": null
+        },
+        {
+          "name": "confirmed",
+          "dbName": null
+        },
+        {
+          "name": "rejected",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "CustomerVerification",
+      "values": [
+        {
+          "name": "not_checked",
+          "dbName": null
+        },
+        {
+          "name": "customer_confirmed",
+          "dbName": null
+        },
+        {
+          "name": "customer_disputed",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "IssueResolution",
+      "values": [
+        {
+          "name": "accept_rest_remove_items",
+          "dbName": null
+        },
+        {
+          "name": "full_refusal",
+          "dbName": null
+        },
+        {
+          "name": "replacement_later",
+          "dbName": null
+        },
+        {
+          "name": "payment_issue",
+          "dbName": null
+        },
+        {
+          "name": "escalate_to_admin",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "FulfillmentOutcome",
+      "values": [
+        {
+          "name": "full",
+          "dbName": null
+        },
+        {
+          "name": "partial",
+          "dbName": null
+        },
+        {
+          "name": "refused",
+          "dbName": null
+        },
+        {
+          "name": "replacement_pending",
+          "dbName": null
+        },
+        {
+          "name": "service_failure",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "AdjustmentType",
+      "values": [
+        {
+          "name": "goods_removed",
+          "dbName": null
+        },
+        {
+          "name": "service_fee_reduction",
+          "dbName": null
+        },
+        {
+          "name": "service_fee_waiver",
+          "dbName": null
+        },
+        {
+          "name": "delivery_fee_waiver",
+          "dbName": null
+        },
+        {
+          "name": "admin_compensation",
+          "dbName": null
+        },
+        {
+          "name": "correction",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "CashType",
+      "values": [
+        {
+          "name": "collection",
+          "dbName": null
+        },
+        {
+          "name": "cash_refund",
+          "dbName": null
+        },
+        {
+          "name": "correction",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    },
+    {
+      "name": "ShiftStatus",
+      "values": [
+        {
+          "name": "open",
+          "dbName": null
+        },
+        {
+          "name": "submitted",
+          "dbName": null
+        },
+        {
+          "name": "reconciled",
+          "dbName": null
+        },
+        {
+          "name": "discrepancy",
+          "dbName": null
+        }
+      ],
+      "dbName": null
+    }
+  ],
+  "digest": "dd76030164db2fef41b4a27a34eda5b47f25d7bbaade02e163f74abd809a1f89"
+}

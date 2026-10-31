@@ -22,6 +22,7 @@ RUN mkdir -p /out && pnpm --filter @dushanbe-fresh/api list --prod --depth Infin
 RUN node -e 'const fs=require("node:fs");function packages(rows){const out=new Set();function walk(node){for(const [name,item] of Object.entries({...node.dependencies,...node.optionalDependencies})){if(!name.startsWith("@dushanbe-fresh/"))out.add(name+"@"+item.version);walk(item)}}for(const row of rows)walk(row);return out}const trusted=packages(JSON.parse(fs.readFileSync("/out/trusted-dependencies.json")));for(const item of packages(JSON.parse(fs.readFileSync("/out/runtime-dependencies.json"))))if(!trusted.has(item))throw Error("Runtime dependency differs from frozen build: "+item);'
 # pnpm deploy does not retain Prisma's generated sibling directory.
 RUN node -e 'const fs=require("node:fs"),p=require("node:path");const client=require.resolve("@prisma/client/package.json",{paths:["/workspace/apps/api"]});const runtimeClient=require.resolve("@prisma/client/package.json",{paths:["/out/api"]});const generated=p.resolve(p.dirname(client),"../../.prisma/client");const target=p.resolve(p.dirname(runtimeClient),"../../.prisma/client");fs.rmSync(target,{recursive:true,force:true});fs.cpSync(generated,target,{recursive:true});'
+RUN node ops/tarena/collect-prisma-tool.cjs
 
 FROM ${NODE_IMAGE} AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
@@ -49,7 +50,8 @@ ENV HOSTNAME=127.0.0.1 PORT=3000
 CMD ["node", "apps/web/server.js"]
 
 # Migration tools are a separate, one-shot artifact, never the runtime API.
-FROM build AS migrator
-ENV NODE_ENV=production
-USER node
-ENTRYPOINT ["node", "apps/api/node_modules/prisma/build/index.js", "migrate", "deploy", "--schema", "apps/api/prisma/schema.prisma"]
+FROM base AS migrator
+WORKDIR /app
+COPY --from=build --chown=node:node /out/migrator/node_modules ./node_modules
+COPY --from=build --chown=node:node /workspace/apps/api/prisma ./prisma
+ENTRYPOINT ["node", "node_modules/prisma/build/index.js", "migrate", "deploy", "--schema", "prisma/schema.prisma"]

@@ -1,0 +1,91 @@
+name: df-production
+x-logs: &logs
+  driver: json-file
+  options: {max-size: 5m, max-file: "3"}
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    labels: {df.production: "4ac48e2"}
+    env_file: [/etc/dushanbe-fresh/postgres.env]
+    ports: [127.0.0.1:15440:5432]
+    command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, max_connections=20]
+    volumes: [production_db:/var/lib/postgresql/data]
+    networks: [private, hostlink]
+    mem_limit: 384m
+    pids_limit: 128
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U df_owner -d df_production]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    logging: *logs
+  migrate:
+    profiles: [tools]
+    image: df-tarena-migrator:4ac48e2
+    network_mode: host
+    env_file: [/etc/dushanbe-fresh/migrator.env]
+    mem_limit: 256m
+    pids_limit: 96
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logs
+  bootstrap:
+    profiles: [tools]
+    image: df-tarena-api-candidate:20261031
+    entrypoint: [node, /ops/bootstrap-production.cjs]
+    network_mode: host
+    env_file: [/etc/dushanbe-fresh/bootstrap.env]
+    volumes: [./ops:/ops:ro]
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    mem_limit: 192m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logs
+  api:
+    image: df-tarena-api-candidate:20261031
+    labels: {df.production: "4ac48e2"}
+    network_mode: host
+    depends_on: {postgres: {condition: service_healthy}}
+    env_file: [/etc/dushanbe-fresh/app.env]
+    volumes: [./images:/data/images]
+    init: true
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    mem_limit: 384m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/api/v1/health/ready',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 3
+    logging: *logs
+  web:
+    image: df-tarena-web-candidate:20261031
+    labels: {df.production: "4ac48e2"}
+    network_mode: host
+    depends_on: {api: {condition: service_healthy}}
+    env_file: [/etc/dushanbe-fresh/web.env]
+    init: true
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777", "/app/apps/web/.next/cache:size=32m,uid=1000,gid=1000,mode=0700"]
+    mem_limit: 512m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/v1/health/ready',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 3
+    logging: *logs
+networks:
+  private: {internal: true}
+  hostlink: {}
+volumes:
+  production_db:

@@ -7,6 +7,7 @@ const targets = {
   api: 'df-tarena-api-candidate:20261031', web: 'df-tarena-web-candidate:20261031',
   'api-hardened': 'df-tarena-api-candidate:20261031', 'web-hardened': 'df-tarena-web-candidate:20261031',
   'proxy-hardened': 'df-tarena-proxy-candidate:20261031',
+  'postgres-alpine': 'postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab',
   postgres: 'postgres:16-bookworm@sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938', proxy: 'caddy:2'
 };
 const root = '/private/tmp/df-offline-scan-20261031';

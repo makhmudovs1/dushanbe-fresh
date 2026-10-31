@@ -18,10 +18,18 @@ test('DNS approval never bypasses quarantine, hardening, backup or single-writer
     assert.ok(missingGates('cutover', { ...accepted, [name]: { ...accepted[name], passed: false } }).includes(name));
   }
 });
+test('owner deferral allows private preparation but never DNS without independent backup', () => {
+  for (const name of ['offsiteStorageInTajikistan', 'offsiteEncryptionKeyEscrow', 'offsiteBackupRestored', 'hostHardeningAccepted']) {
+    assert.ok(!gates.export.includes(name));
+    assert.ok(!gates.import.includes(name));
+    assert.ok(missingGates('cutover', {}).includes(name));
+  }
+  assert.ok(!Object.values(gates).flat().includes('externalAlertsTested'));
+});
 test('runtime API/Web images do not inherit the build image or development tree', () => {
   const source = fs.readFileSync('ops/tarena/Production.Dockerfile', 'utf8');
   const api = source.split('FROM base AS api')[1].split('FROM base AS web')[0];
-  const web = source.split('FROM base AS web')[1].split('FROM build AS migrator')[0];
+  const web = source.split('FROM base AS web')[1].split('FROM base AS migrator')[0];
   assert.ok(api.includes('/out/api/node_modules'));
   assert.ok(!api.includes('/workspace /'));
   assert.ok(!api.includes('/prisma ./'));

@@ -2,6 +2,8 @@ const { spawn } = require('node:child_process');
 const { pipeline } = require('node:stream/promises');
 const { createGzip } = require('node:zlib');
 const allowed = new Set(['df-tarena-backup-candidate:20261030', 'df-tarena-api-candidate:20261030', 'df-tarena-web-candidate:20261030', 'df-tarena-api-candidate:20261031', 'df-tarena-web-candidate:20261031', 'df-tarena-proxy-candidate:20261031']);
+allowed.add('df-tarena-migrator:4ac48e2');
+allowed.add('postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab');
 async function main() {
   const names = process.argv.slice(2);
   if (!names.length || names.length > 2 || names.some(name => !allowed.has(name))) throw Error('Explicit candidate image required');
