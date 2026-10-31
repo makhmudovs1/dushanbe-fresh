@@ -1,0 +1,35 @@
+{
+    admin off
+    auto_https ignore_loaded_certs
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+    log default {
+        format filter {
+            wrap json
+            fields {
+                request delete
+                resp_headers delete
+            }
+        }
+    }
+}
+http://dushanbefresh.tj, http://www.dushanbefresh.tj {
+    redir https://{host}{uri} permanent
+}
+https://dushanbefresh.tj, https://www.dushanbefresh.tj {
+    tls /tls/certificates/dushanbefresh.tj.crt /tls/certificates/dushanbefresh.tj.key
+    header Retry-After 300
+    header Cache-Control "no-store"
+    header X-Robots-Tag "noindex, nofollow"
+    respond "Migration in progress" 503
+}
+https://dushanbefresh.tj:8449, https://www.dushanbefresh.tj:8449 {
+    bind 127.0.0.1
+    tls /tls/certificates/dushanbefresh.tj.crt /tls/certificates/dushanbefresh.tj.key
+    header X-Robots-Tag "noindex, nofollow"
+    header X-Content-Type-Options nosniff
+    reverse_proxy 127.0.0.1:3000 {
+        header_up X-Forwarded-For {remote_host}
+        header_up -Forwarded
+        header_up -X-Real-IP
+    }
+}

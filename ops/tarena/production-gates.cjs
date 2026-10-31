@@ -3,12 +3,13 @@ const gates = {
   export: ['sourceEvidencePreserved', 'quarantineInTajikistan', 'exportWindowApproved'],
   import: ['trustedReleaseReviewed', 'isolatedQuarantineAccepted', 'schemaAndRowsReconciled', 'filesValidated', 'freshCredentialsInstalled'],
   cutover: ['offsiteStorageInTajikistan', 'offsiteEncryptionKeyEscrow', 'offsiteBackupRestored', 'hostHardeningAccepted',
-    'publicTlsAndRenewalTested', 'singleWriterFreezeVerified', 'finalDataReconciled',
-    'deviceAcceptanceOrOwnerWaiver', 'dnsChangeExplicitlyApproved']
+    'publicTlsReady', 'singleWriterFreezeVerified', 'finalDataReconciled',
+    'deviceAcceptanceOrOwnerWaiver', 'dnsChangeExplicitlyApproved'],
+  activation: ['publicDnsPointsOnlyToTarena', 'publicTlsAndRenewalTested', 'singleProductionDatabaseVerified']
 };
 function missingGates(phase, evidence) {
   if (!Object.hasOwn(gates, phase)) throw Error('Unknown migration phase');
-  const phases = ['export', 'import', 'cutover'];
+  const phases = ['export', 'import', 'cutover', 'activation'];
   return phases.slice(0, phases.indexOf(phase) + 1).flatMap(p => gates[p]).filter(name => {
     const item = evidence[name];
     return !item || item.passed !== true || typeof item.reference !== 'string' || !item.reference.trim() ||

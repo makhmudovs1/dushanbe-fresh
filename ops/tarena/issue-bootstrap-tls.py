@@ -11,6 +11,24 @@ ROOT=pathlib.Path('/srv/dushanbe-fresh/state')
 LEGO='goacme/lego@sha256:6f1583fc026a455ea46a7a5858c576105bb69c2e2de69db391cab7f14750350c'
 
 
+def certificate_receipt(acme, mode):
+    cert=acme/'certificates/dushanbefresh.tj.crt'
+    key=acme/'certificates/dushanbefresh.tj.key'
+    if any(path.is_symlink() or not path.is_file() for path in [cert,key]):
+        raise ValueError('Expected fresh regular certificate files')
+    info=ssl._ssl._test_decode_cert(str(cert))
+    names={value for kind,value in info['subjectAltName'] if kind=='DNS'}
+    if names != {'dushanbefresh.tj','www.dushanbefresh.tj'} or ssl.cert_time_to_seconds(info['notAfter'])<=time.time()+2*86400:
+        raise ValueError('Wrong certificate or validity')
+    context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(str(cert),str(key))
+    os.chmod(cert,0o640);os.chmod(key,0o640)
+    receipt={'freshCertificateIssued':True,'mode':mode,'domains':sorted(names),'notAfter':info['notAfter'],
+             'privateKeysStayedOnTarena':True,'dnsChanged':False}
+    (acme/'receipt.json').write_text(json.dumps(receipt))
+    return receipt
+
+
 def main():
     os.umask(0o077)
     mode=sys.argv[1]
@@ -30,19 +48,7 @@ def main():
         reason=next((name for name in ['email','authorization','connection refused','timeout','rate limit','webroot'] if name in result.stderr.lower()),'details withheld')
         print(json.dumps({'acmeFailed':True,'mode':mode,'reason':reason,'privateKeysPrinted':False}),file=sys.stderr)
         raise ValueError('ACME failed')
-    cert=acme/'certificates/dushanbefresh.tj.crt'
-    key=acme/'certificates/dushanbefresh.tj.key'
-    info=ssl._ssl._test_decode_cert(str(cert))
-    names={value for kind,value in info['subjectAltName'] if kind=='DNS'}
-    if not {'dushanbefresh.tj','www.dushanbefresh.tj'}<=names or ssl.cert_time_to_seconds(info['notAfter'])<=time.time()+2*86400:
-        raise ValueError('Wrong certificate or validity')
-    context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain(str(cert),str(key))
-    os.chmod(cert,0o640);os.chmod(key,0o640)
-    receipt={'freshCertificateIssued':True,'mode':mode,'domains':sorted(names),'notAfter':info['notAfter'],
-             'privateKeysStayedOnTarena':True,'dnsChanged':False}
-    (acme/'receipt.json').write_text(json.dumps(receipt))
-    print(json.dumps(receipt))
+    print(json.dumps(certificate_receipt(acme, mode)))
 
 
 if __name__=='__main__':

@@ -26,6 +26,14 @@ test('owner deferral allows private preparation but never DNS without independen
   }
   assert.ok(!Object.values(gates).flat().includes('externalAlertsTested'));
 });
+test('HTTP-01 activation is gated after DNS, while trusted bootstrap HTTPS is required before cutover', () => {
+  assert.ok(gates.cutover.includes('publicTlsReady'));
+  assert.ok(!gates.cutover.includes('publicTlsAndRenewalTested'));
+  for (const gate of ['publicDnsPointsOnlyToTarena','publicTlsAndRenewalTested','singleProductionDatabaseVerified']) {
+    assert.ok(missingGates('activation',{}).includes(gate));
+  }
+  assert.ok(missingGates('activation',{}).includes('offsiteBackupRestored'));
+});
 test('runtime API/Web images do not inherit the build image or development tree', () => {
   const source = fs.readFileSync('ops/tarena/Production.Dockerfile', 'utf8');
   const api = source.split('FROM base AS api')[1].split('FROM base AS web')[0];
