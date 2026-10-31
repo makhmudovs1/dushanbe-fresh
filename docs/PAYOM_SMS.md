@@ -2,12 +2,15 @@
 
 ## Current Production: TARENA
 
-Production is now77.95.0.94, not Almaty. Old services are stopped and old
-secrets were not copied. Payom health works from the new backend; SMS remains
-off, and the new ENV still needs token/template/confirmed variable mapping.
-See [PAYOM_TARENA_ACTIVATION.md](PAYOM_TARENA_ACTIVATION.md) for the current
-whitelist, secure ENV edit and one-send pilot. Older dates/commands below are
-historical and must not be executed against the old SSH alias.
+Production is now 77.95.0.94, not Almaty. Old services are stopped and old
+secrets were not copied. On October 31, two authorized real SMS requests
+confirmed the literal key `code-1`; the owner completed Web login, saved a name
+and confirmed session/cart persistence after reload. Credentials and template
+UUID are in private ENV. A one-recipient pilot API is active; mass SMS login
+and mandatory checkout auth remain off. The third authorized send is unused.
+See [PAYOM_PILOT_20261031.md](PAYOM_PILOT_20261031.md) for evidence and the
+temporary port 4012 routing. Earlier sections below are historical; never run
+their old-host commands or interpret their missing-token status as current.
 
 ## Code Released, SMS Still Off
 
@@ -111,11 +114,12 @@ characters, braces, prototype-related names and names over 128 characters are
 rejected locally before any request. The latter checks are local configuration
 safety rules, not a claimed restriction in Payom's schema.
 
-If Payom confirms the API key is `code-1`, configure
-`CUSTOMER_SMS_CODE_VARIABLE=code-1` and the body contains
-`"variables": {"code-1": "123456"}`. If they confirm `code`, configure `code`
-instead. These examples are conditional, not confirmed mappings. Braces belong
-to the editor placeholder, not to this configuration.
+For our approved template, the October 31 real pilot confirmed
+`CUSTOMER_SMS_CODE_VARIABLE=code-1`; the body is
+`"variables": {"code-1": "<generated six-digit string>"}`. Braces belong
+to the editor placeholder, not this configuration. Do not generalize the
+mapping to a different template without confirmation. The older preparation
+and unsent support question below describe the earlier uncertainty.
 
 Question to forward to Payom (not sent by the agent):
 

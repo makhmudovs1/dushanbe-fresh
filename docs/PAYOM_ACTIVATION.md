@@ -3,11 +3,13 @@
 ## Current Production: TARENA
 
 **Do not run the historical Almaty commands below.** Production moved to
-77.95.0.94 on2026-10-31; old Web/API/PostgreSQL are stopped. Fresh OTP secret
-exists on TARENA, SMS remains off. The owner has a token, active DFRESH and an
-approved template, but credentials/template configuration
-are not yet in the new ENV. Use the current instructions:
-[PAYOM_TARENA_ACTIVATION.md](PAYOM_TARENA_ACTIVATION.md).
+77.95.0.94 on 2026-10-31; old Web/API/PostgreSQL are stopped. Fresh OTP secret,
+token and approved template are configured privately. Two authorized real SMS
+confirmed `CUSTOMER_SMS_CODE_VARIABLE=code-1` and successful Web login;
+the owner confirmed profile/cart persistence after reload. A one-recipient
+pilot runs on port 4012; mass SMS and mandatory checkout auth remain off.
+Use [PAYOM_PILOT_20261031.md](PAYOM_PILOT_20261031.md) for current evidence,
+routing and remaining rollout steps. Everything below is historical preparation.
 
 ## Deployment Update
 
