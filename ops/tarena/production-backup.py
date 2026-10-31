@@ -42,6 +42,12 @@ def validate(config):
     if mode == 'synthetic-local':
         if repository != '/repository' or config.get('database') != 'df_tarena_test' or config.get('user') != 'rehearsal_backup':
             raise ValueError('Synthetic scope required')
+    elif mode == 'production-local':
+        if (repository != '/repository' or config.get('database') != 'df_production'
+                or config.get('user') != 'df_backup' or config.get('host') != '127.0.0.1'
+                or config.get('port') != 15440 or config.get('allowLocalOnly') is not True
+                or config.get('allowPrune') is not False):
+            raise ValueError('Explicit local-only production scope without pruning required')
     elif mode == 'production':
         if config.get('regionConfirmed') != 'TJ' or config.get('independentDestinationApproved') is not True:
             raise ValueError('Independent Tajikistan destination approval required')
@@ -54,11 +60,18 @@ def validate(config):
     return config
 
 
+def credential_file(path, allow_service_group=False):
+    info = pathlib.Path(path).lstat()
+    private = info.st_mode & 0o077 == 0
+    service_group = (allow_service_group and stat.S_IMODE(info.st_mode) == 0o640
+                     and info.st_uid == 0 and info.st_gid == os.getegid())
+    if not stat.S_ISREG(info.st_mode) or not (private or service_group):
+        raise ValueError('Private regular credential files required')
+
+
 def environment(config):
-    for path in ['/run/secrets/backup.pgpass', '/run/secrets/restic-password']:
-        info = pathlib.Path(path).lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077:
-            raise ValueError('Private regular credential files required')
+    credential_file('/run/secrets/backup.pgpass')
+    credential_file('/run/secrets/restic-password', allow_service_group=True)
     # Do not inherit app secrets, PGOPTIONS, TLS overrides or restic password commands.
     env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': '/work', 'LANG': 'C.UTF-8',
            'PGHOST': config.get('host', 'postgres'), 'PGPORT': str(config.get('port', 5432)),
@@ -116,6 +129,17 @@ def dump_child():
     args += ['--exclude-table-data=' + table for table in SESSION_TABLES]
     command([*args, '-f', str(work / 'database.dump')], env)
     (work / 'data.sha256').write_text(fingerprint(env, snapshot))
+    # Read photo references from the very same transaction snapshot as the dump.
+    sql = """BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+SET TRANSACTION SNAPSHOT :'snapshot';
+SELECT COALESCE(json_agg(url ORDER BY url), '[]'::json) FROM (
+  SELECT image_url AS url FROM products UNION SELECT image_url FROM categories
+  UNION SELECT icon_url FROM categories UNION SELECT url FROM product_images
+) AS media WHERE url LIKE '%/api/v1/media/%';
+COMMIT;
+"""
+    references = command(['psql', '-XqAt', '-v', 'ON_ERROR_STOP=1', '-v', 'snapshot=' + snapshot], env, input=sql)
+    (work / 'photos.json').write_text(json.dumps(photo_names(json.loads(references))))
     (work / '.complete').touch()
 
 
@@ -125,6 +149,33 @@ def sha(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b''):
             value.update(chunk)
     return value.hexdigest()
+
+
+def photo_names(urls):
+    names = set()
+    for url in urls:
+        match = re.fullmatch(r'(?:https://[^/]+)?/api/v1/media/([A-Za-z0-9_-]+\.webp)', url)
+        if not match:
+            raise ValueError('Unexpected referenced upload URL')
+        names.add(match[1])
+    return sorted(names)
+
+
+def copy_photos(names, source_root, destination):
+    for name in names:
+        if not re.fullmatch(r'[A-Za-z0-9_-]+\.webp', name):
+            raise ValueError('Unexpected photo name')
+        source = source_root / name
+        info = source.lstat()
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError('Referenced photo is missing or unsafe')
+        before = sha(source)
+        shutil.copyfile(source, destination / name)
+        after = source.lstat()
+        stable = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode')
+        if (sha(destination / name) != before or any(getattr(after, field) != getattr(info, field) for field in stable)
+                or sha(source) != before):
+            raise ValueError('Referenced photo changed during backup')
 
 
 def notify(event):
@@ -164,13 +215,11 @@ def once(config, env):
             raise ValueError('Dump or fingerprint failed')
         images = work / 'images'
         images.mkdir()
-        for source in pathlib.Path('/images').iterdir():
-            if source.is_symlink() or not source.is_file() or not re.fullmatch(r'[A-Za-z0-9_-]+\.webp', source.name):
-                raise ValueError('Unexpected upload; refusing incomplete backup')
-            shutil.copyfile(source, images / source.name)
+        copy_photos(json.loads((work / 'photos.json').read_text()), pathlib.Path('/images'), images)
         manifest = {str(file.relative_to(work)): sha(file) for file in sorted(work.rglob('*')) if file.is_file() and file.name != '.complete'}
         (work / 'manifest.json').write_text(json.dumps(manifest, sort_keys=True))
-        restic(['backup', '--quiet', '--host', 'df-clean', '--tag', 'dushanbe-fresh', str(work)], env)
+        restic(['backup', '--quiet', '--read-concurrency', '1', '--pack-size', '4',
+                '--host', 'df-clean', '--tag', 'dushanbe-fresh', str(work)], env)
         snapshot = latest_snapshot(env)
         if snapshot['paths'] != [str(work)]:
             raise ValueError('Snapshot acknowledgement mismatch')
