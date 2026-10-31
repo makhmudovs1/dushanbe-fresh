@@ -34,6 +34,16 @@ test('HTTP-01 activation is gated after DNS, while trusted bootstrap HTTPS is re
   }
   assert.ok(missingGates('activation',{}).includes('offsiteBackupRestored'));
 });
+test('explicit temporary owner risk acceptance waives only offsite, never freeze, TLS or reconciliation', () => {
+  const record = { passed: true, reference: 'owner instruction 2026-10-31', approvedBy: 'owner', checkedAtUTC: '2026-10-31T16:00:00Z' };
+  const evidence = { ownerAcceptedNoIndependentBackup: { ...record, scope: 'current-cutover-with-local-backups-only',
+    noIndependentCopy: true, noAlmatyFallback: true }, localEncryptedRestoreVerified: record };
+  const missing = missingGates('cutover', evidence);
+  assert.ok(!missing.includes('offsiteBackupRestored'));
+  for (const name of ['singleWriterFreezeVerified', 'finalDataReconciled', 'hostHardeningAccepted', 'publicTlsReady']) assert.ok(missing.includes(name));
+  assert.ok(missingGates('cutover', { ...evidence, localEncryptedRestoreVerified: undefined }).includes('offsiteBackupRestored'));
+  assert.ok(missingGates('cutover', { ...evidence, ownerAcceptedNoIndependentBackup: { ...evidence.ownerAcceptedNoIndependentBackup, noIndependentCopy: false } }).includes('offsiteBackupRestored'));
+});
 test('runtime API/Web images do not inherit the build image or development tree', () => {
   const source = fs.readFileSync('ops/tarena/Production.Dockerfile', 'utf8');
   const api = source.split('FROM base AS api')[1].split('FROM base AS web')[0];

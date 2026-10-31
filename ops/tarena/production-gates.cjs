@@ -7,13 +7,20 @@ const gates = {
     'deviceAcceptanceOrOwnerWaiver', 'dnsChangeExplicitlyApproved'],
   activation: ['publicDnsPointsOnlyToTarena', 'publicTlsAndRenewalTested', 'singleProductionDatabaseVerified']
 };
+function accepted(item) {
+  return !!item && item.passed === true && typeof item.reference === 'string' && !!item.reference.trim() &&
+    typeof item.approvedBy === 'string' && !!item.approvedBy.trim() && Number.isFinite(Date.parse(item.checkedAtUTC));
+}
+const offsiteGates = new Set(['offsiteStorageInTajikistan', 'offsiteEncryptionKeyEscrow', 'offsiteBackupRestored']);
 function missingGates(phase, evidence) {
   if (!Object.hasOwn(gates, phase)) throw Error('Unknown migration phase');
+  const waiver = evidence.ownerAcceptedNoIndependentBackup;
+  const temporaryOffsiteWaiver = accepted(waiver) && waiver.scope === 'current-cutover-with-local-backups-only' &&
+    waiver.noIndependentCopy === true && waiver.noAlmatyFallback === true && accepted(evidence.localEncryptedRestoreVerified);
   const phases = ['export', 'import', 'cutover', 'activation'];
   return phases.slice(0, phases.indexOf(phase) + 1).flatMap(p => gates[p]).filter(name => {
-    const item = evidence[name];
-    return !item || item.passed !== true || typeof item.reference !== 'string' || !item.reference.trim() ||
-      typeof item.approvedBy !== 'string' || !item.approvedBy.trim() || !Number.isFinite(Date.parse(item.checkedAtUTC));
+    if (offsiteGates.has(name) && temporaryOffsiteWaiver) return false;
+    return !accepted(evidence[name]);
   });
 }
 module.exports = { gates, missingGates };

@@ -1,5 +1,14 @@
 # Payom: Safe Activation And Owner Actions
 
+## Current Production: TARENA
+
+**Do not run the historical Almaty commands below.** Production moved to
+77.95.0.94 on2026-10-31; old Web/API/PostgreSQL are stopped. Fresh OTP secret
+exists on TARENA, SMS remains off. The owner has a token, active DFRESH and an
+approved template, but credentials/template configuration
+are not yet in the new ENV. Use the current instructions:
+[PAYOM_TARENA_ACTIVATION.md](PAYOM_TARENA_ACTIVATION.md).
+
 ## Deployment Update
 
 The owner subsequently approved a code-only release. Runtime `20341b0` is now

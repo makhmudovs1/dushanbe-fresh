@@ -1,5 +1,12 @@
 # Ежедневные Резервные Копии TARENA
 
+**Уточнение после cutover31октября:** владелец разрешил текущий запуск без
+независимого backup, осознанно приняв риск. Последний local encrypted snapshot
+`f2609f18e7bd708eff5699d1e24f2cd4c379bd4d0387799f2c1c6138e69bb4fb`
+фактически восстановлен и проверен перед DNS. Подробности:
+[MIGRATION_COMPLETED_20261031.md](MIGRATION_COMPLETED_20261031.md).
+Ниже описан прежний strict-offsite gate; он временно waived, не выполнен.
+
 ## Границы
 
 Репозиторий: `/srv/dushanbe-fresh/backups/local-repository` на TARENA.

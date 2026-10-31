@@ -1,5 +1,14 @@
 # Payom SMS Connection
 
+## Current Production: TARENA
+
+Production is now77.95.0.94, not Almaty. Old services are stopped and old
+secrets were not copied. Payom health works from the new backend; SMS remains
+off, and the new ENV still needs token/template/confirmed variable mapping.
+See [PAYOM_TARENA_ACTIVATION.md](PAYOM_TARENA_ACTIVATION.md) for the current
+whitelist, secure ENV edit and one-send pilot. Older dates/commands below are
+historical and must not be executed against the old SSH alias.
+
 ## Code Released, SMS Still Off
 
 The owner-approved preparation runtime `20341b0` was deployed on 2026-10-29.
