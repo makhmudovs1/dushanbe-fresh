@@ -18,6 +18,7 @@ async function main() {
         return new URL(request.url()).origin === origin ? route.continue() : route.abort();
       });
       const page = await context.newPage();
+      page.setDefaultNavigationTimeout(60000);
       stage = engine + '-login';
       const response = await page.goto(origin + '/account', { waitUntil: 'domcontentloaded' });
       if (response.status() !== 200 || !await response.securityDetails()) throw Error('HTTPS account unavailable');
@@ -34,25 +35,37 @@ async function main() {
       await page.goto(origin + '/catalog', { waitUntil: 'domcontentloaded' });
       const product = page.locator('.product-card:visible').first();
       await expect(product).toBeVisible();
-      await expect.poll(() => product.locator('img').first().evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+      await expect.poll(() => product.locator('img').first().evaluate(img => img.complete && img.naturalWidth > 0), { timeout: 30000 }).toBe(true);
+      stage = engine + '-add-product';
       await product.locator('.product-card__action').click();
+      stage = engine + '-address-invitation';
       const invitation = page.locator('.address-invitation');
       await expect(invitation).toBeVisible();
       await invitation.locator('.secondary-link').click();
+      stage = engine + '-guest-cart';
       await page.goto(origin + '/cart', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('.cart-item')).toHaveCount(1);
+      stage = engine + '-guest-cart-reload';
       await page.reload({ waitUntil: 'domcontentloaded' });
       await expect(page.locator('.cart-item')).toHaveCount(1);
       await expect(page.locator('.empty-cart')).toHaveCount(0);
+      await expect.poll(() => page.locator('.cart-item img').first().evaluate(img => img.complete && img.naturalWidth > 0), { timeout: 30000 }).toBe(true);
       await page.screenshot({ path: path.join(output, engine + '-cart.png') });
       stage = engine + '-checkout';
       await page.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-      await expect(page.getByRole('heading', { name: 'Контактные данные', exact: true })).toBeVisible();
+      await page.waitForURL(origin + '/checkout', { timeout: 30000 });
+      stage = engine + '-checkout-contact';
+      await expect(page.getByRole('heading', { name: 'Контактные данные', exact: true })).toBeVisible({ timeout: 30000 });
       await expect(page.locator('.customer-login')).toHaveCount(0);
-      const native = await page.request.get(origin + '/api/v1/mobile/auth/status');
-      const auth = await native.json();
-      if (native.status() !== 200 || !auth.enabled || auth.requiredForCheckout) throw Error('Native auth/guest policy changed');
-      const staff = await page.request.get(origin + '/admin/login');
+      stage = engine + '-native-status';
+      const status = await page.evaluate(async () => {
+        const response = await fetch('/api/v1/mobile/auth/status', { signal: AbortSignal.timeout(30000) });
+        const auth = await response.json();
+        return { status: response.status, enabled: auth.enabled, requiredForCheckout: auth.requiredForCheckout };
+      });
+      if (status.status !== 200 || !status.enabled || status.requiredForCheckout) throw Error('Native auth/guest policy changed');
+      stage = engine + '-staff-entry';
+      const staff = await page.goto(origin + '/admin/login', { waitUntil: 'domcontentloaded' });
       if (staff.status() !== 200) throw Error('Staff entry unavailable');
       results.push({ engine, width, https: true, brandedLoginAndBlackButton: true, photoRendered: true,
         guestCartReload: true, optionalCheckout: true, nativeStatus200: true, staffLogin200: true,
@@ -64,4 +77,4 @@ async function main() {
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
 }
-main().catch(() => { console.error(JSON.stringify({ productionBrowserSmokeFailed: true, stage, privateDetailsWithheld: true })); process.exitCode = 1; });
+main().catch(error => { console.error(JSON.stringify({ productionBrowserSmokeFailed: true, stage, errorType: error.name, privateDetailsWithheld: true })); process.exitCode = 1; });
