@@ -135,7 +135,8 @@ export async function getLastAdminPricingBatch(): Promise<BulkPricingBatch | nul
     const data = await response.json().catch(() => null);
     throw new Error(errorMessage(data?.message));
   }
-  return response.json() as Promise<BulkPricingBatch | null>;
+  const body = await response.text();
+  return body.trim() ? JSON.parse(body) as BulkPricingBatch | null : null;
 }
 
 export function updateAdminCategory(id: string, payload: Record<string, unknown>) {

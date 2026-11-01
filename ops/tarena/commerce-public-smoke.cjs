@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit, expect } = require(require.resolve('@playwright/test', { paths: [path.resolve('apps/web')] }));
 const origin = 'https://dushanbefresh.tj';
-const output = path.resolve('apps/web/test-results/commerce-production-20261101');
+const output = path.resolve('test-results/commerce-production-20261101');
 let stage = 'start';
 async function main() {
   fs.mkdirSync(output, { recursive: true });
@@ -39,6 +39,18 @@ async function main() {
         return (await response.json()).length;
       });
       if (slots) await expect(page.locator('.minimum-order progress')).toBeVisible({ timeout: 30000 });
+      let stableProgressAfterRapidChanges = false;
+      if (slots) {
+        const progress = await page.locator('.minimum-order progress').elementHandle();
+        const increase = page.locator('.cart-item').first().getByRole('button', { name: /^Увеличить количество:/ });
+        const decrease = page.locator('.cart-item').first().getByRole('button', { name: /^Уменьшить количество:/ });
+        for (let i = 0; i < 3; i++) await increase.click();
+        await decrease.click();
+        if (!await progress.evaluate(element => element.isConnected)) throw Error('Minimum progress was remounted');
+        await expect(page.locator('.cart-summary')).toHaveAttribute('aria-busy', 'false');
+        await expect(page.locator('.minimum-order progress')).toBeVisible();
+        stableProgressAfterRapidChanges = await progress.evaluate(element => element.isConnected);
+      }
       await expect.poll(() => page.locator('.cart-item img').first().evaluate(img => img.complete && img.naturalWidth > 0), { timeout: 30000 }).toBe(true);
       await page.screenshot({ path: path.join(output, engine + '-cart.png'), animations: 'disabled' });
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -54,7 +66,7 @@ async function main() {
       await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, 0); });
       await page.screenshot({ path: path.join(output, engine + '-checkout.png'), animations: 'disabled' });
       results.push({ engine, width, cartAndCheckoutPassed: true, serverMinimumPreview: slots > 0, guestCartReload: true,
-        actualOrderCreated: false, actualSmsSent: false, blockedWrites, authenticatedHistoryTested: false });
+        stableProgressAfterRapidChanges, actualOrderCreated: false, actualSmsSent: false, blockedWrites, authenticatedHistoryTested: false });
       await context.close();
     } finally { await browser.close(); }
   }

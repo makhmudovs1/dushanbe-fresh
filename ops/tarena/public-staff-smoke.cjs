@@ -3,6 +3,8 @@ const base = 'https://dushanbefresh.tj/api/v1';
 const origin = 'https://dushanbefresh.tj';
 let stage = 'fresh-staff-login';
 let lastHttpStatus;
+let emptyHistoryStatus;
+let emptyHistoryBodyBytes;
 async function main() {
   const [credential] = JSON.parse(fs.readFileSync('/prepared/staff-access.json'));
   let cookie = '';
@@ -13,7 +15,7 @@ async function main() {
         ...(cookie ? { Cookie: cookie } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
     lastHttpStatus = response.status;
-    if (response.status !== expected) throw Error('Public staff API did not accept request');
+    if (expected === null ? ![200, 204].includes(response.status) : response.status !== expected) throw Error('Public staff API did not accept request');
     return response;
   }
   try {
@@ -35,8 +37,10 @@ async function main() {
       stage = 'legacy-product-pricing-metadata';
       if (!products.length || products.some(product => product.priceMode !== 'manual' || product.markupPercent !== null || product.appliedMarkupPercent !== null)) throw Error('Legacy pricing changed');
       stage = 'last-pricing-operation';
-      const previous = await request('/admin/pricing/bulk/last', 'GET', undefined, 204);
-      if (await previous.text() !== '') throw Error('Unexpected live repricing');
+      const previous = await request('/admin/pricing/bulk/last', 'GET', undefined, null);
+      const previousBody = await previous.text();
+      emptyHistoryStatus = previous.status; emptyHistoryBodyBytes = previousBody.length;
+      if (!['', 'null'].includes(previousBody.trim())) throw Error('Unexpected live repricing');
       pricingReadVerified = true;
     }
     stage = 'public-refresh';
@@ -52,7 +56,7 @@ async function main() {
     if (native.status !== 400) throw Error('Native guest validation contract changed');
     const result = { publicStaffLogin: true, secureCookie: true, protectedAdminProductsOrdersWaves: true,
       publicRefreshAndRotation: true, nativeGuestValidation400: true, customerOrdersCreated: 0, smsSent: false,
-      checkedAtUTC: new Date().toISOString(), pricingReadVerified };
+      checkedAtUTC: new Date().toISOString(), pricingReadVerified, emptyHistoryStatus, emptyHistoryBodyBytes };
     fs.writeFileSync('/result/staff.json', JSON.stringify(result), { flag: 'wx', mode: 0o600 });
     console.log(JSON.stringify(result));
   } finally {

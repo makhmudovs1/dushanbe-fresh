@@ -10,6 +10,12 @@ describe("admin pricing API contract", () => {
     vi.mocked(staffFetch).mockResolvedValue(new Response(null, { status: 204 }));
     await expect(getLastAdminPricingBatch()).resolves.toBeNull();
   });
+  it("accepts an empty HTTP 200 and JSON null history without a parse error", async () => {
+    for (const body of ["", "null"]) {
+      vi.mocked(staffFetch).mockResolvedValue(new Response(body, { status: 200 }));
+      await expect(getLastAdminPricingBatch()).resolves.toBeNull();
+    }
+  });
   it("uses Ampere's single pricing settings API and authenticated client", async () => {
     vi.mocked(staffFetch).mockResolvedValue({ ok: true, json: async () => ({ defaultMarkupPercent: "10.00" }) } as Response);
     await getAdminPricingSettings();
@@ -28,7 +34,8 @@ describe("admin pricing API contract", () => {
     expect(staffFetch).toHaveBeenLastCalledWith("/api/v1/admin/pricing/bulk/apply", expect.objectContaining({ body: '{"previewId":"preview","requestId":"apply-id"}' }));
     await undoAdminPricing({ batchId: "batch", requestId: "undo-id" });
     expect(staffFetch).toHaveBeenLastCalledWith("/api/v1/admin/pricing/bulk/undo", expect.objectContaining({ body: '{"batchId":"batch","requestId":"undo-id"}' }));
-    await getLastAdminPricingBatch();
+    vi.mocked(staffFetch).mockResolvedValue(new Response('{"batchId":"batch"}'));
+    await expect(getLastAdminPricingBatch()).resolves.toMatchObject({ batchId: "batch" });
     expect(staffFetch).toHaveBeenLastCalledWith("/api/v1/admin/pricing/bulk/last", expect.any(Object));
   });
   it("surfaces server conflicts without a client-side fallback write", async () => {
