@@ -30,8 +30,10 @@ describe("customer experience surfaces", () => {
   });
   it("does not ask an unverified visitor for a name or reveal whether the phone exists", () => {
     const html = renderToStaticMarkup(<CustomerLogin onClose={() => {}} onSuccess={() => {}} />);
-    expect(html).toContain('value="+992"');
-    expect(html).toContain("Получить код");
+    expect(html).toContain(">+992<");
+    expect(html).toContain("Введите номер телефона");
+    expect(html).toContain("Продолжить");
+    expect(html).toContain('autoComplete="tel-national"');
     expect(html).not.toContain('autoComplete="name"');
     expect(html).not.toContain("Код отправлен");
   });

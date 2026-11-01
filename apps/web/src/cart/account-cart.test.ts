@@ -4,7 +4,7 @@ import { CustomerError } from "@/lib/customer";
 import type { Product } from "@/lib/api";
 import {
   AccountCartSync, accountCartStorageKey, CartRequest, CartSnapshot, CartSyncView,
-  findLegacyCartConflicts, loadGuestCart, mergeCartItemsMax, reconcileCartItems
+  findLegacyCartConflicts, loadGuestCart, mergeCartItemsMax, readGuestCart, reconcileCartItems
 } from "./account-cart";
 import { CART_STORAGE_KEY, CartItem, getCartItemKey, loadCart, saveCart } from "./cart";
 
@@ -101,6 +101,18 @@ beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { sessions.splice(0).forEach(session => session.dispose()); vi.useRealTimers(); });
 
 describe("account cart pure reconciliation", () => {
+  it("distinguishes a confirmed empty guest cart from unavailable or corrupt storage without overwriting it", () => {
+    const storage = new MemoryStorage();
+    expect(readGuestCart(storage)).toMatchObject({ state: { items: [] }, error: "", unavailable: false });
+    expect(readGuestCart(undefined)).toMatchObject({ unavailable: true });
+    expect(readGuestCart(undefined).error).not.toBe("");
+    for (const raw of ["not-json", '{"items":[{}]}', '[]', 'null']) {
+      storage.setItem(CART_STORAGE_KEY, raw);
+      expect(readGuestCart(storage)).toMatchObject({ unavailable: false });
+      expect(readGuestCart(storage).error).not.toBe("");
+      expect(storage.getItem(CART_STORAGE_KEY)).toBe(raw);
+    }
+  });
   it("merges ordinary quantities by MAX, retaining saved metadata and immutable legacy keys", () => {
     const saved = [item("2"), item("1", "tomatoes", "ripe"), item("0.75", "tomatoes", "firm")];
     const incoming = [
@@ -560,6 +572,37 @@ describe("verified-owner cart sync", () => {
     expect(api.current().items).toEqual([item("1.5")]);
     expect(h.uuid).toHaveBeenCalledTimes(1);
     expect(storage.getItem(CART_STORAGE_KEY)).toBeNull();
+  });
+
+  it("keeps known nonempty items visible during explicit retry", async () => {
+    const storage = new MemoryStorage();
+    saveCart(storage, { items: [item("2")] });
+    const api = server();
+    api.request.mockRejectedValueOnce(new Error("Offline"));
+    const h = harness(api.request as CartRequest, storage);
+    await h.session.start();
+    const delayed = deferred<CartSnapshot>();
+    api.request.mockImplementationOnce(() => delayed.promise);
+    const retry = h.session.start(true);
+    expect(h.view()).toMatchObject({ hydrated: true, syncing: true, state: { items: [item("2")] } });
+    delayed.resolve(api.current());
+    await retry;
+    expect(h.view().state.items).toEqual([item("2")]);
+  });
+
+  it("does not call an unresolved empty retry hydrated after a failed initial read", async () => {
+    const api = server();
+    api.request.mockRejectedValueOnce(new Error("Offline"));
+    const h = harness(api.request as CartRequest);
+    await h.session.start();
+    expect(h.view().syncError).not.toBe("");
+    const delayed = deferred<CartSnapshot>();
+    api.request.mockImplementationOnce(() => delayed.promise);
+    const retry = h.session.start(true);
+    expect(h.view()).toMatchObject({ hydrated: false, syncing: true });
+    delayed.resolve(api.current());
+    await retry;
+    expect(h.view()).toMatchObject({ hydrated: true, syncError: "", state: { items: [] } });
   });
 
   it("preserves legacy lines and refreshes ordinary rules without normalization or repricing", async () => {

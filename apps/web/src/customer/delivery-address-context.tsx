@@ -32,7 +32,7 @@ export function useDeliveryAddress() { return useContext(Context); }
 
 export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
   const customer = useCustomer();
-  const owner = customer.loading ? "pending" : customer.user?.id ?? "guest";
+  const owner = customer.loading || customer.resolved === false ? "pending" : customer.user?.id ?? "guest";
   const [state, setState] = useState<{ owner: string; selection: Selection | null; addresses: SavedAddress[]; status: SavedStatus }>({ owner: "pending", selection: null, addresses: [], status: "loading" });
   const previousState = useRef(state); previousState.current = state;
   const [modal, setModal] = useState<{ owner: string; initial: AddressInput; editingId?: string; startWithNew?: boolean } | null>(null);
@@ -170,10 +170,11 @@ export function DeliveryAddressTrigger({ className = "", eyebrow = "Душанб
   const delivery = useDeliveryAddress();
   const { t } = useI18n();
   if (!delivery) return null;
-  const label = delivery.addressLabel || t("Указать адрес доставки");
+  const pending = !delivery.ready || (!delivery.addressLabel && delivery.savedStatus === "loading");
+  const label = pending ? t("Загружаем адрес") : delivery.addressLabel || t("Указать адрес доставки");
   return <button type="button" className={`delivery-address-trigger ${className}`} disabled={!delivery.ready}
     aria-haspopup="dialog" aria-label={`${t("Адрес доставки")}: ${label}`} title={label} onClick={event => { event.currentTarget.focus({ preventScroll: true }); delivery.openAddress(); }}>
     {brandMark ? <Image className="delivery-address-trigger__brand" src="/brand/wordmark-v3.webp" width={108} height={38} alt="Dushanbe Fresh" priority /> : <MapPin size={18} aria-hidden="true" />}
-    <span className="delivery-address-trigger__text">{eyebrow ? <span className="delivery-address-trigger__city">{t(eyebrow)}</span> : null}<span className="delivery-address-trigger__address">{label}</span></span><ChevronDown size={16} aria-hidden="true" />
+    <span className="delivery-address-trigger__text">{eyebrow ? <span className="delivery-address-trigger__city">{t(eyebrow)}</span> : null}<span className={`delivery-address-trigger__address${pending ? " skeleton" : ""}`} aria-busy={pending}>{label}</span></span><ChevronDown size={16} aria-hidden="true" />
   </button>;
 }

@@ -7,6 +7,7 @@ import { CHECKOUT_DRAFT_KEY } from "@/lib/checkout-draft";
 
 type Context = {
   user: CustomerProfile | null; status: CustomerAuthStatus; loading: boolean;
+  resolved: boolean; error: string;
   login: () => void; logout: () => Promise<void>; refresh: () => Promise<void>;
   loginAndThen: (action: () => void) => void;
 };
@@ -15,6 +16,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CustomerProfile | null>(null);
   const [status, setStatus] = useState<CustomerAuthStatus>({ enabled: false, requiredForCheckout: false });
   const [loading, setLoading] = useState(true);
+  const [resolved, setResolved] = useState(false);
+  const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const afterLogin = useRef<(() => void) | null>(null);
   const requestVersion = useRef(0);
@@ -26,7 +29,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       if (version !== requestVersion.current) return;
       setStatus(next);
       setUser(nextUser);
-    } catch { if (version === requestVersion.current) { setUser(null); setStatus({ enabled: false, requiredForCheckout: false }); } }
+      setResolved(true); setError("");
+    } catch { if (version === requestVersion.current) setError("Не удалось проверить вход. Проверьте соединение и повторите попытку."); }
     finally { if (version === requestVersion.current) setLoading(false); }
   }, []);
   useEffect(() => { const version = requestVersion; void refresh(); return () => { version.current++; }; }, [refresh]);
@@ -35,18 +39,18 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", update);
     return () => window.removeEventListener("focus", update);
   }, [refresh]);
-  return <CustomerContext.Provider value={{ user, status, loading, login: () => { afterLogin.current = null; setOpen(true); },
+  return <CustomerContext.Provider value={{ user, status, loading, resolved, error, login: () => { if (!resolved) return; afterLogin.current = null; setOpen(true); },
     loginAndThen: action => { afterLogin.current = action; setOpen(true); }, refresh,
     logout: async () => {
       await customerRequest("customer-auth/logout", "POST");
       requestVersion.current++;
       try { for (const key of [CHECKOUT_DRAFT_KEY, `${CHECKOUT_DRAFT_KEY}.user.${user?.id}`, "df.delivery.address.v1", "df.delivery.address.account.v1"]) sessionStorage.removeItem(key); } catch { /* Server logout still succeeds with blocked storage. */ }
-      setUser(null);
+      setUser(null); setResolved(true); setError("");
     } }}>
     {children}
     {open ? <CustomerLogin available={status.enabled} onClose={() => { setOpen(false); afterLogin.current = null; void refresh(); }} onSuccess={value => {
       requestVersion.current++;
-      setUser(value); setOpen(false); const action = afterLogin.current; afterLogin.current = null; action?.();
+      setUser(value); setResolved(true); setLoading(false); setError(""); setOpen(false); const action = afterLogin.current; afterLogin.current = null; action?.();
     }} /> : null}
   </CustomerContext.Provider>;
 }

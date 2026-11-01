@@ -25,6 +25,8 @@ RUN node -e 'const fs=require("node:fs"),p=require("node:path");const client=req
 RUN node ops/tarena/collect-prisma-tool.cjs
 
 FROM ${NODE_IMAGE} AS base
+ARG RELEASE_SHA=unspecified
+LABEL org.opencontainers.image.revision=${RELEASE_SHA}
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \

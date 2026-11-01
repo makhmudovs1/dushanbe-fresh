@@ -130,6 +130,8 @@ export class CheckoutService {
             create: { phoneNormalized: input.phone, displayName: input.name }
           });
           if (accountUserId) {
+            // Legacy clients may rename at checkout; never retain mismatched structured names.
+            await tx.user.updateMany({ where: { id: accountUserId, NOT: { name: input.name } }, data: { firstName: null, lastName: null } });
             const updated = await tx.user.updateMany({ where: { id: accountUserId, phone: input.phone, phoneVerifiedAt: { not: null }, status: "active", role: "customer", roles: { isEmpty: true } }, data: { name: input.name } });
             if (!updated.count) throw new UnauthorizedException("Войдите по номеру телефона.");
           }

@@ -4,7 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import {
   CartAction, CartItem, CartState, cartReducer, createCartItem, emptyCartState, getCartItemKey, saveCart
 } from "./cart";
-import { AccountCartSync, CartLegacyConflict, CartSyncView, loadGuestCart, sameCartItems } from "./account-cart";
+import { AccountCartSync, CartLegacyConflict, CartSyncView, findLegacyCartConflicts, mergeCartItemsMax, readGuestCart, sameCartItems } from "./account-cart";
 import { useOptionalCustomer } from "@/customer/customer-context";
 import { getProducts, Product } from "@/lib/api";
 import { customerRequest } from "@/lib/customer";
@@ -24,6 +24,7 @@ type CartContextValue = {
   removeItem: (item: CartItem) => void;
   lineCount: number;
   hydrated: boolean;
+  loadState: "loading" | "loaded" | "error";
   clearCart: () => void;
   syncError: string;
   syncing: boolean;
@@ -34,7 +35,7 @@ type CartContextValue = {
   removeBoth: (key: string) => void;
 };
 
-type Runtime = { owner: string | null; view: CartSyncView; session?: AccountCartSync };
+type Runtime = { owner: string | null; view: CartSyncView; session?: AccountCartSync; guestReadError?: boolean; storageUnavailable?: boolean };
 const initialView: CartSyncView = { state: emptyCartState, hydrated: false, syncing: false, syncError: "", legacyConflicts: [] };
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -44,8 +45,10 @@ function browserStorage() {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const customer = useOptionalCustomer();
+  const refreshCustomer = customer?.refresh;
   const user = customer?.user;
-  const owner = !customer?.loading && customer?.status.enabled && user?.phoneVerifiedAt ? user.id : null;
+  const identityPending = !!customer && (customer.loading || customer.resolved === false);
+  const owner = identityPending ? "pending" : customer?.status.enabled && user?.phoneVerifiedAt ? user.id : null;
   const runtime = useRef<Runtime | null>(null);
   const [published, setPublished] = useState<{ owner: string | null; view: CartSyncView } | null>(null);
   const [lastAddition, setLastAddition] = useState(0);
@@ -53,6 +56,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const view = published?.owner === owner ? published.view : initialView;
 
   useEffect(() => {
+    if (owner === "pending") return;
     const current: Runtime = { owner, view: initialView };
     runtime.current = current;
     const publish = (next: CartSyncView) => {
@@ -64,7 +68,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       current.session = new AccountCartSync(owner, browserStorage(), customerRequest, () => crypto.randomUUID(), publish);
       void current.session.start();
     } else {
-      publish({ ...initialView, state: loadGuestCart(browserStorage()), hydrated: true });
+      const saved = readGuestCart(browserStorage());
+      current.guestReadError = !!saved.error; current.storageUnavailable = saved.unavailable;
+      publish({ ...initialView, state: saved.state, hydrated: true, syncError: saved.error });
     }
     return () => {
       current.session?.dispose();
@@ -77,12 +83,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!current || current.owner !== owner) return false;
     if (current.session) return current.session.apply(action);
     if (!current.view.hydrated) return false;
+    if (current.guestReadError && !current.storageUnavailable) return false;
     const state = cartReducer(current.view.state, action);
     if (sameCartItems(state.items, current.view.state.items) && action.type !== "clear") return false;
     let syncError = "";
     try {
       const storage = browserStorage();
-      if (!storage) throw new Error("Storage unavailable");
+      if (!storage || current.guestReadError) throw new Error("Storage unavailable");
       saveCart(storage, state);
     } catch { syncError = "Не удалось сохранить корзину на устройстве."; }
     current.view = { ...current.view, state, syncError };
@@ -103,23 +110,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [owner, view.hydrated, apply]);
 
   const retrySync = useCallback(() => {
+    if (identityPending) { void refreshCustomer?.(); return; }
     const current = runtime.current;
     if (!current || current.owner !== owner) return;
     if (current.session) current.session.retrySync();
     else {
       try {
         const storage = browserStorage();
+        if (current.guestReadError) {
+          const saved = readGuestCart(storage);
+          if (saved.error) return;
+          if (findLegacyCartConflicts({ revision: 0, items: saved.state.items }, current.view.state.items).length) return;
+          current.view = { ...current.view, state: { items: mergeCartItemsMax(saved.state.items, current.view.state.items) } };
+          current.guestReadError = false;
+        }
         if (!storage) return;
         saveCart(storage, current.view.state);
         current.view = { ...current.view, syncError: "" };
         setPublished({ owner, view: current.view });
       } catch { /* Keep the visible storage error. */ }
     }
-  }, [owner]);
+  }, [owner, identityPending, refreshCustomer]);
 
   const value = useMemo<CartContextValue>(
     () => ({
       ...view,
+      syncError: identityPending ? customer?.error ?? "" : view.syncError,
+      hydrated: view.hydrated && !identityPending,
+      loadState: (identityPending ? customer?.error : view.syncError) ? "error" : view.hydrated ? "loaded" : "loading",
       lastAddition,
       retrySync,
       discardIncoming: key => {
@@ -146,7 +164,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       lineCount: view.state.items.length
     }),
-    [view, lastAddition, retrySync, apply, owner]
+    [view, lastAddition, retrySync, apply, owner, identityPending, customer?.error]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

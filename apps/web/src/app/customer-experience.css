@@ -99,3 +99,61 @@
   .account-menu > *, .customer-dialog button { transition: background-color 180ms ease, color 180ms ease; }
 }
 @keyframes customer-dialog-in { from { opacity: .7; } to { opacity: 1; } }
+
+.customer-login .customer-dialog__surface { width: min(460px, 100%); min-height: min(620px, 100%); }
+.customer-login .catalog-dialog__header { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; padding: 24px 24px 16px; }
+.customer-login .catalog-dialog__header h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.customer-login .catalog-dialog__header .customer-login__back { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #303332; cursor: pointer; }
+.customer-login__logo { width: 152px; height: 54px; object-fit: contain; justify-self: center; }
+.customer-login__balance { width: 44px; }
+.customer-login .catalog-dialog__body { padding: 24px 28px 32px; flex: 1; }
+.customer-login__form { display: grid; gap: 18px; align-content: start; }
+.customer-login__intro { margin-bottom: 8px; }
+.customer-login__intro h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.15; font-weight: 750; color: #1f1f1f; overflow-wrap: anywhere; }
+.customer-login__intro p { color: #6e706f; font-size: 15px; line-height: 1.45; }
+.customer-login--code .customer-login__intro { text-align: center; margin-bottom: 20px; }
+.customer-login--code .customer-login__intro h1 { font-size: 26px; }
+.customer-login__phone-link { display: inline; border: 0; background: transparent; color: #1f1f1f; padding: 4px 0; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: #d6d9d7; text-underline-offset: 4px; }
+.customer-login__phone-field { display: flex; align-items: center; min-width: 0; height: 60px; padding: 0 8px 0 14px; border: 1px solid #e0e5e2; border-radius: 16px; background: #fff; gap: 10px; }
+.customer-login__phone-field:focus-within { border-color: #145c32; box-shadow: 0 0 0 2px #145c3210; }
+.customer-login__flag { flex: 0 0 28px; font-size: 23px; line-height: 1; }
+.customer-login__prefix { color: #1f1f1f; font-size: 18px; }
+.customer-login .customer-login__phone-field input { border: 0; outline: 0; background: transparent; padding: 0; height: 56px; min-height: 0; flex: 1; width: 0; box-shadow: none; font-size: 18px; font-variant-numeric: tabular-nums; }
+.customer-login__clear { flex: 0 0 36px; display: grid; place-items: center; width: 36px; height: 44px; border: 0; background: transparent; color: #838785; padding: 0; cursor: pointer; }
+.customer-login__clear:disabled { visibility: hidden; }
+.customer-login .primary-action { width: 100%; min-height: 56px; background: #1f1f1f; color: #fff; border-radius: 16px; }
+.customer-login .primary-action:hover { background: #353535; color: #fff; }
+.customer-login .primary-action:disabled { background: #edf0ee; color: #949b97; }
+.customer-login__otp { position: relative; height: 68px; border-radius: 16px; }
+.customer-login__cells { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; height: 100%; }
+.customer-login__cells span { position: relative; display: grid; place-items: center; border: 1px solid #e0e5e2; border-radius: 12px; background: #fafbfa; color: #1f1f1f; font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.customer-login__cells span[data-filled="false"]::after { content: ""; width: 12px; height: 2px; background: #bdc5c0; }
+.customer-login__otp:focus-within span[data-active="true"] { border-color: #145c32; box-shadow: 0 0 0 1px #145c32; }
+.customer-login .customer-login__otp input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 1; color: transparent; -webkit-text-fill-color: transparent; caret-color: transparent; border: 0; background: transparent; outline: 0; box-shadow: none; }
+.customer-login__verification { display: block; min-height: 20px; text-align: center; margin-top: -8px; color: #6e706f; font-size: 14px; }
+.customer-login__resend { width: 100%; min-height: 54px; padding: 12px; border: 0; border-radius: 16px; background: #f3f3f3; color: #1f1f1f; font: inherit; font-size: 14px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.customer-login__resend:disabled { color: #9da69f; cursor: default; }
+.customer-login__error { min-height: 48px; }
+.customer-login .customer-login__error p { font-size: 14px; }
+.account-skeleton { display: grid; gap: 12px; padding-block: 20px; }
+.account-skeleton__identity { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; }
+.account-skeleton__identity > div { flex: 1; }
+.account-skeleton__avatar { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; }
+.account-skeleton__row { height: 64px; border-radius: 8px; }
+@media (max-width: 1023px) {
+  .customer-dialog.customer-login[open] { padding: 0; align-items: stretch; background: #fff; }
+  .customer-login .customer-dialog__surface { min-height: 0; height: 100%; max-width: none; border-radius: 0; box-shadow: none; }
+  .customer-login .catalog-dialog__header { padding: max(16px, env(safe-area-inset-top)) 20px 12px; }
+  .customer-login .catalog-dialog__header::before { display: none; }
+  .customer-login .catalog-dialog__body { padding: 24px 24px max(24px, env(safe-area-inset-bottom)); }
+  .customer-login__intro h1 { font-size: 30px; }
+  .customer-login__cells { gap: 7px; }
+}
+@media (max-height: 550px) {
+  .customer-login .catalog-dialog__body { padding-top: 12px; }
+  .customer-login__intro { margin-bottom: 0; }
+  .customer-login--code .customer-login__intro { margin-bottom: 4px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .customer-login__intro { animation: customer-dialog-in 140ms ease-out; }
+}

@@ -6,10 +6,10 @@ import { useI18n } from "@/i18n/provider";
 import { CustomerDialog } from "./customer-dialog";
 
 export function AccountCartNotice() {
-  const { syncError, retrySync, legacyConflicts = [], discardIncoming, removeBoth, hydrated } = useCart();
+  const { syncError, retrySync, legacyConflicts = [], discardIncoming, removeBoth } = useCart();
   const { t, name, label, quantityLabel } = useI18n();
   const [choice, setChoice] = useState<{ key: string; both: boolean } | null>(null);
-  if (!hydrated || !syncError) return null;
+  if (!syncError) return null;
   return <section className="notice account-cart-notice" role="alert">
     <p>{t(syncError)}</p>
     {legacyConflicts.map(pair => <div className="account-cart-conflict" key={pair.key}>

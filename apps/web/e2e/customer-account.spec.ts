@@ -46,12 +46,12 @@ async function login(page: Page, phone: string, locale: Locale, name?: string, w
   const t = (value: string) => tr(locale, value);
   try {
     await control(page, `/cooldown?phone=${encodeURIComponent(phone)}`);
-    const dialog = page.getByRole("dialog", { name: t("Вход по телефону"), exact: true });
+    const dialog = page.locator(".customer-login");
     await dialog.getByLabel(t("Телефон"), { exact: true }).fill(phone);
-    await dialog.getByRole("button", { name: t("Получить код"), exact: true }).click();
+    await dialog.getByRole("button", { name: t("Продолжить"), exact: true }).click();
     const input = dialog.getByLabel(t("Код из SMS"), { exact: true });
     await expect(input).toBeVisible();
-    await expect(dialog.getByRole("button", { name: new RegExp(`^${t("Отправить код снова")}`) })).toBeDisabled();
+    await expect(dialog.getByRole("button", { name: new RegExp(`^${t("Отправить код повторно")}`) })).toBeDisabled();
     const response = await page.request.get(`${gateway}/captured?phone=${encodeURIComponent(phone)}`, { headers });
     if (response.status() !== 200) throw new Error("Capture unavailable");
     const captured: unknown = await response.json();
@@ -59,16 +59,15 @@ async function login(page: Page, phone: string, locale: Locale, name?: string, w
     if (typeof code !== "string" || !/^\d{6}$/.test(code)) throw new Error("Capture unavailable");
     if (wrongCode) {
       await input.fill(code === "111111" ? "222222" : "111111");
-      await dialog.getByRole("button", { name: t("Подтвердить номер"), exact: true }).click();
       await expect(dialog.getByRole("alert")).toBeVisible();
     }
     await input.fill(code);
-    await dialog.getByRole("button", { name: t("Подтвердить номер"), exact: true }).click();
     await expect(input).toHaveCount(0);
-    const naming = page.getByRole("dialog", { name: t("Как вас зовут?"), exact: true });
+    const naming = page.getByRole("dialog", { name: t("Как к вам обращаться?"), exact: true });
     if (name !== undefined) {
       await expect(naming).toBeVisible();
       await naming.getByLabel(t("Имя"), { exact: true }).fill(name);
+      await naming.getByLabel(t("Фамилия"), { exact: true }).fill("Тестовый");
       await naming.getByRole("button", { name: t("Продолжить"), exact: true }).click();
     } else await expect(naming).toHaveCount(0);
     await expect(page.locator(".customer-login")).toHaveCount(0);
@@ -127,7 +126,7 @@ for (const { width, locale } of variants) {
     await page.goto("/checkout");
     const invitation = page.getByRole("dialog", { name: t("Войдите, чтобы оформить заказ"), exact: true });
     await expect(invitation).toBeVisible();
-    await expect(page.getByRole("dialog", { name: t("Вход по телефону"), exact: true })).toHaveCount(0);
+    await expect(page.locator(".customer-login")).toHaveCount(0);
     await screenshot(page, info, `checkout-invitation-${locale}-${width}`);
     await invitation.getByRole("button", { name: t("Войти по номеру телефона"), exact: true }).click();
     await login(page, phone, locale, name, width === 360);
@@ -239,13 +238,13 @@ test("SMS failure preserves the guest address and already-added cart", async ({ 
   await address(page, "ru", "apartment", "Не потерять адрес", "3");
   await page.goto("/checkout");
   await page.getByRole("dialog", { name: "Войдите, чтобы оформить заказ", exact: true }).getByRole("button", { name: "Войти по номеру телефона", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Вход по телефону", exact: true });
+  const dialog = page.locator(".customer-login");
   const phone = phoneNumber();
   await control(page, `/cooldown?phone=${encodeURIComponent(phone)}`);
   await dialog.getByLabel("Телефон", { exact: true }).fill(phone);
   await screenshot(page, info, "login-phone-ru-390", true);
   await control(page, "/fail-next");
-  await dialog.getByRole("button", { name: "Получить код", exact: true }).click();
+  await dialog.getByRole("button", { name: "Продолжить", exact: true }).click();
   await expect(dialog.getByRole("alert")).toContainText("Не удалось отправить SMS");
   await expect(dialog.locator('input[autocomplete="one-time-code"]')).toHaveCount(0);
   await dialog.getByRole("button", { name: "Закрыть форму", exact: true }).click();
@@ -270,7 +269,7 @@ test("expired session requires login without losing checkout draft or account ca
   await page.getByLabel("Я проверил товары, стоимость и время доставки").check();
   await control(page, `/expire?phone=${encodeURIComponent(phone)}`);
   await page.getByRole("button", { name: "Подтвердить заказ", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Вход по телефону", exact: true })).toBeVisible();
+  await expect(page.locator(".customer-login")).toBeVisible();
   await expect(page.getByText("Сохранить при истечении", { exact: false })).toHaveCount(0);
   await login(page, phone, "ru");
   await expect(page.locator(".checkout-address-summary")).toContainText("Сохранить при истечении");

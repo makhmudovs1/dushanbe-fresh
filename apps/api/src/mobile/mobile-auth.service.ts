@@ -44,12 +44,16 @@ function verifiedUser(user: {
 function profile(user: {
   id: string;
   name: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   phone: string | null;
   phoneVerifiedAt: Date | null;
 }): CustomerProfile {
   return {
     id: user.id,
     name: user.name,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
     phone: user.phone!,
     phoneVerifiedAt: user.phoneVerifiedAt!.toISOString(),
   };

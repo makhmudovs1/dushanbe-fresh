@@ -22,6 +22,7 @@ export type CartRequest = <T>(path: string, method?: string, body?: unknown) => 
 const CONFLICT = "Корзина изменена на другом устройстве. Нажмите повторить, чтобы объединить изменения.";
 const FAILURE = "Не удалось синхронизировать корзину. Локальные изменения сохранены; повторите попытку.";
 const STORAGE_FAILURE = "Не удалось сохранить корзину на устройстве. Проверьте доступ к хранилищу и повторите попытку.";
+const READ_FAILURE = "Не удалось прочитать сохранённую корзину. Данные на устройстве не изменены.";
 const LEGACY_REVIEW = "В корзинах есть несовместимые старые позиции. Сравните варианты и количество, удалите ненужные и повторите сохранение.";
 const RESOLVED = "Выбор сохранён на устройстве. Нажмите повторить, чтобы синхронизировать корзину.";
 
@@ -99,6 +100,21 @@ function guestClaim(storage: Storage | undefined): GuestClaim | null {
 
 export function loadGuestCart(storage: Storage | undefined): CartState {
   return guestClaim(storage) ? emptyCartState : loadCart(storage);
+}
+
+export function readGuestCart(storage: Storage | undefined) {
+  let raw: string | null;
+  try {
+    if (!storage) throw new Error("Storage unavailable");
+    raw = storage.getItem(CART_STORAGE_KEY);
+  } catch { return { state: emptyCartState, error: READ_FAILURE, unavailable: true }; }
+  try {
+    if (raw !== null) {
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || !("items" in parsed) || !validItems(parsed.items)) throw new Error("Invalid stored cart");
+    }
+    return { state: loadGuestCart(storage), error: "", unavailable: false };
+  } catch { return { state: emptyCartState, error: READ_FAILURE, unavailable: false }; }
 }
 
 function validItems(value: unknown): value is CartItem[] {
@@ -201,6 +217,7 @@ export class AccountCartSync {
       this.acknowledgeGuest(claim.sourceId);
       return;
     }
+    if (this.storage && readGuestCart(this.storage).error) throw new Error("Stored guest cart cannot be read safely");
     const guest = loadCart(this.storage);
     if (!guest.items.length) return;
     const sourceId = claim?.sourceId ?? this.uuid();
@@ -323,7 +340,7 @@ export class AccountCartSync {
     clearTimeout(this.timer);
     this.busy = true;
     this.ready = false;
-    this.emit({ hydrated: false, syncing: true, syncError: "", legacyConflicts: [] });
+    this.emit({ hydrated: this.view.hydrated && this.view.state.items.length > 0, syncing: true, syncError: "", legacyConflicts: [] });
     try {
       this.prepareGuest();
       this.emit({ state: { items: this.localItems() } });

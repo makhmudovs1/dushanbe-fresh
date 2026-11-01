@@ -96,7 +96,9 @@ export class CustomerAuthService {
       throw new BadRequestException("Введите шестизначный код из SMS.");
     }
     const challenge = await this.prisma.customerOtpChallenge.findUnique({ where: { id: challengeId } });
-    if (!challenge || !challenge.sentAt || challenge.consumedAt || challenge.expiresAt <= new Date() || challenge.attempts >= 5) throw this.invalidCode();
+    if (!challenge || !challenge.sentAt || challenge.consumedAt) throw this.invalidCode();
+    if (challenge.attempts >= 5) throw new UnauthorizedException({ code: "OTP_ATTEMPTS_EXCEEDED", message: "Превышен лимит попыток. Запросите новый код." });
+    if (challenge.expiresAt <= new Date()) throw new UnauthorizedException({ code: "OTP_EXPIRED", message: "Срок действия кода истёк. Запросите новый код." });
     const valid = timingSafeEqual(Buffer.from(challenge.codeHash, "hex"), Buffer.from(this.hmac(`${challenge.id}:${challenge.phone}:${value}`), "hex"));
     // Compare-and-swap consumes the code once. Failed attempts are committed before returning an error.
     const token = randomBytes(32).toString("hex");
@@ -146,8 +148,9 @@ export class CustomerAuthService {
     const token = this.token(cookie);
     if (token) await this.prisma.customerSession.updateMany({ where: { tokenHash: this.hashToken(token), revokedAt: null }, data: { revokedAt: new Date() } });
   }
-  private profile(user: { id: string; name: string | null; phone: string | null; phoneVerifiedAt: Date | null }): CustomerProfile {
-    return { id: user.id, name: user.name, phone: user.phone!, phoneVerifiedAt: user.phoneVerifiedAt!.toISOString() };
+  private profile(user: { id: string; name: string | null; firstName?: string | null; lastName?: string | null; phone: string | null; phoneVerifiedAt: Date | null }): CustomerProfile {
+    return { id: user.id, name: user.name, firstName: user.firstName ?? null, lastName: user.lastName ?? null,
+      phone: user.phone!, phoneVerifiedAt: user.phoneVerifiedAt!.toISOString() };
   }
 }
 

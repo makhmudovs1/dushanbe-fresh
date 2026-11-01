@@ -194,10 +194,10 @@ export function CheckoutContent() {
     <Link className="back-link" href="/cart">{t("Вернуться в корзину")}</Link>
     <header className="page-heading"><h1>{t("Оформление заказа")}</h1><p>{t("Свежие продукты с доставкой по Душанбе")}</p></header>
   </>;
-  if (!hydrated) return <>{heading}<CheckoutSkeleton /></>;
+  if (!hydrated) return <>{heading}{syncError ? <AccountCartNotice /> : <CheckoutSkeleton />}</>;
   if (completed) return <>{heading}<p role="status">{t("Заказ оформлен. Открываем подтверждение...")}</p></>;
   if (legacy) return <>{heading}<AccountCartNotice /><LegacyCartNotice checkout /></>;
-  if (customer.user && syncError) return <>{heading}<AccountCartNotice /></>;
+  if (syncError && (customer.user || !state.items.length)) return <>{heading}<AccountCartNotice /></>;
   if (!state.items.length) return <div className="empty-cart"><h1>{t("Корзина пока пустая")}</h1><p>{t("Добавьте свежие продукты из каталога.")}</p><Link className="primary-link" href="/catalog">{t("Перейти в каталог")}</Link></div>;
   if (!customer.loading && customer.status.requiredForCheckout && !customer.user) return <>{heading}
     <section className="checkout-login-invitation"><h2>{t("Войдите, чтобы оформить заказ")}</h2><p>{t("Корзина и выбранный адрес сохранятся после входа")}</p>

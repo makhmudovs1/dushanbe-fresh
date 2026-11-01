@@ -82,6 +82,13 @@ export function CartSkeleton() {
   </>;
 }
 
+export function AccountSkeleton() {
+  return <LoadingState label="Загружаем профиль"><div className="account-skeleton">
+    <div className="account-skeleton__identity"><Skeleton className="account-skeleton__avatar" /><div className="skeleton-stack"><Skeleton /><Skeleton className="skeleton-short" /></div></div>
+    {[0, 1, 2, 3].map(id => <Skeleton className="account-skeleton__row" key={id} />)}
+  </div></LoadingState>;
+}
+
 export function CheckoutSkeleton() {
   const { t } = useI18n();
   return <LoadingState label={t("Загружаем данные оформления")}><div className="checkout-layout">

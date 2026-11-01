@@ -2,14 +2,19 @@
 const fs = require('node:fs');
 const { parseEnv } = require('node:util');
 const { summarize, boundedBody } = require('./payom-template-probe.cjs');
+function pilotApiPort(value = '4012') {
+  if (!['4012', '4013'].includes(value)) throw Error('Unsupported private pilot port');
+  return value;
+}
 function main() {
+  const port = pilotApiPort(process.env.PAYOM_PILOT_API_PORT);
   const plan = JSON.parse(fs.readFileSync('/probe/ui-request.json'));
   const phone = fs.readFileSync('/probe/recipient', 'utf8').trim();
   const env = parseEnv(fs.readFileSync('/run/secrets/app.env', 'utf8'));
   if (env.CUSTOMER_SMS_CODE_VARIABLE !== 'code-1' || env.CUSTOMER_REQUIRE_PHONE !== 'false' ||
       env.CUSTOMER_AUTH_ENABLED !== 'false' || !/^\+992\d{9}$/.test(phone) ||
       !/^[0-9a-f-]{36}$/.test(plan.pilotId) || plan.purpose !== 'web-ui') throw Error('Private pilot prerequisites incomplete');
-  Object.assign(process.env, env, { NODE_ENV: 'production', API_HOST: '127.0.0.1', API_PORT: '4012',
+  Object.assign(process.env, env, { NODE_ENV: 'production', API_HOST: '127.0.0.1', API_PORT: port,
     CUSTOMER_AUTH_ENABLED: 'true', MOBILE_CUSTOMER_API_ENABLED: 'true', CUSTOMER_REQUIRE_PHONE: 'false',
     CUSTOMER_SMS_PILOT_PHONE: phone, CUSTOMER_SMS_PILOT_ID: plan.pilotId });
   const database = new URL(process.env.DATABASE_URL);
@@ -39,5 +44,8 @@ function main() {
   };
   require('/app/dist/main.js');
 }
-try { main(); }
-catch { console.error('One-recipient Payom pilot could not start; private details withheld'); process.exitCode = 1; }
+if (require.main === module) {
+  try { main(); }
+  catch { console.error('One-recipient Payom pilot could not start; private details withheld'); process.exitCode = 1; }
+}
+module.exports = { pilotApiPort };

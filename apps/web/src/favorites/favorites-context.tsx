@@ -8,13 +8,13 @@ import { CustomerError, customerRequest } from "@/lib/customer";
 import { useI18n } from "@/i18n/provider";
 import { CustomerDialog } from "@/components/customer-dialog";
 
-const Context = createContext<{ ids: string[]; ready: boolean; busyIds?: Set<string>; toggle: (id: string) => void }>({ ids: [], ready: false, toggle: () => {} });
+const Context = createContext<{ ids: string[]; ready: boolean; error?: string; retry?: () => void; busyIds?: Set<string>; toggle: (id: string) => void }>({ ids: [], ready: false, toggle: () => {} });
 const emptyIds: string[] = [];
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const customer = useOptionalCustomer();
   const { t } = useI18n();
-  const owner = customer?.loading ? "loading" : customer?.user?.id ?? "guest";
+  const owner = customer?.loading || customer?.resolved === false ? "loading" : customer?.user?.id ?? "guest";
   const ownerRef = useRef(owner); ownerRef.current = owner;
   const refreshCustomer = customer?.refresh;
   const revision = useRef(0);
@@ -63,10 +63,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const ready = state.owner === owner && state.ready;
   useEffect(() => { if (queued && ready && owner !== "guest") { setQueued(null); void change(queued, true); } }, [queued, ready, owner, change]);
   const ids = state.owner === owner ? state.ids : emptyIds;
-  const value = useMemo(() => ({ ids, ready, busyIds, toggle: (id: string) => {
+  const loadError = error || (owner === "loading" ? customer?.error ?? "" : "");
+  const value = useMemo(() => ({ ids, ready, error: loadError, retry: () => { if (owner === "loading") void refreshCustomer?.(); else void reload(); }, busyIds, toggle: (id: string) => {
     if (owner === "guest") setPrompt(id);
     else if (ready) void change(id, !ids.includes(id));
-  } }), [ids, ready, busyIds, owner, change]);
+  } }), [ids, ready, busyIds, owner, change, loadError, refreshCustomer, reload]);
   return <Context.Provider value={value}>
     {children}
     {error ? <div className="account-sync-notice" role="status"><span>{t(error)}</span><button type="button" onClick={() => void reload()}>{t("Повторить")}</button></div> : null}

@@ -1,6 +1,9 @@
 import type { AddressInput } from "./checkout";
 
-export type CustomerProfile = { id: string; name: string | null; phone: string; phoneVerifiedAt: string };
+export type CustomerProfile = {
+  id: string; name: string | null; phone: string; phoneVerifiedAt: string;
+  firstName?: string | null; lastName?: string | null;
+};
 export type CustomerAuthStatus = { enabled: boolean; requiredForCheckout: boolean };
 export type SavedAddressInput = AddressInput & { label: "home" | "work" | "other"; isDefault: boolean };
 export type SavedAddress = SavedAddressInput & { id: string };

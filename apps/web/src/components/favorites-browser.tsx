@@ -10,8 +10,9 @@ import { ProductCard } from "./product-card";
 import { ProductGridSkeleton } from "./loading-state";
 
 export function FavoritesBrowser({ products }: { products: Product[] | null }) {
-  const { ids, ready } = useFavorites();
+  const { ids, ready, error, retry } = useFavorites();
   const { t } = useI18n();
+  if (error && !ids.length) return <div role="alert" className="notice">{t(error)}<button type="button" className="secondary-link" onClick={retry}>{t("Повторить")}</button></div>;
   if (!ready) return <ProductGridSkeleton />;
   if (products === null) return <div role="alert" className="notice">{t("Не удалось загрузить товары. Попробуйте ещё раз.")}
     <button type="button" className="secondary-link" onClick={() => location.reload()}>{t("Повторить")}</button></div>;

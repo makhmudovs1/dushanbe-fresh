@@ -48,10 +48,10 @@ async function login(page: Page, phone: string, locale: Locale, newName?: string
   const t = (value: string) => translate(locale, value);
   try {
     await control(page, `/cooldown?phone=${encodeURIComponent(phone)}`);
-    const dialog = page.getByRole("dialog", { name: t("Вход по телефону"), exact: true });
+    const dialog = page.locator(".customer-login");
     await dialog.getByLabel(t("Телефон"), { exact: true }).fill(phone);
     if (info && shot) await screenshot(page, info, shot, true);
-    await dialog.getByRole("button", { name: t("Получить код"), exact: true }).click();
+    await dialog.getByRole("button", { name: t("Продолжить"), exact: true }).click();
     const input = dialog.getByLabel(t("Код из SMS"), { exact: true });
     await expect(input).toBeVisible();
     const captured = await page.request.get(`${gateway}/captured?phone=${encodeURIComponent(phone)}`, { headers });
@@ -60,11 +60,11 @@ async function login(page: Page, phone: string, locale: Locale, newName?: string
     const code = (value as { code?: unknown })?.code;
     if (typeof code !== "string" || !/^\d{6}$/.test(code)) throw new Error("Capture unavailable");
     await input.fill(code);
-    await dialog.getByRole("button", { name: t("Подтвердить номер"), exact: true }).click();
     await expect(input).toHaveCount(0);
-    const naming = page.getByRole("dialog", { name: t("Как вас зовут?"), exact: true });
+    const naming = page.getByRole("dialog", { name: t("Как к вам обращаться?"), exact: true });
     if (newName !== undefined) {
       await naming.getByLabel(t("Имя"), { exact: true }).fill(newName);
+      await naming.getByLabel(t("Фамилия"), { exact: true }).fill("Тестовый");
       await naming.getByRole("button", { name: t("Продолжить"), exact: true }).click();
     } else await expect(naming).toHaveCount(0);
     await expect(page.locator(".customer-login")).toHaveCount(0);
@@ -355,14 +355,13 @@ for (const width of [390, 1440]) for (const locale of ["ru", "tg"] as const) tes
   await page.locator(".account-welcome").getByRole("button", { name: t("Войти"), exact: true }).click();
   const loginDialog = page.locator(".customer-login");
   await loginDialog.getByLabel(t("Телефон"), { exact: true }).fill(phone);
-  await loginDialog.getByRole("button", { name: t("Получить код"), exact: true }).click();
+  await loginDialog.getByRole("button", { name: t("Продолжить"), exact: true }).click();
   const input = loginDialog.getByLabel(t("Код из SMS"), { exact: true });
   await expect(input).toBeVisible();
   const captured = await page.request.get(`${gateway}/captured?phone=${encodeURIComponent(phone)}`, { headers });
   const value = await captured.json() as { code?: string };
   if (typeof value.code !== "string" || !/^\d{6}$/.test(value.code)) throw new Error("Local mock code unavailable");
   await input.fill(value.code);
-  await loginDialog.getByRole("button", { name: t("Подтвердить номер"), exact: true }).click();
   await expect(loginDialog.getByLabel(t("Имя"), { exact: true })).toBeVisible();
   await loginDialog.getByRole("button", { name: t("Закрыть форму"), exact: true }).click();
   await expect(page.locator(".account-identity")).toBeVisible();
@@ -392,9 +391,9 @@ for (const locale of ["ru", "tg"] as const) test(`disabled SMS is honest and opt
     const welcome = page.locator(".account-welcome");
     await expect(welcome.getByText(t("Вход по SMS пока недоступен. Можно оформить заказ без входа."), { exact: true })).toBeVisible();
     await welcome.getByRole("button", { name: t("Войти"), exact: true }).click();
-    const dialog = page.getByRole("dialog", { name: t("Вход по телефону"), exact: true });
+    const dialog = page.locator(".customer-login");
     await expect(dialog.getByRole("status")).toContainText(t("Вход по SMS пока недоступен. Можно оформить заказ без входа."));
-    await expect(dialog.getByRole("button", { name: t("Получить код"), exact: true })).toHaveCount(0);
+    await expect(dialog.getByRole("button", { name: t("Продолжить"), exact: true })).toHaveCount(0);
     await expect(dialog.getByRole("textbox")).toHaveCount(0);
     await dialog.getByRole("button", { name: t("Продолжить покупки"), exact: true }).click();
     await screenshot(page, info, `sms-disabled-profile-${locale}`);
@@ -415,7 +414,7 @@ for (const locale of ["ru", "tg"] as const) test(`disabled SMS is honest and opt
     await page.reload();
     await expect(page.getByRole("heading", { name: t("Контактные данные"), exact: true })).toBeVisible();
     await expect(page.getByRole("dialog", { name: t("Войдите, чтобы оформить заказ"), exact: true })).toHaveCount(0);
-    await expect(page.getByRole("dialog", { name: t("Вход по телефону"), exact: true })).toHaveCount(0);
+    await expect(page.locator(".customer-login")).toHaveCount(0);
   } finally { await control(page, "/auth-mode?enabled=true&required=true"); }
 });
 

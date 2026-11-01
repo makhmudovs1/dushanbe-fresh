@@ -226,6 +226,16 @@ describe.skipIf(!target)(
         ).status,
       ).toBe(401);
     });
+    it("reads structured profile names through native sessions and still accepts legacy native writes", async () => {
+      const saved = await request("/mobile/customer/profile", "PATCH", { firstName: "Ситора", lastName: "Алиева" }, one.accessToken);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toMatchObject({ name: "Ситора Алиева", firstName: "Ситора", lastName: "Алиева" });
+      expect((await request("/mobile/customer/profile", "PATCH", { name: "Ситора Алиева" }, one.accessToken)).status).toBe(200);
+      expect(await (await request("/mobile/auth/me", "GET", undefined, one.accessToken)).json()).toMatchObject({ firstName: "Ситора", lastName: "Алиева" });
+      expect((await request("/mobile/customer/profile", "PATCH", { firstName: "Ситора" }, one.accessToken)).status).toBe(400);
+      expect((await request("/mobile/customer/profile", "PATCH", { name: "Прежний клиент" }, one.accessToken)).status).toBe(200);
+      expect(await (await request("/mobile/auth/me", "GET", undefined, one.accessToken)).json()).toMatchObject({ name: "Прежний клиент", firstName: null, lastName: null });
+    });
     it("synchronizes existing cart revisions/import IDs across browser and native transports", async () => {
       await db.category.create({
         data: { id: marker, slug: marker, name: "Категория теста" },

@@ -140,8 +140,8 @@ export class MobileCustomerController {
     @Body() value: unknown,
     @Req() req: MobileRequest,
   ) {
-    const body = shoppingRecord(value, ["name"]);
-    return this.account.updateName(await this.user(req), body.name);
+    const body = shoppingRecord(value, ["name", "firstName", "lastName"]);
+    return this.account.updateProfile(await this.user(req), body);
   }
   @Get("orders") @Header("Cache-Control", "private, no-store") async orders(
     @Req() req: MobileRequest,

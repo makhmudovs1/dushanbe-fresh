@@ -27,8 +27,8 @@ export class CustomerAccountController {
     assertCustomerOrigin(origin); return this.account.deleteAddress((await this.user(cookie)).id, id);
   }
   @Patch("profile")
-  async profile(@Body() body: { name?: unknown }, @Headers("cookie") cookie?: string, @Headers("origin") origin?: string) {
-    assertCustomerOrigin(origin); return this.account.updateName(await this.user(cookie), body?.name);
+  async profile(@Body() body: unknown, @Headers("cookie") cookie?: string, @Headers("origin") origin?: string) {
+    assertCustomerOrigin(origin); return this.account.updateProfile(await this.user(cookie), body);
   }
   @Get("orders")
   @Header("Cache-Control", "private, no-store")

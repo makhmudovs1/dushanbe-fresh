@@ -4,9 +4,10 @@ import { ReactNode, useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { useDialogViewport } from "./use-dialog-viewport";
 
-export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму", fitVisualViewport = false, surfaceClassName, focusTitleOnMobile = false }: {
+export function CatalogDialog({ title, children, busy, onClose, className = "", closeLabel = "Закрыть форму", fitVisualViewport = false, surfaceClassName, focusTitleOnMobile = false, headerContent }: {
   title: string; children: ReactNode; busy: boolean; onClose: () => void;
   className?: string; closeLabel?: string; fitVisualViewport?: boolean; surfaceClassName?: string; focusTitleOnMobile?: boolean;
+  headerContent?: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -58,9 +59,9 @@ export function CatalogDialog({ title, children, busy, onClose, className = "", 
   }, [fitVisualViewport, focusTitleOnMobile]);
   useDialogViewport(ref, fitVisualViewport);
   const content = <>
-    <header className="catalog-dialog__header"><h2 id={titleId} tabIndex={focusTitleOnMobile ? -1 : undefined}>{title}</h2>
-      <button className="catalog-icon-action" type="button" aria-label={closeLabel} title={closeLabel}
-        disabled={busy} onClick={onClose}><X size={20} aria-hidden="true" /></button>
+    <header className="catalog-dialog__header"><h2 id={titleId} aria-hidden={headerContent ? true : undefined} tabIndex={focusTitleOnMobile ? -1 : undefined}>{title}</h2>
+      {headerContent ?? <button className="catalog-icon-action" type="button" aria-label={closeLabel} title={closeLabel}
+        disabled={busy} onClick={onClose}><X size={20} aria-hidden="true" /></button>}
     </header>
     <div className="catalog-dialog__body">{children}</div>
   </>;

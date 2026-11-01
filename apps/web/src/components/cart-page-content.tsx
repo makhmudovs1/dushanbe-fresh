@@ -43,8 +43,8 @@ export function selectCartRecommendations(products: Product[], cartIds: Set<stri
 }
 
 function CartBrowseAll() {
-  const { state, hydrated } = useCart();
-  return hydrated && !state.items.length ? <BrowseAll /> : null;
+  const { state, hydrated, syncError } = useCart();
+  return hydrated && !syncError && !state.items.length ? <BrowseAll /> : null;
 }
 
 function CartRecommendations() {
@@ -61,12 +61,13 @@ function CartRecommendations() {
 
 function CartContents() {
   const { t, name, label, priceLabel } = useI18n();
-  const { state, hydrated, incrementItem, decrementItem, removeItem, lineCount, legacyConflicts = [] } = useCart();
+  const { state, hydrated, syncError, incrementItem, decrementItem, removeItem, lineCount, legacyConflicts = [] } = useCart();
   const subtotalMinor = calculateCartSubtotalMinor(state);
   const containsWeightedProducts = hasWeightedItems(state);
   const subtotalPrefix = containsWeightedProducts ? "≈ " : "";
   const legacy = hasLegacyCartItems(state);
 
+  if (!state.items.length && syncError) return <header className="page-heading"><h1>{t("Корзина")}</h1></header>;
   if (!hydrated) return <CartSkeleton />;
 
   if (state.items.length === 0) {

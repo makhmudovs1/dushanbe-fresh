@@ -71,6 +71,8 @@ model User {
   email           String?            @unique
   passwordHash    String?            @map("password_hash")
   name            String?
+  firstName       String?            @map("first_name")
+  lastName        String?            @map("last_name")
   phoneVerifiedAt DateTime?          @map("phone_verified_at")
   role            UserRole           @default(customer)
   roles           StaffRole[]        @default([])

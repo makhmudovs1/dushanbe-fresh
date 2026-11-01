@@ -25,7 +25,8 @@ export function DeliveryLocation({ mobile = false }: { mobile?: boolean }) {
 
 export function SiteHeader() {
   const { t } = useI18n();
-  const { lineCount, hydrated } = useCart();
+  const { lineCount, hydrated, syncError } = useCart();
+  const countReady = hydrated && (!syncError || lineCount > 0);
   const customer = useCustomer();
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
@@ -58,20 +59,22 @@ export function SiteHeader() {
       <DeliveryLocation />
       <LanguageSwitcher />
       <nav className="site-nav" aria-label={t("Основная навигация")}>
-        <Link className="cart-link" href="/cart" aria-current={pathname === "/cart" ? "page" : undefined} aria-label={t(hydrated ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
+        <Link className="cart-link" href="/cart" aria-current={pathname === "/cart" ? "page" : undefined} aria-label={t(countReady ? `Корзина, позиций: ${lineCount}` : "Корзина")}>
           <ShoppingCart size={22} aria-hidden="true" />
           <span>{t("Корзина")}</span>
-          <strong aria-hidden={!hydrated}>{hydrated ? lineCount : ""}</strong>
+          <strong aria-hidden={!countReady}>{countReady ? lineCount : ""}</strong>
         </Link>
         {customer.user ? <Link href="/account" className="header-account" title={t("Профиль")} aria-label={t("Профиль")}><UserRound size={21} aria-hidden="true" /></Link>
-          : <button className="header-account" type="button" onClick={customer.login} title={t("Войти")} aria-label={t("Войти")}><UserRound size={21} aria-hidden="true" /></button>}
+          : <button className="header-account" type="button" disabled={customer.loading} aria-busy={customer.loading}
+            onClick={() => { if (customer.resolved === false) void customer.refresh(); else customer.login(); }}
+            title={t(customer.loading || customer.resolved === false ? "Профиль" : "Войти")} aria-label={t(customer.loading || customer.resolved === false ? "Профиль" : "Войти")}><UserRound size={21} aria-hidden="true" /></button>}
         <LastOrderLink activeOnly />
       </nav>
       {drawer ? <CatalogDialog title={t("Каталог")} busy={false} className="category-drawer" closeLabel={t("Закрыть каталог")}
         onClose={() => setDrawer(false)}>
         {loading ? <CategorySkeleton /> : <CategorySidebar categories={categories} onNavigate={() => setDrawer(false)} onRetry={() => void openCatalog()} />}
         <Link className="category-drawer__cart" href="/cart" onClick={() => setDrawer(false)}><ShoppingCart size={20} aria-hidden="true" />
-          <span>{t("Корзина")}</span><strong>{hydrated ? lineCount : ""}</strong></Link>
+          <span>{t("Корзина")}</span><strong>{countReady ? lineCount : ""}</strong></Link>
       </CatalogDialog> : null}
     </header>
   );

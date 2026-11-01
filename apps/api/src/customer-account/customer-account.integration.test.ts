@@ -14,7 +14,7 @@ const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("customer accounts over HTTP", () => {
   const db = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
   const marker = `account-${randomUUID()}`;
-  const phones = Array.from({ length: 12 }, (_, index) => `+9929${String(Date.now()).slice(-6)}${String(index).padStart(2, "0")}`);
+  const phones = Array.from({ length: 13 }, (_, index) => `+9929${String(Date.now()).slice(-6)}${String(index).padStart(2, "0")}`);
   const messages = new Map<string, { code: string; id: string }>();
   let app: INestApplication; let base: string; let cookie = ""; let otherCookie = ""; let userId = "";
   let addressId = ""; let secondAddressId = ""; let orderId = "";
@@ -107,14 +107,37 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     const message = await challenge(phones[1]);
     const wrong = message.code === "111111" ? "222222" : "111111";
     for (let i = 0; i < 5; i++) expect((await request("/customer-auth/verify", "POST", { challengeId: message.id, code: wrong })).status).toBe(401);
-    expect((await request("/customer-auth/verify", "POST", { challengeId: message.id, code: message.code })).status).toBe(401);
+    const exhausted = await request("/customer-auth/verify", "POST", { challengeId: message.id, code: message.code });
+    expect(exhausted.status).toBe(401);
+    expect(await exhausted.json()).toMatchObject({ code: "OTP_ATTEMPTS_EXCEEDED" });
     expect((await db.customerOtpChallenge.findUniqueOrThrow({ where: { id: message.id } })).attempts).toBe(5);
     const expired = await challenge(phones[2]);
     await db.customerOtpChallenge.update({ where: { id: expired.id }, data: { expiresAt: new Date(0) } });
-    expect((await request("/customer-auth/verify", "POST", { challengeId: expired.id, code: expired.code })).status).toBe(401);
+    const expiredResponse = await request("/customer-auth/verify", "POST", { challengeId: expired.id, code: expired.code });
+    expect(expiredResponse.status).toBe(401);
+    expect(await expiredResponse.json()).toMatchObject({ code: "OTP_EXPIRED" });
     const unsent = await challenge(phones[3]);
     await db.customerOtpChallenge.update({ where: { id: unsent.id }, data: { sentAt: null } });
     expect((await request("/customer-auth/verify", "POST", { challengeId: unsent.id, code: unsent.code })).status).toBe(401);
+  });
+  it("stores separate name parts and preserves compatibility with old native profile writes", async () => {
+    const logged = await login(phones[12]);
+    const profile = await request("/customer/profile", "PATCH", { firstName: "Ситора", lastName: "Алиева" }, logged.cookie);
+    expect(profile.status).toBe(200);
+    expect(await profile.json()).toMatchObject({ id: logged.user.id, name: "Ситора Алиева", firstName: "Ситора", lastName: "Алиева" });
+    expect(await (await request("/customer-auth/me", "GET", undefined, logged.cookie)).json()).toMatchObject({ firstName: "Ситора", lastName: "Алиева" });
+    expect(await db.customer.findUniqueOrThrow({ where: { phoneNormalized: phones[12] } })).toMatchObject({ displayName: "Ситора Алиева" });
+    await db.customer.update({ where: { phoneNormalized: phones[12] }, data: { codPolicy: "manual_review" } });
+    const input = { deliverySlotId: marker, items: [{ productId: marker, quantity: "2", qualityOptionId: null }] };
+    const quote = await (await request("/checkout/validate", "POST", input, logged.cookie)).json();
+    const order = { ...input, phone: phones[12], name: "Ситора Алиева", address, substitutionPolicy: "contact_me", reviewToken: quote.reviewToken, requestId: randomUUID() };
+    expect((await request("/checkout/orders", "POST", order, logged.cookie)).status).toBe(201);
+    expect(await (await request("/customer-auth/me", "GET", undefined, logged.cookie)).json()).toMatchObject({ firstName: "Ситора", lastName: "Алиева" });
+    expect((await request("/checkout/orders", "POST", { ...order, requestId: randomUUID(), name: "Другое имя" }, logged.cookie)).status).toBe(201);
+    expect(await (await request("/customer-auth/me", "GET", undefined, logged.cookie)).json()).toMatchObject({ name: "Другое имя", firstName: null, lastName: null });
+    expect((await request("/customer/profile", "PATCH", { firstName: "Ситора", lastName: " " }, logged.cookie)).status).toBe(400);
+    expect((await request("/customer/profile", "PATCH", { name: "Прежнее имя" }, logged.cookie)).status).toBe(200);
+    expect(await (await request("/customer-auth/me", "GET", undefined, logged.cookie)).json()).toMatchObject({ name: "Прежнее имя", firstName: null, lastName: null });
   });
   it("keeps customer sessions separate from staff and blocks staff-number login", async () => {
     expect((await request("/admin/orders")).status).toBe(401);

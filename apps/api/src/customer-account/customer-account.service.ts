@@ -12,11 +12,30 @@ export class CustomerAccountService {
 
   async updateName(user: CustomerProfile, value: unknown) {
     const name = customerText(value, 100);
+    return this.saveName(user, { name,
+      firstName: user.name === name ? user.firstName ?? null : null,
+      lastName: user.name === name ? user.lastName ?? null : null });
+  }
+  async updateProfile(user: CustomerProfile, input: unknown) {
+    if (!input || typeof input !== "object" || Array.isArray(input)) throw new BadRequestException("Укажите имя и фамилию.");
+    const body = input as Record<string, unknown>;
+    if ("firstName" in body || "lastName" in body) {
+      if ("name" in body) throw new BadRequestException("Укажите имя и фамилию отдельно.");
+      const firstName = customerText(body.firstName, 50);
+      const lastName = customerText(body.lastName, 50);
+      const name = `${firstName} ${lastName}`;
+      if (name.length > 100) throw new BadRequestException("Имя и фамилия должны быть не длиннее 100 символов.");
+      return this.saveName(user, { name, firstName, lastName });
+    }
+    // Older native clients still send a single display name; do not invent name parts.
+    return this.updateName(user, body.name);
+  }
+  private async saveName(user: CustomerProfile, data: { name: string; firstName: string | null; lastName: string | null }) {
     await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: user.id }, data: { name } }),
-      this.prisma.customer.updateMany({ where: { userId: user.id }, data: { displayName: name } })
+      this.prisma.user.update({ where: { id: user.id }, data }),
+      this.prisma.customer.updateMany({ where: { userId: user.id }, data: { displayName: data.name } })
     ]);
-    return { ...user, name };
+    return { ...user, ...data };
   }
   async addresses(userId: string): Promise<SavedAddress[]> {
     const addresses = await this.prisma.customerAddress.findMany({ where: { userId, deletedAt: null }, orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] });
