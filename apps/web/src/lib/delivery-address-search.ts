@@ -1,5 +1,4 @@
 import { ADDRESS_QUERY_MAX, ADDRESS_QUERY_MIN, ADDRESS_SEARCH_LIMIT, CityBounds, DELIVERY_CITY, DUSHANBE_BOUNDS, WORLD_BOUNDS, hasAddressControlCharacters, isWithinDeliveryBounds, parseCityBounds, parseDeliveryAddress, type AddressSuggestion } from "./delivery-address";
-import type { AddressInput } from "@dushanbe-fresh/shared";
 
 export const ADDRESS_SEARCH_TIMEOUT_MS = 4000;
 export type AddressSearchConfig = { url: string | null; apiKey?: string; provider?: "geoapify"; bounds: CityBounds };
@@ -76,10 +75,11 @@ export function parseAddressSuggestions(value: unknown, bounds: CityBounds): Add
     if (typeof row.lat !== "number" || typeof row.lng !== "number") continue;
     const address = parseDeliveryAddress({ street: row.street, building: row.building, latitude: row.lat, longitude: row.lng,
       apartment: "", entrance: "", floor: "", instructions: "" }, false);
-    if (!address?.street || !isWithinDeliveryBounds(address, bounds)) continue;
-    const key = JSON.stringify([address.street, address.building, address.latitude, address.longitude]);
+    const placeName = typeof row.placeName === "string" && row.placeName.trim() && row.placeName.length <= 150 && !hasAddressControlCharacters(row.placeName) ? row.placeName.trim() : undefined;
+    if (!address || (!address.street && !placeName) || !isWithinDeliveryBounds(address, bounds)) continue;
+    const key = JSON.stringify([address.street, address.building, placeName, address.latitude, address.longitude]);
     if (seen.has(key)) continue;
-    seen.add(key); result.push({ ...address, ...(typeof row.description === "string" && row.description.length <= 180 && !hasAddressControlCharacters(row.description) ? { description: row.description.trim() } : {}) });
+    seen.add(key); result.push({ ...address, ...(placeName ? { placeName } : {}), ...(typeof row.description === "string" && row.description.length <= 180 && !hasAddressControlCharacters(row.description) ? { description: row.description.trim() } : {}) });
     if (result.length === ADDRESS_SEARCH_LIMIT) break;
   }
   return result;
@@ -106,14 +106,13 @@ export async function searchDeliveryAddresses(query: string, config: AddressSear
   if (config.provider === "geoapify") {
     const params: Record<string, string> = { text: query, filter: `countrycode:tj|rect:${config.bounds.join(",")}`,
       bias: "proximity:68.77,38.56", lang: language, limit: String(ADDRESS_SEARCH_LIMIT) };
-    if (!/\d/.test(query)) params.type = "street";
     const data = await requestGeoapify("autocomplete", params, config, signal);
     const addresses = parseGeoapifyAddresses(data, config.bounds, true);
     // Some OSM streets only have Russian spelling; retry text, never invent a result.
     const letters: Record<string, string> = { ӯ: "у", ӣ: "и", ғ: "г", қ: "к", ҳ: "х", ҷ: "дж" };
-    const alternative = query.replace(/[ӯӣғқҳҷ]/gi, letter => letters[letter.toLowerCase()]);
-    if (addresses?.length === 0 && (!params.type || alternative !== query) && !signal?.aborted) {
-      return parseGeoapifyAddresses(await requestGeoapify("autocomplete", { ...params, type: "street", text: alternative }, config, signal), config.bounds, true);
+    const alternative = query.replace(/ё/gi, "е").replace(/[ӯӣғқҳҷ]/gi, letter => letters[letter.toLowerCase()]);
+    if (addresses?.length === 0 && alternative !== query && !signal?.aborted) {
+      return parseGeoapifyAddresses(await requestGeoapify("autocomplete", { ...params, text: alternative }, config, signal), config.bounds, true);
     }
     return addresses;
   }
@@ -137,12 +136,15 @@ export function parseGeoapifyAddresses(value: unknown, bounds: CityBounds, addre
   const items = (value as { results: unknown[] }).results.slice(0, 100).flatMap(item => {
     if (!item || typeof item !== "object") return [];
     const row = item as Record<string, unknown>;
-    // A named park/shop may match the query but sit on a completely different street.
-    if (addressesOnly && row.result_type !== undefined && !["street", "building"].includes(String(row.result_type))) return [];
+    const type = String(row.result_type ?? "");
+    const place = ["amenity", "suburb", "district", "locality"].includes(type);
+    if (addressesOnly && type && !["street", "building", "amenity", "suburb", "district", "locality"].includes(type)) return [];
     if (cityOnly && (typeof row.country_code !== "string" || row.country_code.toLowerCase() !== "tj" || typeof row.city !== "string"
       || !["dushanbe", "душанбе", "dushanbe city", "шаҳри душанбе", "город душанбе"].includes(row.city.trim().toLowerCase()))) return [];
     const description = [row.suburb || row.district, row.city].filter(part => typeof part === "string").join(", ");
-    return [{ street: row.street, building: row.housenumber ?? "", lat: row.lat, lng: row.lon, description }];
+    // A district/landmark is a search destination, never an invented street or house.
+    const placeName = place ? row.name || row.suburb || row.district : undefined;
+    return [{ street: place ? "" : row.street, building: place ? "" : row.housenumber ?? "", placeName, lat: row.lat, lng: row.lon, description }];
   });
   return parseAddressSuggestions({ items }, bounds);
 }
@@ -164,7 +166,7 @@ async function requestGeoapify(operation: "autocomplete" | "reverse", params: Re
   finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
 }
 
-export async function reverseDeliveryAddress(point: AddressPoint, config: AddressSearchConfig, signal?: AbortSignal, language: AddressLanguage = "ru"): Promise<AddressInput[] | null> {
+export async function reverseDeliveryAddress(point: AddressPoint, config: AddressSearchConfig, signal?: AbortSignal, language: AddressLanguage = "ru"): Promise<AddressSuggestion[] | null> {
   if (config.provider !== "geoapify" || !parseAddressPoint(point)) return null;
   const data = await requestGeoapify("reverse", { lat: String(point.latitude), lon: String(point.longitude), lang: language, limit: "1" }, config, signal);
   // The nearest mapped building may differ from the explicitly chosen entrance.

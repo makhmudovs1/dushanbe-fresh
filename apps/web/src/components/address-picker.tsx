@@ -4,7 +4,7 @@ import { ArrowLeft, Bookmark, BriefcaseBusiness, Check, ChevronRight, Home, Load
 import { checkDeliveryZone, deliveryZoneMessages } from "@dushanbe-fresh/shared";
 import type { AddressInput, SavedAddress } from "@dushanbe-fresh/shared";
 import { useI18n } from "@/i18n/provider";
-import { ADDRESS_QUERY_MIN, ADDRESS_QUERY_MAX, ADDRESS_SEARCH_LIMIT, deliveryAddressLabel, DUSHANBE_BOUNDS, WORLD_BOUNDS, emptyAddress, isWithinDeliveryBounds, parseAddressSuggestion, parseCityBounds, parseDeliveryAddress, type AddressSuggestion, type CityBounds } from "@/lib/delivery-address";
+import { ADDRESS_QUERY_MIN, ADDRESS_QUERY_MAX, ADDRESS_SEARCH_LIMIT, addressSuggestionLabel, deliveryAddressLabel, DUSHANBE_BOUNDS, WORLD_BOUNDS, emptyAddress, isWithinDeliveryBounds, parseAddressSuggestion, parseCityBounds, parseDeliveryAddress, type AddressSuggestion, type CityBounds } from "@/lib/delivery-address";
 import { AddressMapCanvas, type DeliveryPoint } from "./address-map-canvas";
 import { CustomerDialog } from "./customer-dialog";
 import { useReverseAddress } from "./use-reverse-address";
@@ -29,12 +29,13 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
   const [active, setActive] = useState(-1);
   const [source, setSource] = useState<"search" | "map" | "manual">("manual");
   const [moving, setMoving] = useState(false);
+  const [pointLabel, setPointLabel] = useState(deliveryAddressLabel(initial));
   const [config, setConfig] = useState<{ available: boolean; bounds: CityBounds; geoapify?: boolean }>({ available: false, bounds: DUSHANBE_BOUNDS });
   const [search, setSearch] = useState<{ status: "idle" | "loading" | "ready" | "error"; items: AddressSuggestion[] }>({ status: "idle", items: [] });
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
   const delivery = useDeliveryZone();
-  const reverse = useReverseAddress(address, WORLD_BOUNDS, view === "map" && source === "map" && !moving);
+  const reverse = useReverseAddress(address, WORLD_BOUNDS, view === "map" && source === "map" && !moving && config.available && !!config.geoapify);
   const gps = useDeliveryGeolocation(changePoint, WORLD_BOUNDS);
   const cancelLocation = gps.cancel;
   useEffect(() => { if (view !== "map") cancelLocation(); }, [view, cancelLocation]);
@@ -62,31 +63,34 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
         const data = await response.json();
         if (data.status !== "available" || !Array.isArray(data.items)) throw new Error("Unavailable");
         const items = data.items.slice(0, ADDRESS_SEARCH_LIMIT).map(parseAddressSuggestion)
-          .filter((item: AddressSuggestion | null): item is AddressSuggestion => !!item && isWithinDeliveryBounds(item, config.bounds));
+          .filter((item: AddressSuggestion | null): item is AddressSuggestion => !!item && isWithinDeliveryBounds(item, config.bounds)
+            && (!delivery.zone?.enabled || checkDeliveryZone(delivery.zone, item) === "allowed"));
         if (valid) setSearch({ status: "ready", items });
       }).catch(() => { if (valid) setSearch({ status: "error", items: [] }); });
     }, 350);
     const deadline = setTimeout(() => controller.abort(), 6500);
     return () => { valid = false; controller.abort(); clearTimeout(timer); clearTimeout(deadline); };
-  }, [query, dirty, config, locale, view]);
+  }, [query, dirty, config, locale, view, delivery.zone]);
 
   useEffect(() => {
+    if (reverse?.status === "empty" || reverse?.status === "unavailable") { setPointLabel(""); setQuery(""); setDirty(false); return; }
     if (reverse?.status !== "available" || !reverse.address) return;
     const result = reverse.address;
     setAddress(current => ({ ...current, street: result.street, building: result.building }));
-    setQuery(deliveryAddressLabel(result)); setDirty(false);
+    setPointLabel(deliveryAddressLabel(result)); setQuery(deliveryAddressLabel(result)); setDirty(false);
   }, [reverse]);
 
   function choose(item: AddressSuggestion) {
     cancelLocation();
     setAddress(current => ({ ...current, street: item.street, building: item.building, latitude: item.latitude, longitude: item.longitude }));
-    setQuery(deliveryAddressLabel(item)); setDirty(false); setOpen(false); setSource("search"); input.current?.blur();
+    setPointLabel(addressSuggestionLabel(item)); setQuery(addressSuggestionLabel(item)); setDirty(false); setOpen(false); setSource(item.placeName ? "map" : "search"); input.current?.blur();
   }
   function changePoint(point: DeliveryPoint) {
-    setAddress(current => ({ ...current, ...point, street: "", building: "" })); setSource("map"); setQuery(""); setDirty(false); setOpen(false); input.current?.blur();
+    setPointLabel(previous => deliveryAddressLabel(address) || previous);
+    setAddress(current => ({ ...current, ...point, street: "", building: "" })); setSource("map"); setDirty(false); setOpen(false); input.current?.blur();
   }
-  function edit(item: SavedAddress) { setAddress(item); setMetadata({ id: item.id, label: item.label, isDefault: item.isDefault }); setView("details"); }
-  function add() { setAddress({ ...emptyAddress }); setMetadata({ label: "home" }); setQuery(""); setDirty(false); setSource("manual"); setView("map"); }
+  function edit(item: SavedAddress) { setAddress(item); setPointLabel(deliveryAddressLabel(item)); setMetadata({ id: item.id, label: item.label, isDefault: item.isDefault }); setView("details"); }
+  function add() { setAddress({ ...emptyAddress }); setPointLabel(""); setMetadata({ label: "home" }); setQuery(""); setDirty(false); setSource("manual"); setView("map"); }
   const zoneResult = delivery.zone ? checkDeliveryZone(delivery.zone, address) : null;
   const validPoint = delivery.status === "ready" && zoneResult === "allowed";
   const zoneError = delivery.status === "unavailable" ? deliveryZoneMessages.unavailable : zoneResult && zoneResult !== "allowed" ? deliveryZoneMessages[zoneResult] : "";
@@ -124,16 +128,17 @@ export function AddressPicker({ initial, addresses, initialEditingId, startWithN
         {search.status === "loading" && dirty ? <LoaderCircle className="address-search-spinner" size={19} aria-label={t("Ищем адрес...")} /> : query ? <button type="button" title={t("Очистить поиск")} aria-label={t("Очистить поиск")} onClick={() => { cancelLocation(); setQuery(""); setSource("manual"); setDirty(true); input.current?.focus(); }}><X size={19} /></button> : null}
         {showResults ? <div className="address-suggestions" id={listId} role="listbox" aria-label={t("Адреса в Душанбе")}>
           {search.items.map((item, index) => <button key={`${item.street}-${item.building}-${index}`} id={`${listId}-${index}`} type="button" role="option" aria-selected={active === index}
-            onMouseDown={event => event.preventDefault()} onClick={() => choose(item)}><MapPin size={18} /><span><strong>{deliveryAddressLabel(item)}</strong><small>{item.description || t("Душанбе")}</small></span>{active === index ? <Check size={17} /> : null}</button>)}
-          {!search.items.length ? <p role="status">{t(search.status === "loading" ? "Ищем адрес..." : "Не нашли адрес? Уточните его вручную.")}</p> : null}
+            onMouseDown={event => event.preventDefault()} onClick={() => choose(item)}><MapPin size={18} /><span><strong>{addressSuggestionLabel(item)}</strong><small>{item.description || t("Душанбе")}</small></span>{active === index ? <Check size={17} /> : null}</button>)}
+          {!search.items.length ? <p role="status">{t(search.status === "loading" ? "Ищем адрес..." : search.status === "error" ? "Поиск временно недоступен. Укажите адрес вручную." : "Не нашли адрес? Уточните его вручную.")}</p> : null}
           {config.geoapify && search.items.length ? <small className="address-suggestions__credit"><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a></small> : null}
         </div> : null}
       </div>
       <AddressMapCanvas point={address} zone={delivery.zone} onChange={changePoint} onMoving={setMoving} onLocate={gps.locate} onInteraction={cancelLocation} locating={gps.locating} locationError={gps.error} />
       <footer className="address-picker__footer">
         {delivery.zone?.enabled && !moving && address.latitude != null ? <p className={`address-zone-status${zoneResult === "outside" ? " is-outside" : ""}`} data-testid="delivery-zone-status">{zoneResult === "allowed" ? <Check size={16} /> : <MapPin size={16} />}{t(zoneResult === "allowed" ? "Сюда доставляем" : "За зоной доставки")}</p> : null}
-        <div className="address-picker__selected"><MapPin size={20} /><span><strong>{dirty ? query || t("Выберите точку на карте") : moving ? t("Выберите точку на карте") : deliveryAddressLabel(address) || t("Уточните улицу и номер дома")}</strong>{isWithinDeliveryBounds(address, DUSHANBE_BOUNDS) ? <small>{t("Душанбе")}</small> : null}</span>
-          {reverse?.status === "searching" ? <LoaderCircle size={18} className="address-search-spinner" aria-label={t("Определяем адрес точки...")} /> : null}</div>
+        <div className="address-picker__selected" aria-busy={moving || reverse?.status === "searching"}><MapPin size={20} /><span><strong>{dirty ? query || t("Выберите точку на карте") : deliveryAddressLabel(address) || (moving || reverse?.status === "searching" ? pointLabel : "") || t("Уточните улицу и номер дома")}</strong>{isWithinDeliveryBounds(address, DUSHANBE_BOUNDS) ? <small>{t("Душанбе")}</small> : null}</span>
+          {moving || reverse?.status === "searching" ? <LoaderCircle size={18} className="address-search-spinner" aria-label={t("Определяем адрес точки...")} /> : null}</div>
+        {source === "map" && !moving && reverse?.status !== "searching" && !address.street ? <p className="address-manual-hint" role="status">{t("Точка сохранена. Укажите улицу, дом и ориентир вручную.")}</p> : null}
         {zoneNotice}
         <button type="button" className="primary-action" data-testid="address-continue" disabled={moving || !validPoint} onClick={() => {
           if (dirty) setAddress(current => ({ ...current, street: query.trim(), building: "" }));

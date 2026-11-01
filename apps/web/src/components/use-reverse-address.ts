@@ -17,8 +17,6 @@ export function useReverseAddress(value: AddressInput, bounds: CityBounds, enabl
     const deadline = setTimeout(() => controller.abort(), 6500);
     const timer = setTimeout(() => {
       void (async () => {
-        const config = await fetch("/api/address-search", { cache: "no-store", signal: controller.signal });
-        if (!config.ok || (await config.json()).reverse !== true) throw new Error("Unavailable");
         const response = await fetch("/api/address-reverse", { method: "POST", cache: "no-store", signal: controller.signal,
           headers: { "Content-Type": "application/json" }, body: JSON.stringify({ latitude, longitude, language: locale }) });
         if (!response.ok) throw new Error("Unavailable");
@@ -31,5 +29,6 @@ export function useReverseAddress(value: AddressInput, bounds: CityBounds, enabl
     }, 400);
     return () => { active = false; clearTimeout(timer); clearTimeout(deadline); controller.abort(); };
   }, [latitude, longitude, locale, bounds, key, enabled]);
-  return enabled && result.key === key && latitude != null && longitude != null ? result : null;
+  if (!enabled || latitude == null || longitude == null) return null;
+  return result.key === key ? result : { key, status: "searching" as const };
 }

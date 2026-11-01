@@ -41,17 +41,19 @@ describe("Geoapify server adapter", () => {
     expect(url.pathname).toBe("/v1/geocode/reverse");
     expect(Object.fromEntries(url.searchParams)).toMatchObject({ lat: String(point.latitude), lon: String(point.longitude), lang: "tg", limit: "1" });
   });
-  it("does not disguise a matching POI as a different street in address suggestions", async () => {
+  it("accepts landmarks without disguising them as a different street", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [
       { ...row, street: "Сомони", name: "Парк Рудаки", result_type: "amenity" },
       { ...row, result_type: "street", housenumber: undefined },
       { ...row, result_type: "building" }
     ] }))));
-    expect((await searchDeliveryAddresses("Рудаки", config()))?.map(item => item.street)).toEqual([row.street, row.street]);
-    expect(new URL(vi.mocked(fetch).mock.calls[0][0] as URL).searchParams.get("type")).toBe("street");
+    const items = await searchDeliveryAddresses("Рудаки", config());
+    expect(items?.map(item => item.street)).toEqual(["", row.street, row.street]);
+    expect(items?.[0]).toMatchObject({ placeName: "Парк Рудаки", building: "" });
+    expect(new URL(vi.mocked(fetch).mock.calls[0][0] as URL).searchParams.has("type")).toBe(false);
   });
   it("retries Tajik spelling only for empty address results and keeps provider coordinates", async () => {
-    const fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ results: [{ ...row, result_type: "amenity" }] })))
+    const fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ results: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ results: [{ ...row, result_type: "street" }] })));
     vi.stubGlobal("fetch", fetch);
     const result = await searchDeliveryAddresses("Рӯдакӣ", config(), undefined, "tg");
@@ -59,6 +61,11 @@ describe("Geoapify server adapter", () => {
     expect(new URL(fetch.mock.calls[1][0]).searchParams.get("text")).toBe("Рудаки");
     expect(new URL(fetch.mock.calls[1][0]).searchParams.get("lang")).toBe("tg");
     expect(result?.[0]).toMatchObject({ latitude: row.lat, longitude: row.lon });
+  });
+  it("returns a real neighbourhood as a point, not an invented street or house", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [{ ...row, result_type: "suburb", name: "Гипрозем", street: undefined, housenumber: undefined }] }))));
+    const result = await searchDeliveryAddresses("Гипрозем", config());
+    expect(result?.[0]).toMatchObject({ placeName: "Гипрозем", street: "", building: "", latitude: row.lat, longitude: row.lon });
   });
   it.each([401, 403, 429, 500, 503])("sanitizes upstream HTTP %s", async status => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(key, { status })));

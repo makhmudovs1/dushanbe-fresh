@@ -12,9 +12,13 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
 ARG API_URL=http://127.0.0.1:4000/api/v1
 ARG NEXT_PUBLIC_GEOAPIFY_MAP_API_KEY=
+ARG GEOAPIFY_MAP_KEY_REVISION=none
 ENV API_URL=${API_URL} NEXT_OUTPUT_STANDALONE=true NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_GEOAPIFY_MAP_API_KEY=${NEXT_PUBLIC_GEOAPIFY_MAP_API_KEY}
-RUN pnpm db:generate && pnpm build
+RUN --mount=type=secret,id=geoapify_map_key \
+    test -n "$GEOAPIFY_MAP_KEY_REVISION"; \
+    if [ -f /run/secrets/geoapify_map_key ]; then export NEXT_PUBLIC_GEOAPIFY_MAP_API_KEY="$(cat /run/secrets/geoapify_map_key)"; fi; \
+    pnpm db:generate && pnpm build
 RUN mkdir -p /out && pnpm --filter @dushanbe-fresh/api list --prod --depth Infinity --json > /out/trusted-dependencies.json \
     && pnpm --filter @dushanbe-fresh/api deploy --prod /out/api \
     && pnpm --dir /out/api list --prod --depth Infinity --json > /out/runtime-dependencies.json

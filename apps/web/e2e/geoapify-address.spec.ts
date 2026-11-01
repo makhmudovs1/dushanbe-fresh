@@ -111,7 +111,7 @@ for (const failure of ["error","empty"] as const) test(`manual house after searc
   await page.setViewportSize({ width: 390, height: 844 });
   const { dialog } = await setup(page, context, baseURL!, "ru", { failure: failure === "error", empty: failure === "empty", reverseError: true });
   await dialog.getByRole("combobox").fill("Неизвестная улица");
-  await expect(dialog.getByText("Не нашли адрес? Уточните его вручную.", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(failure === "error" ? "Поиск временно недоступен. Укажите адрес вручную." : "Не нашли адрес? Уточните его вручную.", { exact: true })).toBeVisible();
   await dialog.getByTestId("address-continue").click();
   await dialog.getByRole("textbox", { name: "Дом", exact: true }).fill("7");
   await dialog.getByRole("group", { name: "Тип жилья" }).getByLabel("Частный дом", { exact: true }).check();

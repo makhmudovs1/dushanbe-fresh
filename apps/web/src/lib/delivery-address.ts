@@ -3,7 +3,7 @@ import { CHECKOUT_DRAFT_KEY, loadCheckoutDraft, saveCheckoutDraft } from "./chec
 
 export const DELIVERY_ADDRESS_KEY = "df.delivery.address.v1";
 export const GUEST_ADDRESS_LIST_KEY = "df.delivery.addresses.v1";
-export type AddressSuggestion = AddressInput & { description?: string };
+export type AddressSuggestion = AddressInput & { description?: string; placeName?: string };
 export const emptyAddress: AddressInput = { housingType: "apartment", street: "", building: "", apartment: "", entrance: "", floor: "", intercom: "", instructions: "", latitude: null, longitude: null };
 const OWNER_KEY = "df.delivery.address.account.v1";
 export const ADDRESS_SEARCH_LIMIT = 6;
@@ -62,7 +62,13 @@ export function parseAddressSuggestion(value: unknown): AddressSuggestion | null
   const address = parseDeliveryAddress(value, false);
   if (!address) return null;
   const description = (value as { description?: unknown }).description;
-  return { ...address, ...(typeof description === "string" && description.length <= 180 && !hasAddressControlCharacters(description) ? { description: description.trim() } : {}) };
+  const placeName = (value as { placeName?: unknown }).placeName;
+  return { ...address, ...(typeof description === "string" && description.length <= 180 && !hasAddressControlCharacters(description) ? { description: description.trim() } : {}),
+    ...(typeof placeName === "string" && placeName.trim() && placeName.length <= 150 && !hasAddressControlCharacters(placeName) ? { placeName: placeName.trim() } : {}) };
+}
+
+export function addressSuggestionLabel(address: AddressSuggestion) {
+  return address.placeName || deliveryAddressLabel(address);
 }
 
 export function loadGuestAddressList(storage: Pick<Storage, "getItem">): SavedAddress[] {
