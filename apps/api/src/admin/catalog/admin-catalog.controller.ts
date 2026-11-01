@@ -21,13 +21,13 @@ export class AdminCatalogController {
   }
 
   @Post("categories")
-  createCategory(@Body() body: Record<string, unknown>) {
-    return this.catalogService.createAdminCategory(parseCategoryInput(body));
+  createCategory(@Body() body: Record<string, unknown>, @Req() request: StaffRequest) {
+    return this.catalogService.createAdminCategory(parseCategoryInput(body), request.staff.id);
   }
 
   @Patch("categories/:id")
-  updateCategory(@Param("id") id: string, @Body() body: Record<string, unknown>) {
-    return this.catalogService.updateAdminCategory(id, parseCategoryUpdateInput(body));
+  updateCategory(@Param("id") id: string, @Body() body: Record<string, unknown>, @Req() request: StaffRequest) {
+    return this.catalogService.updateAdminCategory(id, parseCategoryUpdateInput(body), request.staff.id);
   }
 
   @Get("products")
@@ -46,8 +46,8 @@ export class AdminCatalogController {
   }
 
   @Post("products")
-  createProduct(@Body() body: Record<string, unknown>) {
-    return this.catalogService.createAdminProduct(parseProductInput(body));
+  createProduct(@Body() body: Record<string, unknown>, @Req() request: StaffRequest) {
+    return this.catalogService.createAdminProduct(parseProductInput(body), request.staff.id);
   }
 
   @Patch("products/:id")

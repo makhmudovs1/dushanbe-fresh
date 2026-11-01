@@ -17,6 +17,11 @@
 .minimum-order progress::-webkit-progress-bar { background: #e2e7e2; }
 .minimum-order progress::-webkit-progress-value { background: #329360; border-radius: 5px; }
 .minimum-order progress::-moz-progress-bar { background: #329360; border-radius: 5px; }
+.minimum-order, .commerce-cart .summary-row { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .minimum-order progress::-webkit-progress-value { transition: width 200ms ease-out; }
+  .minimum-order progress::-moz-progress-bar { transition: width 200ms ease-out; }
+}
 .commerce-cart .cart-item { display: grid; grid-template-columns: 72px minmax(0, 1fr) 132px 100px 28px; grid-template-areas: "photo info quantity total delete"; gap: 12px; align-items: center; min-height: 100px; padding: 14px 0; border: 0; border-radius: 0; box-shadow: none; background: #fff; }
 .commerce-cart .cart-item .cart-item__media { width: 72px; height: 76px; min-height: 0; border-radius: 8px; overflow: hidden; background: #f7f7f7; }
 .commerce-cart .cart-item__media .product-image { width: 100%; height: 100%; object-fit: contain; }

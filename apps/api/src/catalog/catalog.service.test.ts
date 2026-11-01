@@ -61,6 +61,7 @@ function createService() {
       update: vi.fn().mockResolvedValue(product)
     },
     productPriceHistory: { create: vi.fn() },
+    pricingAudit: { create: vi.fn() },
     productImage: { updateMany: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() }
   };
 
@@ -154,7 +155,7 @@ describe("CatalogService", () => {
     const image = "/api/v1/media/00000000-0000-4000-8000-000000000001.webp";
     prisma.product.update.mockResolvedValue({ ...product, imageUrl: image });
     const result = await service.updateAdminProduct(product.id, { image });
-    expect(prisma.product.update).toHaveBeenCalledWith(expect.objectContaining({ data: { imageUrl: image } }));
+    expect(prisma.product.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ imageUrl: image }) }));
     expect(result.image).toBe(image);
   });
 

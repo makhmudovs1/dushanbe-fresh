@@ -7,34 +7,58 @@ import { getDeliverySlots, validateCheckout } from "@/lib/checkout";
 import { decimalLabel } from "@/lib/format";
 import { minimumProgress } from "@/lib/order-presentation";
 import { hasLegacyCartItems, type CartState } from "@/cart/cart";
+import { optimisticCartQuote } from "@/lib/cart-pricing-preview";
+import { useOptionalCustomer } from "@/customer/customer-context";
 
 export function useCartPricing(state: CartState, ready: boolean) {
+  const customer = useOptionalCustomer();
+  const identityPending = !!customer && (customer.loading || customer.resolved === false);
+  const owner = customer?.status.enabled && customer.user?.phoneVerifiedAt ? customer.user.id : "guest";
   const key = JSON.stringify(state.items.map(item => ({ productId: item.productId, quantity: item.quantity,
     qualityOptionId: item.qualityOptionId ?? null, observedPrice: item.sellingPrice })));
-  const enabled = ready && state.items.length > 0 && !hasLegacyCartItems(state);
-  const [slot, setSlot] = useState<string | null>(null);
-  const [result, setResult] = useState<{ key: string; quote: CheckoutQuote } | null>(null);
-  const [errorKey, setErrorKey] = useState("");
+  const scope = ready && !identityPending && state.items.length > 0 && !hasLegacyCartItems(state) ? owner : null;
+  const [session, setSession] = useState<{
+    scope: string | null; key: string; slot: string | null;
+    quote: CheckoutQuote | null; status: "pending" | "confirmed" | "failed";
+  }>({ scope, key, slot: null, quote: null, status: "pending" });
+  // Reset before commit so a previous owner's quote can never flash or reappear.
+  if (session.scope !== scope) {
+    setSession({ scope, key, slot: null, quote: null, status: "pending" });
+  } else if (session.key !== key) {
+    setSession({ ...session, key, status: session.slot ? "pending" : session.status });
+  }
+  const slot = session.scope === scope ? session.slot : null;
   useEffect(() => {
-    if (!enabled) return;
+    if (scope === null) return;
     const controller = new AbortController();
     void getDeliverySlots(controller.signal).then(slots => {
-      if (!controller.signal.aborted) setSlot((slots.find(slot => slot.available) ?? slots[0])?.id ?? null);
-    }).catch(() => { /* Checkout can retry independently; never invent a fee or threshold. */ });
+      if (controller.signal.aborted) return;
+      const slot = (slots.find(slot => slot.available) ?? slots[0])?.id ?? null;
+      setSession(current => ({ ...current, slot, status: slot ? "pending" : "failed" }));
+    }).catch(() => {
+      if (!controller.signal.aborted) setSession(current => ({ ...current, status: "failed" }));
+    });
     return () => controller.abort();
-  }, [enabled]);
+  }, [scope]);
   useEffect(() => {
-    if (!enabled || !slot) return;
+    if (scope === null || !slot) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       const input: CheckoutInput = { items: JSON.parse(key), deliverySlotId: slot };
       void validateCheckout(input, controller.signal).then(quote => {
-        if (!controller.signal.aborted) { setResult({ key, quote }); setErrorKey(""); }
-      }).catch(() => { if (!controller.signal.aborted) setErrorKey(key); });
+        if (!controller.signal.aborted) setSession(current => ({ ...current, quote, status: "confirmed" }));
+      }).catch(() => {
+        if (!controller.signal.aborted) setSession(current => ({ ...current, status: "failed" }));
+      });
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [enabled, key, slot]);
-  return { quote: enabled && result?.key === key ? result.quote : null, failed: errorKey === key };
+  }, [scope, key, slot]);
+  const active = scope !== null && session.scope === scope && session.key === key;
+  return {
+    quote: active && session.quote ? session.status === "confirmed" ? session.quote : optimisticCartQuote(session.quote, state) : null,
+    pending: active && session.status === "pending",
+    failed: active && session.status === "failed"
+  };
 }
 
 export function MinimumOrderProgress({ quote }: { quote: CheckoutQuote }) {

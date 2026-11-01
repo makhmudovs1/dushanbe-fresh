@@ -97,6 +97,21 @@
 .catalog-dialog .photo-preview { width: 180px; }
 .catalog-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .catalog-form-actions button { box-shadow: none; font-weight: 650; }
+.admin-bulk-pricing { padding: 16px 0; margin-bottom: 12px; border-block: 1px solid var(--color-border); }
+.admin-bulk-pricing h3 { margin: 0 0 12px; font-size: 17px; }
+.admin-bulk-pricing .checkbox-row, .admin-pricing-categories, .catalog-admin__selection { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.admin-bulk-pricing .checkbox-row label, .admin-pricing-categories label, .admin-pricing-check { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; }
+.admin-pricing-check input, .admin-bulk-pricing input[type="radio"], .admin-pricing-categories input, .admin-pricing-select { flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: var(--color-primary); }
+.catalog-dialog label.admin-pricing-check { display: flex; align-items: center; flex-direction: row; gap: 8px; }
+.admin-pricing-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-block: 12px; }
+.admin-pricing-controls > label:first-child { display: grid; gap: 6px; width: 160px; max-width: 100%; }
+.admin-pricing-controls input:not([type="checkbox"]) { min-width: 0; width: 100%; padding: 8px 12px; min-height: 44px; border: 1px solid var(--color-border); border-radius: 4px; }
+.catalog-admin__selection { padding-block: 4px; font-size: 14px; }
+.admin-pricing-preview { max-width: 100%; overflow-x: auto; margin-block: 12px; }
+.admin-pricing-preview table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; }
+.admin-pricing-preview th, .admin-pricing-preview td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--color-border); }
+.admin-pricing-preview th { font-weight: 600; }
+.admin-pricing-preview th:first-child { min-width: 120px; overflow-wrap: anywhere; }
 @media (min-width: 360px) {
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -1,5 +1,6 @@
 import { Prisma, ProductImage, ProductPriceHistory } from "@prisma/client";
 import type { GalleryInput } from "./catalog.gallery";
+import type { PriceMode, ProductPricing } from "@dushanbe-fresh/shared";
 
 export type ProductWithCategoryAndOptions = Prisma.ProductGetPayload<{
   include: {
@@ -19,6 +20,7 @@ export type CategoryDto = {
   imageUrl?: string | null;
   iconUrl?: string | null;
   parentId?: string | null;
+  markupPercent?: string | null;
 };
 
 export type PublicProductDto = {
@@ -50,7 +52,7 @@ export type PublicProductDto = {
   }>;
 };
 
-export type AdminProductDto = PublicProductDto & {
+export type AdminProductDto = PublicProductDto & ProductPricing & {
   purchasePrice: string;
   isActive: boolean;
   isAvailableToday: boolean;
@@ -64,6 +66,7 @@ export type ProductFilters = {
 };
 
 export type CategoryInput = {
+  markupPercent?: string | null;
   name: string;
   nameTj?: string | null;
   slug: string;
@@ -85,7 +88,9 @@ export type ProductInput = {
   image?: string | null;
   images?: GalleryInput[];
   unit: string;
-  sellingPrice: string;
+  sellingPrice?: string;
+  priceMode?: PriceMode;
+  markupPercent?: string | null;
   purchasePrice: string;
   isWeighted?: boolean;
   minQuantity: string;

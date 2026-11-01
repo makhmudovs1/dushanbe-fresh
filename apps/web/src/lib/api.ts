@@ -1,4 +1,5 @@
 import { errorMessage } from "./error-message";
+import type { BulkPricingApplyInput, BulkPricingBatch, BulkPricingPreview, BulkPricingPreviewInput, BulkPricingUndoInput, PriceMode, PricingSettings } from "@dushanbe-fresh/shared";
 
 export type Category = {
   id: string;
@@ -11,6 +12,7 @@ export type Category = {
   imageUrl?: string | null;
   iconUrl?: string | null;
   parentId?: string | null;
+  markupPercent?: string | null;
 };
 
 export type Product = {
@@ -27,6 +29,9 @@ export type Product = {
   unit: string;
   sellingPrice: string;
   purchasePrice?: string;
+  priceMode?: PriceMode;
+  markupPercent?: string | null;
+  appliedMarkupPercent?: string | null;
   isWeighted: boolean;
   minQuantity: string;
   quantityStep: string;
@@ -101,6 +106,30 @@ export function createAdminCategory(payload: Record<string, unknown>) {
 
 export function getAdminProducts() {
   return request<Product[]>("/admin/products");
+}
+
+export function getAdminPricingSettings() {
+  return request<PricingSettings>("/admin/pricing/settings");
+}
+
+export function updateAdminPricingSettings(payload: PricingSettings) {
+  return request<PricingSettings>("/admin/pricing/settings", { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function previewAdminPricing(payload: BulkPricingPreviewInput) {
+  return request<BulkPricingPreview>("/admin/pricing/bulk/preview", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function applyAdminPricing(payload: BulkPricingApplyInput) {
+  return request<BulkPricingBatch>("/admin/pricing/bulk/apply", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function undoAdminPricing(payload: BulkPricingUndoInput) {
+  return request<BulkPricingBatch>("/admin/pricing/bulk/undo", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function getLastAdminPricingBatch() {
+  return request<BulkPricingBatch | null>("/admin/pricing/bulk/last");
 }
 
 export function updateAdminCategory(id: string, payload: Record<string, unknown>) {

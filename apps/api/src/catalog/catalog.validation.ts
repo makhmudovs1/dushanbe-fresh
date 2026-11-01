@@ -3,6 +3,7 @@ import { BadRequestException } from "@nestjs/common";
 import { CategoryInput, ProductInput, ProductUpdateInput } from "./catalog.types";
 import { parseGallery } from "./catalog.gallery";
 import { assertCatalogImage } from "./catalog.image";
+import { parseMarkup, parsePriceMode } from "./pricing.rules";
 
 const decimalPattern = /^\d+(\.\d{1,3})?$/;
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
@@ -84,6 +85,7 @@ function categoryImage(value: unknown) {
 
 export function parseCategoryInput(body: Record<string, unknown>): CategoryInput {
   return {
+    markupPercent: body.markupPercent === undefined ? undefined : body.markupPercent === null ? null : parseMarkup(body.markupPercent),
     name: assertString(body.name, "name"),
     nameTj: body.nameTj === undefined ? undefined : optionalString(body.nameTj, "nameTj"),
     imageUrl: body.imageUrl === undefined ? undefined : categoryImage(body.imageUrl),
@@ -100,6 +102,7 @@ export function parseCategoryUpdateInput(
   body: Record<string, unknown>
 ): Partial<CategoryInput> {
   const parsed: Partial<CategoryInput> = {};
+  if (body.markupPercent !== undefined) parsed.markupPercent = body.markupPercent === null ? null : parseMarkup(body.markupPercent);
 
   if (body.name !== undefined) parsed.name = assertString(body.name, "name");
   if (body.nameTj !== undefined) parsed.nameTj = optionalString(body.nameTj, "nameTj");
@@ -126,7 +129,9 @@ export function parseProductInput(body: Record<string, unknown>): ProductInput {
     image: optionalString(body.image, "image"),
     images: body.images === undefined ? undefined : parseGallery(body.images),
     unit: assertString(body.unit, "unit"),
-    sellingPrice: money(body.sellingPrice, "sellingPrice"),
+    sellingPrice: body.sellingPrice === undefined ? undefined : money(body.sellingPrice, "sellingPrice"),
+    priceMode: body.priceMode === undefined ? undefined : parsePriceMode(body.priceMode),
+    markupPercent: body.markupPercent === undefined ? undefined : body.markupPercent === null ? null : parseMarkup(body.markupPercent),
     purchasePrice: money(body.purchasePrice, "purchasePrice"),
     isWeighted: optionalBoolean(body.isWeighted, "isWeighted"),
     minQuantity: quantity(body.minQuantity, "minQuantity"),
@@ -142,6 +147,8 @@ export function parseProductUpdateInput(
 ): ProductUpdateInput {
   assertNoQualityOptions(body.qualityOptions);
   const parsed: ProductUpdateInput = {};
+  if (body.priceMode !== undefined) parsed.priceMode = parsePriceMode(body.priceMode);
+  if (body.markupPercent !== undefined) parsed.markupPercent = body.markupPercent === null ? null : parseMarkup(body.markupPercent);
 
   if (body.categoryId !== undefined) parsed.categoryId = assertString(body.categoryId, "categoryId");
   if (body.name !== undefined) parsed.name = assertString(body.name, "name");

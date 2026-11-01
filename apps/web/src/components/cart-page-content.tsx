@@ -69,7 +69,7 @@ function CartContents() {
   const containsWeightedProducts = hasWeightedItems(state);
   const subtotalPrefix = containsWeightedProducts ? "≈ " : "";
   const legacy = hasLegacyCartItems(state);
-  const { quote } = useCartPricing(state, hydrated && !syncError);
+  const { quote, pending: pricingPending, failed: pricingFailed } = useCartPricing(state, hydrated && !syncError);
 
   if (!state.items.length && syncError) return <header className="page-heading"><h1>{t("Корзина")}</h1></header>;
   if (!hydrated) return <CartSkeleton />;
@@ -102,7 +102,8 @@ function CartContents() {
         {state.items.map((item) => {
           const itemKey = `${item.productId}:${item.qualityOptionId ?? "none"}`;
           const conflicting = legacyConflicts.some(pair => pair.saved.productId === item.productId && (pair.saved.qualityOptionId ?? null) === (item.qualityOptionId ?? null));
-          const itemSubtotal = formatMoneyFromMinor(calculateItemSubtotalMinor(item));
+          const quotedItem = quote?.items.find(line => line.productId === item.productId);
+          const itemSubtotal = quotedItem?.estimatedTotal ?? formatMoneyFromMinor(calculateItemSubtotalMinor(item));
 
           return (
             <article className="cart-item" key={itemKey}>
@@ -112,7 +113,7 @@ function CartContents() {
               <div className="cart-item__info">
                 <h3><MobileProductLink product={item.slug}>{name(item)}</MobileProductLink></h3>
                 {isLegacyCartItem(item) ? <p className="form-error">{t("Старая позиция")}{item.qualityOptionLabel ? `: ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}</p> : null}
-                <p className="cart-item__unit-price">{quantityLabel(item.quantity, item.unit)} <span aria-hidden="true">·</span> {priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
+                <p className="cart-item__unit-price">{quantityLabel(item.quantity, item.unit)} <span aria-hidden="true">·</span> {priceLabel(quotedItem?.sellingPrice ?? item.sellingPrice, item.unit, item.slug)}</p>
                 <p className="cart-item__mobile-price"><strong>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)} {t("сомони")}</strong></p>
                 {quote?.items.filter(line => line.productId === item.productId).flatMap(line => [...line.errors, ...line.warnings]).map(message => <p className="checkout-error" key={message}>{t(message)}</p>)}
               </div>
@@ -133,8 +134,9 @@ function CartContents() {
       </div>
       </div>
 
-      <aside className="cart-summary">
+      <aside className="cart-summary" aria-busy={pricingPending}>
         <h2>{t("Итого")}</h2>
+        {pricingFailed ? <p className="commerce-caption" role="status">{t("Не удалось уточнить сумму. Проверим её при оформлении.")}</p> : null}
         <div className="summary-row">
           <span>{t("Товары")}</span>
           <strong>

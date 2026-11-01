@@ -234,6 +234,7 @@ model Category {
   children  Category[] @relation("CategoryTree")
   deletedAt DateTime? @map("deleted_at")
   products  Product[]
+  markupPercent Decimal? @map("markup_percent") @db.Decimal(7, 2)
 
   @@index([parentId])
   @@map("categories")
@@ -251,6 +252,9 @@ model Product {
   unit                 String
   currentPurchasePrice Decimal                @map("current_purchase_price") @db.Decimal(12, 2)
   currentSalePrice     Decimal                @map("current_sale_price") @db.Decimal(12, 2)
+  priceMode            String                 @default("manual") @map("price_mode")
+  markupPercent        Decimal?               @map("markup_percent") @db.Decimal(7, 2)
+  appliedMarkupPercent Decimal?               @map("applied_markup_percent") @db.Decimal(7, 2)
   isWeighted           Boolean                @default(false) @map("is_weighted")
   minQuantity          Decimal                @map("min_quantity") @db.Decimal(12, 3)
   quantityStep         Decimal                @map("quantity_step") @db.Decimal(12, 3)
@@ -454,6 +458,37 @@ model AppSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("app_settings")
+}
+
+model PricingBatch {
+  id             String    @id @default(uuid())
+  createdBy      String    @map("created_by")
+  input          Json
+  snapshot       Json
+  afterSnapshot  Json?     @map("after_snapshot")
+  status         String    @default("preview")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  expiresAt      DateTime  @map("expires_at")
+  appliedAt      DateTime? @map("applied_at")
+  undoneAt       DateTime? @map("undone_at")
+  applyRequestId String?   @unique @map("apply_request_id")
+  undoRequestId  String?   @unique @map("undo_request_id")
+
+  @@index([appliedAt])
+  @@map("pricing_batches")
+}
+
+model PricingAudit {
+  id        String   @id @default(uuid())
+  actorId   String?  @map("actor_id")
+  action    String
+  targetId  String   @map("target_id")
+  before    Json
+  after     Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([targetId, createdAt])
+  @@map("pricing_audit")
 }
 
 enum CustomerRisk {

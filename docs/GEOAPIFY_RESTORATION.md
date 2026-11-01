@@ -28,8 +28,9 @@ BuildKit secret mount. The server key must never enter build inputs or assets.
 
 An unused newly generated server key was exposed in a diagnostic exception.
 It was revoked with explicit approval before deployment; only its replacement
-is installed. Old project keys remain active until the new production maps
-have passed checks and their removal is explicitly confirmed.
+is installed. After successful public desktop/mobile checks, the two old project
+keys were removed with explicit confirmation. Only the fresh browser/server pair
+remains; production search and map checks passed again after revocation.
 
 ## Address behavior
 

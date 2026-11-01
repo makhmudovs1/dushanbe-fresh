@@ -1245,3 +1245,40 @@
 Дата/повтор доступны из истории владельца, публичная ссылка не обходит авторизацию.
 Контракты API и база не расширяются в рамках этого визуального этапа.
 Подробнее: [COMMERCE_REDESIGN.md](COMMERCE_REDESIGN.md).
+
+## 2026-11-01: Backend Automatic Product Markup
+
+- Additive migration leaves all existing Product prices untouched and defaults
+  their priceMode to manual. No SKU, order-snapshot or procurement changes.
+- Global/direct-category percentages are defaults for future products, not an
+  implicit catalog repricing. No category-tree markup inheritance in the MVP.
+- Product override wins over category and global. Auto products retain an applied
+  percentage snapshot for later purchase-price changes. Explicit mode/override or
+  category edits can adopt the current defaults; ordinary edits cannot.
+- Zero purchase in the existing required Decimal column means unknown for auto
+  pricing. Never invent sale/purchase values: auto price edits fail, bulk skips.
+- Preserve old create clients: an explicit sale without a mode remains manual;
+  a new create without sale/mode is auto. Explicit auto never accepts a mismatching
+  client sale. Decimal half-up rounding to 2dp, always based on purchase.
+- Bulk selection is explicit IDs, exact category IDs (no descendants), or all;
+  manual overwrite requires preview opt-in. Persist preview snapshots (15-minute
+  expiry), compare membership and product revisions, apply/audit/history/idempotency
+  atomically. Undo only the globally last applied batch, all-or-nothing if unchanged.
+- API and backend verification details: [PRICING.md](../apps/api/docs/PRICING.md).
+
+## 2026-11-01: Web Admin Automatic Markup
+
+- Admin reuses purchasePrice/sellingPrice. Missing pricing metadata means manual;
+  new admin products start in auto mode, without an invented purchase or sale.
+- Individual markup overrides the exact category, then the global default.
+  Global/category settings are future-only. Existing auto products retain their
+  applied percent when purchase changes; explicit return-to-auto, category or
+  individual-markup edits resolve the current defaults again.
+- Unchanged pricing policy fields are omitted from product PATCH requests, and
+  auto sale prices are calculated authoritatively by the API, not submitted by Web.
+- Admin currently loads the complete product list, without pagination. Selection
+  persists across filters; categoryIds/all selections go to the server, never
+  expand from visible rows. Category selection targets each exact category.
+- Bulk preview, explicit confirmation and undo use the backend pricing batch API.
+  Manual prices require a separate opt-in checkbox; retries reuse request IDs.
+  The last operation is loaded from the API after reload, not local browser state.

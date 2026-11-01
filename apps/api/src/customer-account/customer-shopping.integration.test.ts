@@ -61,6 +61,8 @@ describe.skipIf(!target)("isolated customer shopping HTTP and PostgreSQL", () =>
         IF (SELECT to_jsonb(c) FROM customers c) IS DISTINCT FROM (SELECT row FROM before_customers) THEN RAISE EXCEPTION 'Customer/risk changed'; END IF;
         IF (SELECT intercom FROM customer_addresses LIMIT 1) <> '' THEN RAISE EXCEPTION 'Wrong intercom default'; END IF;
       END $$;`);
+    const later = names.filter(name => name > shoppingMigration).map(name => readFileSync(resolve(migrations, name, "migration.sql"), "utf8")).join("\n");
+    sql(`SET search_path TO "${schema}";\n${later}`);
     const isolated = new URL(target!); isolated.searchParams.set("schema", schema);
     vi.stubEnv("DATABASE_URL", isolated.toString()); vi.stubEnv("WEB_ORIGIN", "http://localhost:3000"); vi.stubEnv("NODE_ENV", "test");
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_OTP_SECRET", secret);

@@ -7,6 +7,8 @@ import { mapAdminProduct, mapCategory, mapPublicProduct } from "./catalog.mapper
 import { assertCatalogImage } from "./catalog.image";
 import { parseGallery, type GalleryInput } from "./catalog.gallery";
 import { assertNoQualityOptions } from "./catalog.validation";
+import { lockPricing, parseMarkup } from "./pricing.rules";
+import { productPricingData, pricingState } from "./product-pricing";
 import {
   CategoryInput,
   ProductFilters,
@@ -85,15 +87,17 @@ export class CatalogService {
     return categories.map((category) => mapCategory(category, true));
   }
 
-  async createAdminCategory(input: CategoryInput) {
+  async createAdminCategory(input: CategoryInput, actorId?: string) {
     assertCatalogImage(input.imageUrl);
     assertCatalogImage(input.iconUrl);
     const category = await this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
       await this.validateCategoryParent(tx, input.parentId);
-      return tx.category.create({
+      const created = await tx.category.create({
       data: {
         name: input.name,
+        markupPercent: input.markupPercent == null ? input.markupPercent : parseMarkup(input.markupPercent),
         nameTj: input.nameTj,
         imageUrl: input.imageUrl,
         iconUrl: input.iconUrl,
@@ -104,22 +108,27 @@ export class CatalogService {
         isActive: input.isActive ?? true
       }
       });
+      if (input.markupPercent !== undefined) await tx.pricingAudit.create({ data: { actorId, action: "category_markup", targetId: created.id, before: {}, after: { markupPercent: created.markupPercent?.toFixed(2) ?? null } } });
+      return created;
     });
 
     return mapCategory(category, true);
   }
 
-  async updateAdminCategory(id: string, input: Partial<CategoryInput>) {
+  async updateAdminCategory(id: string, input: Partial<CategoryInput>, actorId?: string) {
     assertCatalogImage(input.imageUrl);
     assertCatalogImage(input.iconUrl);
     const category = await this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
       await this.lockCategory(tx, id);
       await this.validateCategoryParent(tx, input.parentId, id);
-      return tx.category.update({
+      const before = input.markupPercent !== undefined ? await tx.category.findUniqueOrThrow({ where: { id } }) : null;
+      const updated = await tx.category.update({
         where: { id },
         data: {
           name: input.name,
+          markupPercent: input.markupPercent == null ? input.markupPercent : parseMarkup(input.markupPercent),
           nameTj: input.nameTj,
           imageUrl: input.imageUrl,
           iconUrl: input.iconUrl,
@@ -130,6 +139,8 @@ export class CatalogService {
           isActive: input.isActive
         }
       });
+      if (before) await tx.pricingAudit.create({ data: { actorId, action: "category_markup", targetId: id, before: { markupPercent: before.markupPercent?.toFixed(2) ?? null }, after: { markupPercent: updated.markupPercent?.toFixed(2) ?? null } } });
+      return updated;
     });
 
     return mapCategory(category, true);
@@ -145,15 +156,19 @@ export class CatalogService {
     return products.map((product) => mapAdminProduct(product));
   }
 
-  async createAdminProduct(input: ProductInput) {
+  async createAdminProduct(input: ProductInput, actorId?: string) {
     assertCatalogImage(input.image);
     const images = input.images !== undefined ? parseGallery(input.images) : input.image ? parseGallery([{ url: input.image }]) : [];
     const product = await this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await this.lockCategory(tx, input.categoryId);
-      return tx.product.create({
-        data: { ...this.toCreateProductData(input), imageUrl: images.find(image => image.isPrimary)?.url ?? null, images: { create: images } },
+      const pricing = await productPricingData(tx, input);
+      const created = await tx.product.create({
+        data: { ...this.toCreateProductData(input, pricing.currentSalePrice ?? input.sellingPrice!), ...pricing, imageUrl: images.find(image => image.isPrimary)?.url ?? null, images: { create: images } },
         include: productInclude
       });
+      await tx.pricingAudit.create({ data: { actorId, action: "product_create", targetId: created.id, before: {}, after: pricingState(created) } });
+      return created;
     });
 
     return mapAdminProduct(product);
@@ -161,10 +176,12 @@ export class CatalogService {
 
   async updateAdminProduct(id: string, input: ProductUpdateInput, changedByUserId?: string) {
     const product = await this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await this.lockProduct(tx, id);
       if (input.categoryId !== undefined) await this.lockCategory(tx, input.categoryId);
       const existing = await tx.product.findUnique({ where: { id }, include: { priceHistory: productInclude.priceHistory, images: productInclude.images } });
       if (!existing) throw new NotFoundException("Товар не найден.");
+      const pricing = await productPricingData(tx, input, existing);
       assertCatalogImage(input.image === undefined ? existing.imageUrl : input.image);
       // Legacy editors send image even on price-only saves. Do not erase their newer gallery.
       const images = input.images !== undefined ? parseGallery(input.images)
@@ -174,8 +191,9 @@ export class CatalogService {
             .map((image, index) => ({ url: image.url, isPrimary: false, sortOrder: index + 1 }))
         ]) : undefined;
       if (images !== undefined) await this.saveGallery(tx, id, images);
-      if (input.sellingPrice !== undefined) {
-        const newPrice = new Prisma.Decimal(input.sellingPrice);
+      const salePrice = pricing.currentSalePrice ?? input.sellingPrice;
+      if (salePrice !== undefined) {
+        const newPrice = new Prisma.Decimal(salePrice);
         if (!newPrice.equals(existing.currentSalePrice)) {
           await tx.productPriceHistory.create({ data: {
             productId: id, oldSalePrice: existing.currentSalePrice, newSalePrice: newPrice, changedByUserId,
@@ -183,11 +201,13 @@ export class CatalogService {
           } });
         }
       }
-      return tx.product.update({
+      const updated = await tx.product.update({
         where: { id },
-        data: { ...this.toUpdateProductData(input), ...(images !== undefined ? { imageUrl: images.find(image => image.isPrimary)?.url ?? null } : {}) },
+        data: { ...this.toUpdateProductData(input), ...pricing, updatedAt: new Date(Math.max(Date.now(), existing.updatedAt.getTime() + 1)), ...(images !== undefined ? { imageUrl: images.find(image => image.isPrimary)?.url ?? null } : {}) },
         include: productInclude
       });
+      if (JSON.stringify(pricingState(existing)) !== JSON.stringify(pricingState(updated))) await tx.pricingAudit.create({ data: { actorId: changedByUserId, action: "product_update", targetId: id, before: pricingState(existing), after: pricingState(updated) } });
+      return updated;
     });
 
     return mapAdminProduct(product);
@@ -205,6 +225,7 @@ export class CatalogService {
 
   async deleteAdminProduct(id: string) {
     return this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await this.lockProduct(tx, id);
       await tx.product.update({ where: { id }, data: { deletedAt: new Date(), isActive: false, isAvailableToday: false } });
       return { deleted: true };
@@ -213,6 +234,7 @@ export class CatalogService {
 
   async deleteAdminCategory(id: string) {
     return this.prisma.$transaction(async tx => {
+      await lockPricing(tx);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(7412054)`;
       await this.lockCategory(tx, id);
       const count = await tx.product.count({ where: { categoryId: id, deletedAt: null } });
@@ -279,7 +301,7 @@ export class CatalogService {
     };
   }
 
-  private toCreateProductData(input: ProductInput): Prisma.ProductCreateInput {
+  private toCreateProductData(input: ProductInput, salePrice: Prisma.Decimal | string): Prisma.ProductCreateInput {
     assertNoQualityOptions(input.qualityOptions);
     return {
       category: { connect: { id: input.categoryId } },
@@ -290,7 +312,7 @@ export class CatalogService {
       descriptionTj: input.descriptionTj,
       imageUrl: input.image,
       unit: input.unit,
-      currentSalePrice: new Prisma.Decimal(input.sellingPrice),
+      currentSalePrice: new Prisma.Decimal(salePrice),
       currentPurchasePrice: new Prisma.Decimal(input.purchasePrice),
       isWeighted: input.isWeighted ?? false,
       minQuantity: new Prisma.Decimal(input.minQuantity),

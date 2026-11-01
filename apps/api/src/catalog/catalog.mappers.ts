@@ -28,6 +28,7 @@ export function mapCategory(category: Category, includeAdminFields = false): Cat
   if (includeAdminFields) {
     dto.isActive = category.isActive;
     dto.isVisible = category.isVisible;
+    dto.markupPercent = category.markupPercent?.toFixed(2) ?? null;
   }
 
   return dto;
@@ -90,6 +91,9 @@ export function mapAdminProduct(
     description: product.description,
     descriptionTj: product.descriptionTj,
     purchasePrice: decimalToString(product.currentPurchasePrice),
+    priceMode: product.priceMode === "auto" ? "auto" : "manual",
+    markupPercent: product.markupPercent?.toFixed(2) ?? null,
+    appliedMarkupPercent: product.appliedMarkupPercent?.toFixed(2) ?? null,
     isActive: product.isActive,
     isAvailableToday: product.isAvailableToday,
     sortOrder: product.sortOrder,

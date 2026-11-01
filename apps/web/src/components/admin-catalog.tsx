@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import {
   Category,
@@ -11,6 +11,7 @@ import {
   deleteAdminProduct,
   getAdminCategories,
   getAdminProducts,
+  getAdminPricingSettings,
   Product,
   updateAdminProduct,
   updateAdminCategory,
@@ -24,8 +25,11 @@ import { ProductImage } from "./product-image";
 import { CatalogDialog } from "./catalog-dialog";
 import { ProductPhotoField } from "./product-photo-field";
 import { categoryDescendantIds } from "@dushanbe-fresh/shared";
+import type { PriceMode, PricingSettings } from "@dushanbe-fresh/shared";
+import { calculateAutoPrice, changeProductPricing, markupPattern, productPricingPayload, resolveMarkup, validMarkup } from "@/lib/admin-pricing";
+import { AdminBulkPricing } from "./admin-bulk-pricing";
 
-const emptyCategory = { name: "", nameTj: "", slug: "", sortOrder: 0, imageUrl: "", iconUrl: "", parentId: "", isVisible: true };
+const emptyCategory = { name: "", nameTj: "", slug: "", sortOrder: 0, imageUrl: "", iconUrl: "", parentId: "", isVisible: true, markupPercent: "" };
 
 const emptyProduct = {
   categoryId: "",
@@ -36,8 +40,12 @@ const emptyProduct = {
   descriptionTj: "",
   image: "",
   unit: "kg",
-  sellingPrice: "0.00",
-  purchasePrice: "0.00",
+  sellingPrice: "",
+  purchasePrice: "",
+  priceMode: "auto" as PriceMode,
+  markupPercent: "",
+  appliedMarkupPercent: "",
+  individualMarkup: false,
   isWeighted: true,
   minQuantity: "0.500",
   quantityStep: "0.500",
@@ -56,7 +64,13 @@ export function AdminCatalog() {
   const [categoryFile, setCategoryFile] = useState<File | null>(null);
   const [categoryIconFile, setCategoryIconFile] = useState<File | null>(null);
   const [notice, setNotice] = useState("");
-  const [pending, setPending] = useState(false);
+  const [saving, setPending] = useState(false);
+  const [pricingBusy, setPricingBusy] = useState(false);
+  const pending = saving || pricingBusy;
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings | null>(null);
+  const [pricingError, setPricingError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [resetAuto, setResetAuto] = useState(false);
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [panel, setPanel] = useState<"product" | "category" | null>(null);
@@ -66,6 +80,7 @@ export function AdminCatalog() {
 
   useEffect(() => {
     void load();
+    void getAdminPricingSettings().then(setPricingSettings).catch(() => setPricingError("Не удалось загрузить общую наценку. Авторасчёт без индивидуальной или категорийной наценки недоступен."));
   }, []);
 
   const selectedProduct = useMemo(
@@ -81,6 +96,7 @@ export function AdminCatalog() {
       ]);
       setCategories(nextCategories);
       setProducts(nextProducts);
+      setSelectedIds(current => current.filter(id => nextProducts.some(product => product.id === id)));
       setForm((current) => ({
         ...current,
         categoryId: nextCategories.some(category => category.id === current.categoryId) ? current.categoryId : nextCategories[0]?.id || ""
@@ -91,6 +107,7 @@ export function AdminCatalog() {
   }
 
   function selectProduct(product: Product) {
+    setResetAuto(false);
     setPanel("product");
     setPhotos(productPhotos(product));
     setNotice("");
@@ -105,7 +122,11 @@ export function AdminCatalog() {
       image: product.image ?? "",
       unit: product.unit,
       sellingPrice: product.sellingPrice,
-      purchasePrice: product.purchasePrice ?? "0.00",
+      purchasePrice: product.purchasePrice ?? "",
+      priceMode: product.priceMode ?? "manual",
+      markupPercent: product.markupPercent ?? "",
+      appliedMarkupPercent: product.appliedMarkupPercent ?? "",
+      individualMarkup: product.markupPercent != null,
       isWeighted: product.isWeighted,
       minQuantity: product.minQuantity,
       quantityStep: product.quantityStep,
@@ -116,6 +137,7 @@ export function AdminCatalog() {
   }
 
   function resetForm() {
+    setResetAuto(false);
     setPhotos([]);
     setSelectedProductId("");
     setForm({
@@ -126,11 +148,12 @@ export function AdminCatalog() {
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending || (form.priceMode === "auto" && !autoPrice) || (form.individualMarkup && !validMarkup(form.markupPercent))) return;
     setPending(true);
     setNotice("");
 
     const payload = {
-      ...form,
+      ...productPricingPayload(form, selectedProduct, resetAuto),
       images: photos
     };
 
@@ -162,7 +185,7 @@ export function AdminCatalog() {
         categoryFile ? uploadProductImage(categoryFile, "category") : categoryForm.imageUrl,
         categoryIconFile ? uploadProductImage(categoryIconFile, "category-icon") : categoryForm.iconUrl
       ]);
-      const payload = { ...categoryForm, imageUrl: imageUrl || null, iconUrl: iconUrl || null,
+      const payload = { ...categoryForm, markupPercent: categoryForm.markupPercent || null, imageUrl: imageUrl || null, iconUrl: iconUrl || null,
         parentId: categoryForm.parentId || null, nameTj: categoryForm.nameTj || null };
       if (selectedCategoryId) await updateAdminCategory(selectedCategoryId, payload);
       else await createAdminCategory(payload);
@@ -176,6 +199,15 @@ export function AdminCatalog() {
       setPending(false);
     }
   }
+
+  function changePricing(patch: Parameters<typeof changeProductPricing>[1]) {
+    if (patch.priceMode === "auto" || patch.markupPercent !== undefined || patch.categoryId !== undefined) setResetAuto(true);
+    setForm(current => changeProductPricing(current, patch, categories, pricingSettings));
+  }
+  const effectiveMarkup = resolveMarkup(form.markupPercent, form.categoryId, categories, pricingSettings);
+  const autoPrice = calculateAutoPrice(form.purchasePrice, form.appliedMarkupPercent || effectiveMarkup.percent);
+  const filteredProducts = products.filter(product => !categoryFilter || product.category.id === categoryFilter);
+  const allFilteredSelected = filteredProducts.length > 0 && filteredProducts.every(product => selectedIds.includes(product.id));
 
   async function toggleProduct(product: Product, field: "isActive" | "isAvailableToday") {
     setPending(true);
@@ -230,7 +262,8 @@ export function AdminCatalog() {
           if (!category) return;
           setSelectedCategoryId(category.id); setCategoryFile(null); setCategoryIconFile(null); setNotice("");
           setCategoryForm({ name: category.name, nameTj: category.nameTj || "", slug: category.slug, sortOrder: category.sortOrder,
-            imageUrl: category.imageUrl || "", iconUrl: category.iconUrl || "", parentId: category.parentId || "", isVisible: category.isVisible ?? true });
+            imageUrl: category.imageUrl || "", iconUrl: category.iconUrl || "", parentId: category.parentId || "", isVisible: category.isVisible ?? true,
+            markupPercent: category.markupPercent ?? "" });
           setPanel("category");
         }}><Pencil size={18} aria-hidden="true" />Редактировать категорию</button>
         <button type="button" className="catalog-delete-category" disabled={pending}
@@ -240,12 +273,22 @@ export function AdminCatalog() {
           }}><Trash2 size={18} aria-hidden="true" />Удалить категорию</button>
       </div> : null}
       {notice && !panel && !deleting ? <p className="notice" role="status">{notice}</p> : null}
+      {pricingError ? <p className="notice" role="status">{pricingError}</p> : null}
       {loading ? <p role="status">Загружаем каталог...</p> : <>
+        <AdminBulkPricing categories={categories} selectedIds={selectedIds} disabled={saving || loading} onBusy={setPricingBusy} onApplied={load} />
+        <div className="catalog-admin__selection">
+          <label className="admin-pricing-check"><input type="checkbox" disabled={pending || !filteredProducts.length} checked={allFilteredSelected}
+            onChange={event => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...filteredProducts.map(product => product.id)])] : selectedIds.filter(id => !filteredProducts.some(product => product.id === id)))} />Выбрать все в списке ({filteredProducts.length})</label>
+          <span>Выбрано: {selectedIds.length}</span>
+          {selectedIds.length ? <button type="button" className="catalog-text-action" disabled={pending} onClick={() => setSelectedIds([])}>Снять выбор</button> : null}
+        </div>
         <div className="catalog-admin__columns" aria-hidden="true"><span>Товар</span><span>Цена для клиента</span><span>Сегодня</span><span>Включён</span><span /></div>
         <div className="catalog-admin__products" role="list" aria-label="Товары">
-          {products.filter(product => !categoryFilter || product.category.id === categoryFilter).map(product =>
+          {filteredProducts.map(product =>
             <div className="catalog-admin__row" role="listitem" key={product.id}>
               <div className="catalog-admin__identity">
+                <input className="admin-pricing-select" type="checkbox" aria-label={`Выбрать товар: ${product.name}`} disabled={pending} checked={selectedIds.includes(product.id)}
+                  onChange={event => setSelectedIds(event.target.checked ? [...selectedIds, product.id] : selectedIds.filter(id => id !== product.id))} />
                 <div className="admin-product-photo"><ProductImage src={product.image} name={product.name} /></div>
                 <div><strong>{product.name}</strong><small>{product.category.name}</small></div>
               </div>
@@ -281,12 +324,15 @@ export function AdminCatalog() {
             <label>Название на таджикском<input value={categoryForm.nameTj} onChange={event => setCategoryForm({ ...categoryForm, nameTj: event.target.value })} /></label>
             <label>Адрес в каталоге<input required value={categoryForm.slug} onChange={(event) => setCategoryForm({ ...categoryForm, slug: event.target.value })} /></label>
             <label>Порядок<input required type="number" value={categoryForm.sortOrder} onChange={(event) => setCategoryForm({ ...categoryForm, sortOrder: Number(event.target.value) })} /></label>
+            <label>Наценка категории, %<input inputMode="decimal" pattern={markupPattern} maxLength={8} placeholder="Общая наценка" value={categoryForm.markupPercent}
+              onChange={event => setCategoryForm({ ...categoryForm, markupPercent: event.target.value.replace(",", ".") })} /></label>
             <label>Родительская категория<select value={categoryForm.parentId} onChange={event => setCategoryForm({ ...categoryForm, parentId: event.target.value })}>
               <option value="">Без родителя</option>
               {categories.filter(category => !selectedCategoryId || !categoryDescendantIds(categories, selectedCategoryId).includes(category.id))
                 .map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select></label>
           </div>
+          <p>Наценка категории действует для новых товаров и при явном включении авторасчёта. Существующие цены не изменятся.</p>
           <div className="category-media-fields"><ProductPhotoField label="Фото категории" image={categoryForm.imageUrl} file={categoryFile} disabled={pending}
             onChange={(file, imageUrl) => { setCategoryFile(file); setCategoryForm(current => ({ ...current, imageUrl })); }} />
           <ProductPhotoField label="Иконка категории" removeLabel="Убрать иконку" image={categoryForm.iconUrl} file={categoryIconFile} disabled={pending}
@@ -312,7 +358,7 @@ export function AdminCatalog() {
             <select
               required
               value={form.categoryId}
-              onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
+              onChange={(event) => changePricing({ categoryId: event.target.value })}
             >
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -358,6 +404,20 @@ export function AdminCatalog() {
             onChange={setPhotos} onUploading={setUploadingPhotos} />
           </section>
           <section className="catalog-form-section"><h3>Цена и количество</h3>
+          <div className="catalog-admin__actions">
+            <strong>{form.priceMode === "auto" ? "Автоматическая цена" : "Ручная цена"}</strong>
+            {form.priceMode === "manual" ? <button type="button" className="secondary-link" onClick={() => changePricing({ priceMode: "auto" })}>
+              <RotateCcw size={18} aria-hidden="true" />Вернуть авторасчёт</button> : null}
+          </div>
+          <label className="admin-pricing-check"><input type="checkbox" checked={form.individualMarkup} onChange={event => {
+            const checked = event.target.checked;
+            setResetAuto(true);
+            setForm(current => ({ ...changeProductPricing(current, { markupPercent: checked ? (effectiveMarkup.percent || "0.00") : "" }, categories, pricingSettings), individualMarkup: checked }));
+          }} />Индивидуальная наценка</label>
+          {form.individualMarkup ? <label>Индивидуальная наценка, %<input required inputMode="decimal" pattern={markupPattern} maxLength={8} value={form.markupPercent}
+            onChange={event => changePricing({ markupPercent: event.target.value.replace(",", ".") })} /></label> : null}
+          {form.priceMode === "auto" ? <p role="status">Применяемая наценка: {form.appliedMarkupPercent || effectiveMarkup.percent || "не задана"}%.
+            {autoPrice ? ` Цена: ${autoPrice} сомони.` : " Для авторасчёта нужны положительная закупочная цена и корректная наценка."}</p> : null}
           {selectedProduct?.lastPriceChange ? <small className="catalog-price-history">
             Последнее изменение: {priceLabel(selectedProduct.lastPriceChange.oldPrice, form.unit)} → {priceLabel(selectedProduct.lastPriceChange.newPrice, form.unit)}
             {selectedProduct.priceDrop ? ` · Стало дешевле на ${selectedProduct.priceDrop.discountPercent}%` : ""}
@@ -373,9 +433,10 @@ export function AdminCatalog() {
             <label>
               Цена для клиента
               <input
+                required
                 inputMode="decimal"
                 value={form.sellingPrice}
-                onChange={(event) => setForm({ ...form, sellingPrice: event.target.value.replace(",", ".") })}
+                onChange={(event) => changePricing({ priceMode: "manual", sellingPrice: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
@@ -383,7 +444,7 @@ export function AdminCatalog() {
               <input
                 inputMode="decimal"
                 value={form.purchasePrice}
-                onChange={(event) => setForm({ ...form, purchasePrice: event.target.value.replace(",", ".") })}
+                onChange={(event) => changePricing({ purchasePrice: event.target.value.replace(",", ".") })}
               />
             </label>
             <label>
@@ -443,7 +504,7 @@ export function AdminCatalog() {
           </div>
           </section>
           <div className="catalog-form-actions">
-          <button className="primary-action" disabled={pending || uploadingPhotos} type="submit">
+          <button className="primary-action" disabled={pending || uploadingPhotos || (form.priceMode === "auto" && !autoPrice) || (form.individualMarkup && !validMarkup(form.markupPercent))} type="submit">
             {pending ? "Сохраняем..." : "Сохранить"}
           </button>
           <button className="secondary-link" disabled={pending || uploadingPhotos} type="button" onClick={() => { setPanel(null); setPhotos([]); }}>Отмена</button>
