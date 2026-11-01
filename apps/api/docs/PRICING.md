@@ -66,7 +66,8 @@ including edits to skipped items, invalidates the whole preview with 409. Creati
 new members invalidates category/all previews. Changes to unused defaults do not.
 
 `GET /pricing/bulk/last` returns the last applied batch globally, even when undone,
-or null if none has ever been applied.
+or HTTP 204 with an empty body if none has ever been applied (the Web client
+normalizes that response to null).
 
 `POST /pricing/bulk/undo`: `{batchId, requestId}`. Only the last applied batch
 globally may be undone; no walking backwards through older operations. Any edited,

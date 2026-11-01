@@ -6,6 +6,10 @@ vi.mock("./staff-auth", () => ({ staffFetch: vi.fn() }));
 afterEach(() => vi.resetAllMocks());
 
 describe("admin pricing API contract", () => {
+  it("treats the real API's empty 204 history as no previous operation", async () => {
+    vi.mocked(staffFetch).mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(getLastAdminPricingBatch()).resolves.toBeNull();
+  });
   it("uses Ampere's single pricing settings API and authenticated client", async () => {
     vi.mocked(staffFetch).mockResolvedValue({ ok: true, json: async () => ({ defaultMarkupPercent: "10.00" }) } as Response);
     await getAdminPricingSettings();

@@ -34,7 +34,7 @@ async function mockCatalog(page: Page) {
     if (path.startsWith("admin/products/")) return reply({ ...products[0], ...body });
     if (path.startsWith("admin/categories/")) return reply({ ...categories[0], ...body });
     if (path === "admin/pricing/settings") return reply({ defaultMarkupPercent: body?.defaultMarkupPercent ?? "10.00" });
-    if (path === "admin/pricing/bulk/last") return reply(applied ? batch() : null);
+    if (path === "admin/pricing/bulk/last") return applied ? reply(batch()) : route.fulfill({ status: 204, body: "" });
     if (path === "admin/pricing/bulk/preview") {
       input = body as BulkPricingPreviewInput;
       const selected = products.filter(item => input.selection.all || input.selection.ids?.includes(item.id) || input.selection.categoryIds?.includes(item.category.id));

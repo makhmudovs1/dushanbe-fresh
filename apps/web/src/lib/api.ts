@@ -128,8 +128,14 @@ export function undoAdminPricing(payload: BulkPricingUndoInput) {
   return request<BulkPricingBatch>("/admin/pricing/bulk/undo", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function getLastAdminPricingBatch() {
-  return request<BulkPricingBatch | null>("/admin/pricing/bulk/last");
+export async function getLastAdminPricingBatch(): Promise<BulkPricingBatch | null> {
+  const response = await staffFetch(`${apiBaseUrl}/admin/pricing/bulk/last`, { cache: "no-store" });
+  if (response.status === 204) return null;
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(errorMessage(data?.message));
+  }
+  return response.json() as Promise<BulkPricingBatch | null>;
 }
 
 export function updateAdminCategory(id: string, payload: Record<string, unknown>) {

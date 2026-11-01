@@ -113,6 +113,8 @@ def main(sha):
     web = copy.deepcopy(json.loads((ROOT / 'state/releases/geoapify-ce253f305c07/compose.json').read_text())['services']['web'])
     api.update({'image': images['api'], 'container_name': 'df-pricing-api-' + sha[:12]})
     web.update({'image': images['web'], 'container_name': 'df-pricing-web-' + sha[:12]})
+    for service in [api, web]:
+        service['labels'] = {**service.get('labels', {}), 'df.production.revision': sha}
     web['environment']['PORT'] = '3004'
     web['healthcheck']['test'] = [value.replace(':3003/', ':3004/') for value in web['healthcheck']['test']]
     compose = release / 'compose.json'

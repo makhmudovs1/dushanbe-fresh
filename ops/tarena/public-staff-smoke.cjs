@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const base = 'https://dushanbefresh.tj/api/v1';
 const origin = 'https://dushanbefresh.tj';
 let stage = 'fresh-staff-login';
+let lastHttpStatus;
 async function main() {
   const [credential] = JSON.parse(fs.readFileSync('/prepared/staff-access.json'));
   let cookie = '';
@@ -11,6 +12,7 @@ async function main() {
       headers: { Origin: origin, ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...(cookie ? { Cookie: cookie } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
+    lastHttpStatus = response.status;
     if (response.status !== expected) throw Error('Public staff API did not accept request');
     return response;
   }
@@ -23,6 +25,20 @@ async function main() {
     if (!token) throw Error('No staff access token');
     stage = 'public-protected-admin';
     for (const path of ['/admin/products', '/admin/orders', '/admin/delivery-waves']) await request(path);
+    let pricingReadVerified = false;
+    if (process.env.DF_PRICING_RELEASE_VALIDATION === '1') {
+      stage = 'public-protected-pricing';
+      const settings = await (await request('/admin/pricing/settings')).json();
+      stage = 'pricing-settings-format';
+      if (!/^\d+\.\d{2}$/.test(settings.defaultMarkupPercent)) throw Error('Invalid pricing settings');
+      const products = await (await request('/admin/products')).json();
+      stage = 'legacy-product-pricing-metadata';
+      if (!products.length || products.some(product => product.priceMode !== 'manual' || product.markupPercent !== null || product.appliedMarkupPercent !== null)) throw Error('Legacy pricing changed');
+      stage = 'last-pricing-operation';
+      const previous = await request('/admin/pricing/bulk/last', 'GET', undefined, 204);
+      if (await previous.text() !== '') throw Error('Unexpected live repricing');
+      pricingReadVerified = true;
+    }
     stage = 'public-refresh';
     const refreshed = await request('/auth/refresh', 'POST');
     const next = refreshed.headers.get('set-cookie');
@@ -36,11 +52,11 @@ async function main() {
     if (native.status !== 400) throw Error('Native guest validation contract changed');
     const result = { publicStaffLogin: true, secureCookie: true, protectedAdminProductsOrdersWaves: true,
       publicRefreshAndRotation: true, nativeGuestValidation400: true, customerOrdersCreated: 0, smsSent: false,
-      checkedAtUTC: new Date().toISOString() };
+      checkedAtUTC: new Date().toISOString(), pricingReadVerified };
     fs.writeFileSync('/result/staff.json', JSON.stringify(result), { flag: 'wx', mode: 0o600 });
     console.log(JSON.stringify(result));
   } finally {
     if (cookie) await request('/auth/logout', 'POST', undefined, 204);
   }
 }
-main().catch(() => { console.error(JSON.stringify({ publicStaffSmokeFailed: true, stage, privateDetailsWithheld: true })); process.exitCode = 1; });
+main().catch(() => { console.error(JSON.stringify({ publicStaffSmokeFailed: true, stage, lastHttpStatus, privateDetailsWithheld: true })); process.exitCode = 1; });
