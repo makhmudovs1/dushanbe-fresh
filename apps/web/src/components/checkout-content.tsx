@@ -22,10 +22,11 @@ import { CustomerDialog } from "./customer-dialog";
 import { CheckoutError, finishCheckout, getDeliverySlots, validateCheckout } from "@/lib/checkout";
 import { decimalLabel } from "@/lib/format";
 import { CheckoutSkeleton, DeliverySlotsSkeleton, SummarySkeleton } from "./loading-state";
+import { ArrowLeft } from "lucide-react";
 const noSavedAddresses: SavedAddress[] = [];
 
 export function CheckoutContent() {
-  const { t, name, label, priceLabel, quantityLabel, slotLabel } = useI18n();
+  const { t, name, label, slotLabel } = useI18n();
   const { state, hydrated, clearCart, removeItem, syncError } = useCart();
   const legacy = hasLegacyCartItems(state);
   const router = useRouter();
@@ -191,8 +192,8 @@ export function CheckoutContent() {
   }
 
   const heading = <>
-    <Link className="back-link" href="/cart">{t("Вернуться в корзину")}</Link>
-    <header className="page-heading"><h1>{t("Оформление заказа")}</h1><p>{t("Свежие продукты с доставкой по Душанбе")}</p></header>
+    <Link className="commerce-back" href="/cart"><ArrowLeft size={16} aria-hidden="true" />{t("Вернуться в корзину")}</Link>
+    <header className="page-heading commerce-heading"><h1>{t("Оформление заказа")}</h1></header>
   </>;
   if (!hydrated) return <>{heading}{syncError ? <AccountCartNotice /> : <CheckoutSkeleton />}</>;
   if (completed) return <>{heading}<p role="status">{t("Заказ оформлен. Открываем подтверждение...")}</p></>;
@@ -211,17 +212,9 @@ export function CheckoutContent() {
 
   return <>
     {heading}
-    <form onSubmit={submit} className={`checkout-layout${customer.user ? " checkout-layout--account" : ""}`}>
+    <form onSubmit={submit} className={`checkout-layout commerce-checkout${customer.user ? " checkout-layout--account" : ""}`}>
       <fieldset className="checkout-fields" disabled={sending}>
-        {!customer.user ? <section className="checkout-section">
-          <h2>{t("Контактные данные")}</h2>
-          <div className="checkout-input-grid">
-            <label className="field">{t("Имя")}<input autoComplete="name" required maxLength={100} value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} /></label>
-            <label className="field">{t(customer.user ? "Подтверждённый телефон" : "Телефон")}<input type="tel" autoComplete="tel" required readOnly={!!customer.user} maxLength={32} placeholder="+992 900 00 00 00" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} /></label>
-          </div>
-          {customer.status.enabled && !customer.user ? <button type="button" className="secondary-link" onClick={customer.login}>{t("Подтвердить телефон и использовать сохранённые адреса")}</button> : null}
-        </section> : null}
-        <section className="checkout-section">
+        <section className="checkout-section checkout-section--delivery">
           <h2>{t("Адрес доставки")}</h2>
           {customer.user && deliveryAddress ? <div className="checkout-address-summary">
             {parseDeliveryAddress(currentAddress) ? <><strong>{currentAddress.street}, {currentAddress.building}</strong>
@@ -237,6 +230,14 @@ export function CheckoutContent() {
           {customer.user ? <label className="checkout-option"><input type="checkbox" checked={saveAddress} onChange={event => setSaveAddress(event.target.checked)} />{t("Сохранить адрес в личном кабинете")}</label> : null}
           </>}
         </section>
+        {!customer.user ? <section className="checkout-section">
+          <h2>{t("Контактные данные")}</h2>
+          <div className="checkout-input-grid">
+            <label className="field">{t("Имя")}<input autoComplete="name" required maxLength={100} value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} /></label>
+            <label className="field">{t("Телефон")}<input type="tel" autoComplete="tel" required maxLength={32} placeholder="+992 900 00 00 00" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} /></label>
+          </div>
+          {customer.status.enabled ? <button type="button" className="secondary-link" onClick={customer.login}>{t("Подтвердить телефон и использовать сохранённые адреса")}</button> : null}
+        </section> : null}
         {customer.user ? <section className="checkout-section"><h2>{t("Контактные данные")}</h2>
           {customer.user.name ? <div className="checkout-contact-summary"><strong>{customer.user.name}</strong><span>{customer.user.phone}</span><Link href="/account">{t("Изменить")}</Link></div> :
             <label className="field">{t("Имя")}<input autoComplete="name" required maxLength={100} value={contact.name} onChange={event => setContact({ ...contact, name: event.target.value })} /></label>}
@@ -261,31 +262,29 @@ export function CheckoutContent() {
         </fieldset>
       </fieldset>
       <aside className="checkout-summary">
-        <h2>{t("Проверка заказа")}</h2>
-        {!deliverySlotId ? <p>{t("Выберите окно доставки, чтобы проверить товары и сумму заказа.")}</p> : null}
+        <h2>{t("Итого")}</h2>
+        {!deliverySlotId ? <><div className="summary-row"><span>{t("Товары")}</span><span>—</span></div><div className="summary-row"><span>{t("Доставка")}</span><span>—</span></div><p className="commerce-caption">{t("Выберите окно доставки, чтобы проверить сумму")}</p></> : null}
         {pending ? <SummarySkeleton /> : null}
         {currentQuote && !pending ? <>
-          {currentQuote.deliverySlot ? <p><strong>{t("Окно доставки")}</strong><br />{slotLabel(currentQuote.deliverySlot)}</p> : null}
-          <ul className="checkout-lines">
-            {currentQuote.items.map((item, index) => <li key={`${item.productId}:${index}`}>
-              <div className="summary-row"><strong>{name(item)}</strong><span>{decimalLabel(item.estimatedTotal)}{t(" сомони")}</span></div>
-              <p>{quantityLabel(item.requestedQuantity, item.unit)}{item.sellingPrice ? ` · ${priceLabel(item.sellingPrice, item.unit)}` : ""}</p>
+          {currentQuote.items.some(item => item.errors.length || item.warnings.length) ? <ul className="checkout-lines checkout-lines--issues">
+            {currentQuote.items.map((item, index) => item.errors.length || item.warnings.length ? <li key={`${item.productId}:${index}`}>
+              <strong>{name(item)}</strong>
               {item.qualityOption ? <p>{label(item.qualityOption)}</p> : null}
               {item.warnings.map(warning => <p className="notice" key={t(warning)}>{t(warning)}</p>)}
               {item.errors.map(error => <p className="checkout-error" role="alert" key={t(error)}>{t(error)}</p>)}
               {item.errors.length ? <button className="secondary-link" type="button" disabled={sending} onClick={() => removeItem(state.items[index])}>{t("Удалить ")}{name(item)}</button> : null}
-            </li>)}
-          </ul>
+            </li> : null)}
+          </ul> : null}
           <div className="summary-row"><span>{t("Товары")}</span><span>{decimalLabel(currentQuote.itemsSubtotal)}{t(" сомони")}</span></div>
           <div className="summary-row"><span>{t("Доставка")}</span><span>{decimalLabel(currentQuote.deliveryFee)}{t(" сомони")}</span></div>
           {currentQuote.serviceFee !== "0.00" ? <div className="summary-row"><span>{t("Сервисный сбор")}</span><span>{decimalLabel(currentQuote.serviceFee)}{t(" сомони")}</span></div> : null}
-          <div className="summary-row summary-total"><strong>{t("Предварительно")}</strong><strong>{decimalLabel(currentQuote.totalEstimated)}{t(" сомони")}</strong></div>
+          <div className="summary-row summary-total"><strong>{t("К оплате")}</strong><strong>{decimalLabel(currentQuote.totalEstimated)}{t(" сомони")}</strong></div>
           {currentQuote.errors.map(error => <p className="checkout-error" role="alert" key={t(error)}>{t(error)}</p>)}
-          {currentQuote.items.some(item => item.isWeighted) ? <p>{t("Итоговая сумма может немного измениться после фактического взвешивания.")}</p> : null}
-          <p>{t("Оплата наличными при получении")}</p>
+          {currentQuote.items.some(item => item.isWeighted) ? <p className="commerce-caption">{t("Точную стоимость весовых товаров определим после сборки")}</p> : null}
+          <p className="commerce-caption">{t("Оплата наличными при получении")}</p>
         </> : null}
         {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
-        {deliverySlotId ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
+        {deliverySlotId && (error || (currentQuote && !currentQuote.valid)) ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
         <label className="checkout-option"><input type="checkbox" checked={accepted} disabled={!currentQuote?.valid || pending || sending} onChange={e => setAccepted(e.target.checked)} /><span>{t("Я проверил товары, стоимость и время доставки")}</span></label>
         <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || !parseDeliveryAddress(currentAddress) || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Подтвердить телефон и продолжить" : "Подтвердить заказ")}</button>
       </aside>

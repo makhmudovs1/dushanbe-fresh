@@ -2,7 +2,7 @@
 import { useI18n } from "@/i18n/provider";
 
 import { decimalLabel } from "@/lib/format";
-import { ShoppingBag, Trash2 } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { isMinimumQuantity } from "@/cart/catalog-selection";
 
 import Link from "next/link";
@@ -27,9 +27,12 @@ import { LegacyCartNotice } from "./legacy-cart-notice";
 import { AccountCartNotice } from "./account-cart-notice";
 import { BrowseAll, RecommendationGrid, selectRecommendations, useRecommendationProducts } from "./product-recommendations";
 import styles from "./cart-enhancements.module.css";
+import { MinimumOrderProgress, useCartPricing } from "./cart-pricing";
 
 export function CartPageContent() {
-  return <div className={styles.page}>
+  const { t } = useI18n();
+  return <div className={`${styles.page} commerce-cart`}>
+    <Link className="commerce-back" href="/catalog"><ArrowLeft size={16} aria-hidden="true" />{t("Вернуться в каталог")}</Link>
     <CartMobileHeader />
     <AccountCartNotice />
     <CartContents />
@@ -60,12 +63,13 @@ function CartRecommendations() {
 }
 
 function CartContents() {
-  const { t, name, label, priceLabel } = useI18n();
-  const { state, hydrated, syncError, incrementItem, decrementItem, removeItem, lineCount, legacyConflicts = [] } = useCart();
+  const { t, name, label, priceLabel, quantityLabel } = useI18n();
+  const { state, hydrated, syncError, incrementItem, decrementItem, removeItem, legacyConflicts = [] } = useCart();
   const subtotalMinor = calculateCartSubtotalMinor(state);
   const containsWeightedProducts = hasWeightedItems(state);
   const subtotalPrefix = containsWeightedProducts ? "≈ " : "";
   const legacy = hasLegacyCartItems(state);
+  const { quote } = useCartPricing(state, hydrated && !syncError);
 
   if (!state.items.length && syncError) return <header className="page-heading"><h1>{t("Корзина")}</h1></header>;
   if (!hydrated) return <CartSkeleton />;
@@ -88,11 +92,12 @@ function CartContents() {
     <>
       <header className={`page-heading ${styles.desktopHeading}`}>
         <h1>{t("Корзина")}</h1>
-        <p>{t("Ваши продукты")}</p>
       </header>
       {hasInvalidCartQuantity(state) ? <p className="form-error" role="status">{t("Изменился шаг покупки. Уточните количество кнопками минус и плюс.")}</p> : null}
       {legacy ? <LegacyCartNotice /> : null}
     <div className="cart-layout">
+      <div className="cart-main">
+      {quote ? <MinimumOrderProgress quote={quote} /> : !legacy ? <p className="commerce-caption">{t("Условия и стоимость доставки уточним при оформлении")}</p> : null}
       <div className="cart-items">
         {state.items.map((item) => {
           const itemKey = `${item.productId}:${item.qualityOptionId ?? "none"}`;
@@ -107,8 +112,9 @@ function CartContents() {
               <div className="cart-item__info">
                 <h3><MobileProductLink product={item.slug}>{name(item)}</MobileProductLink></h3>
                 {isLegacyCartItem(item) ? <p className="form-error">{t("Старая позиция")}{item.qualityOptionLabel ? `: ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}</p> : null}
-                <p className="cart-item__unit-price">{priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
-                <p className="cart-item__mobile-price" title={priceLabel(item.sellingPrice, item.unit, item.slug)}><strong>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)} {t("сомони")}</strong></p>
+                <p className="cart-item__unit-price">{quantityLabel(item.quantity, item.unit)} <span aria-hidden="true">·</span> {priceLabel(item.sellingPrice, item.unit, item.slug)}</p>
+                <p className="cart-item__mobile-price"><strong>{item.isWeighted ? "≈ " : ""}{decimalLabel(itemSubtotal)} {t("сомони")}</strong></p>
+                {quote?.items.filter(line => line.productId === item.productId).flatMap(line => [...line.errors, ...line.warnings]).map(message => <p className="checkout-error" key={message}>{t(message)}</p>)}
               </div>
               <QuantityStepper name={`${name(item)}${item.qualityOptionLabel ? `, ${label({ label: item.qualityOptionLabel, labelTj: item.qualityOptionLabelTj })}` : ""}`}
                 quantity={item.quantity} unit={item.unit} disabled={isLegacyCartItem(item) || conflicting} decreaseDisabled={isMinimumQuantity(item)}
@@ -125,31 +131,32 @@ function CartContents() {
           );
         })}
       </div>
+      </div>
 
       <aside className="cart-summary">
-        <h2>{t("Ваш заказ")}</h2>
+        <h2>{t("Итого")}</h2>
         <div className="summary-row">
           <span>{t("Товары")}</span>
           <strong>
             {subtotalPrefix}
-            {decimalLabel(formatMoneyFromMinor(subtotalMinor))}{t(" сомони ")}</strong>
+            {decimalLabel(quote?.itemsSubtotal ?? formatMoneyFromMinor(subtotalMinor))}{t(" сомони ")}</strong>
         </div>
         <div className="summary-row">
           <span>{t("Доставка")}</span>
-          <span>{t("будет рассчитана позже")}</span>
+          <span>{quote ? `${decimalLabel(quote.deliveryFee)} ${t("сомони")}` : "—"}</span>
         </div>
+        {quote && Number(quote.serviceFee) > 0 ? <div className="summary-row"><span>{t("Сервисный сбор")}</span><span>{decimalLabel(quote.serviceFee)} {t("сомони")}</span></div> : null}
         <div className="summary-row summary-total">
-          <span>{t("Предварительно")}</span>
+          <span>{t("К оплате")}</span>
           <strong>
             {subtotalPrefix}
-            {decimalLabel(formatMoneyFromMinor(subtotalMinor))}{t(" сомони ")}</strong>
+            {quote ? `${decimalLabel(quote.totalEstimated)} ${t("сомони")}` : "—"}</strong>
         </div>
-        <p>{t("Позиций в корзине: ")}{lineCount}</p>
         {containsWeightedProducts ? (
-          <p>{t("Для продуктов на вес итоговая сумма может немного измениться после сборки.")}</p>
+          <p className="commerce-caption">{t("Точную стоимость весовых товаров определим после сборки")}</p>
         ) : null}
         <div className="cart-checkout-bar">{legacy ? <button className="primary-link" type="button" disabled>{t("Уточните старые позиции")}</button> : <Link className="primary-link" href="/checkout" aria-label={t("Оформить заказ")}><span>{t("Оформить заказ")}</span>
-          <span className="cart-checkout-bar__amount">{subtotalPrefix}{decimalLabel(formatMoneyFromMinor(subtotalMinor))} {t("сомони")}</span>
+          <span className="cart-checkout-bar__amount">{subtotalPrefix}{decimalLabel(quote?.totalEstimated ?? formatMoneyFromMinor(subtotalMinor))} {t("сомони")}</span>
         </Link>}</div>
       </aside>
     </div>

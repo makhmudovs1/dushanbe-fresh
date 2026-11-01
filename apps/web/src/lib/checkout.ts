@@ -6,9 +6,9 @@ export class CheckoutError extends Error {
   constructor(message: string, public quote?: CheckoutQuote, public status?: number) { super(message); }
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`/api/v1/${path}`, {
-    method: body ? "POST" : "GET", cache: "no-store",
+    method: body ? "POST" : "GET", cache: "no-store", signal,
     ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {})
   });
   const data = await response.json().catch(() => null);
@@ -18,8 +18,8 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return data as T;
 }
 
-export const getDeliverySlots = () => request<DeliverySlotDto[]>("delivery-slots");
-export const validateCheckout = (input: CheckoutInput) => request<CheckoutQuote>("checkout/validate", input);
+export const getDeliverySlots = (signal?: AbortSignal) => request<DeliverySlotDto[]>("delivery-slots", undefined, signal);
+export const validateCheckout = (input: CheckoutInput, signal?: AbortSignal) => request<CheckoutQuote>("checkout/validate", input, signal);
 export const createCheckoutOrder = (input: CreateOrderInput) => request<OrderReceipt>("checkout/orders", input);
 
 const receiptKey = "dushanbe-fresh.receipt";

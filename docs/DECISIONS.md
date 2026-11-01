@@ -1234,3 +1234,14 @@
   Persistent timers and a host reboot drill await recovery-console acceptance.
 - Telegram uses only allowlisted operational messages. A tested Mac observer
   is not permanent independent monitoring; install that outside the production VPS.
+
+## 2026-11-01: Компоновка Корзины И Заказов Без Изменения API
+
+Минимальный заказ и суммы корзины берём из существующего checkout/validate,
+не дублируем настройки в Web и не вводим несуществующий порог бесплатной доставки.
+История лениво читает существующие детали заказа. Для фотографий, отсутствующих
+в snapshot DTO, допускается только единственное точное совпадение имени в каталоге;
+никаких подмен разновидностей. Если данных нет, показывается нейтральная заглушка.
+Дата/повтор доступны из истории владельца, публичная ссылка не обходит авторизацию.
+Контракты API и база не расширяются в рамках этого визуального этапа.
+Подробнее: [COMMERCE_REDESIGN.md](COMMERCE_REDESIGN.md).

@@ -9,10 +9,8 @@ import { useCustomer } from "@/customer/customer-context";
 import { useDeliveryAddress } from "@/customer/delivery-address-context";
 import { CustomerError, customerRequest } from "@/lib/customer";
 import { editableName } from "@/lib/customer-login";
-import { useCart } from "@/cart/cart-context";
-import { Product } from "@/lib/api";
 import { useI18n } from "@/i18n/provider";
-import { orderLabels } from "@/lib/operations";
+import { OrderHistoryList } from "./order-history-card";
 import { AddressFields, emptyAddress } from "./address-fields";
 import { CustomerDialog } from "./customer-dialog";
 import { AccountSkeleton } from "./loading-state";
@@ -26,8 +24,7 @@ function CustomerAccountContent() {
   const customer = useCustomer();
   const delivery = useDeliveryAddress();
   const sharedAddresses = !!delivery;
-  const { t, name, locale } = useI18n();
-  const cart = useCart();
+  const { t } = useI18n();
   const [tab, setTab] = useState<"overview" | "orders" | "addresses" | "profile">(() => params?.get("section") === "orders" ? "orders" : "overview");
   useEffect(() => { if (params?.get("section") === "orders") setTab("orders"); }, [params]);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
@@ -80,7 +77,7 @@ function CustomerAccountContent() {
   </section></>;
   const labels = { home: "Дом", work: "Работа", other: "Другой" };
   return <>
-    <header className="account-heading">{tab !== "overview" ? <button type="button" className="catalog-icon-action" aria-label={t("Назад в профиль")} title={t("Назад в профиль")} onClick={() => setTab("overview")}><ArrowLeft size={22} /></button> : null}<h1>{t("Профиль")}</h1></header>
+    <header className={`account-heading${tab === "orders" ? " commerce-history-heading" : ""}`}>{tab !== "overview" ? <button type="button" className="catalog-icon-action" aria-label={t("Назад в профиль")} title={t("Назад в профиль")} onClick={() => setTab("overview")}><ArrowLeft size={22} /></button> : null}<h1>{t(tab === "orders" ? "Мои заказы" : "Профиль")}</h1></header>
     {customer.error ? <p role="alert" className="notice">{t(customer.error)} <button type="button" className="secondary-link" onClick={() => void customer.refresh()}>{t("Повторить")}</button></p> : null}
     {tab === "overview" ? <>
       <button className="account-identity" type="button" onClick={() => setTab("profile")}>
@@ -98,18 +95,9 @@ function CustomerAccountContent() {
     {error ? <p className="checkout-error" role="alert">{t(error)}</p> : null}{notice ? <p className="notice" role="status">{notice}</p> : null}
     {!loaded && (tab === "orders" || (tab === "addresses" && !sharedAddresses)) ? <AccountSkeleton /> : null}
     {loadError && (tab === "orders" || (tab === "addresses" && !sharedAddresses)) ? <div className="notice" role="alert">{t(loadError)} <button type="button" className="secondary-link" onClick={() => void load()}>{t("Повторить")}</button></div> : null}
-    {tab === "orders" ? <section className="account-section"><h2>{t("Мои заказы")}</h2>
+    {tab === "orders" ? <section className="account-section commerce-history">
       {loaded && !loadError && !orders.length ? <p>{t("Пока нет заказов в вашем аккаунте.")}</p> : null}
-      <div className="account-order-list">{orders.map(order => <article key={order.id} className="account-order">
-        <div><strong>{order.orderNumber}</strong><p>{new Date(order.createdAt).toLocaleDateString(locale === "tg" ? "tg-TJ" : "ru-RU")}</p><p>{t(orderLabels[order.status as keyof typeof orderLabels] ?? order.status)}</p></div>
-        <strong>{order.total} {t("сомони")}</strong>
-        <div className="account-order-actions"><Link href={`/order/${order.publicTrackingToken}`} className="secondary-link">{t("Подробнее и отслеживание")}</Link>
-          <button type="button" className="secondary-link" disabled={busy || !cart.hydrated} onClick={() => void run(async () => {
-            const result = await customerRequest<{ items: { product: Product; quantity: string; qualityOptionId: string | null }[]; unavailable: { name: string; nameTj?: string | null }[] }>(`customer/orders/${order.id}/repeat`, "POST");
-            cart.repeatProducts(result.items);
-            setNotice(`${t("Доступные товары добавлены в корзину по текущим ценам.")}${result.unavailable.length ? ` ${t("Сейчас недоступно:")} ${result.unavailable.map(name).join(", ")}.` : ""}`);
-          })}>{t("Повторить заказ")}</button></div>
-      </article>)}</div>
+      <OrderHistoryList orders={orders} />
       {more ? <button className="secondary-link" disabled={busy} onClick={() => void run(async () => {
         const next = await customerRequest<CustomerOrderSummary[]>(`customer/orders?before=${encodeURIComponent(orders[orders.length - 1].id)}`);
         setMore(next.length === 50);
