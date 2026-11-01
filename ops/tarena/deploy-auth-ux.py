@@ -96,7 +96,7 @@ def main(sha):
     if os.getuid() != 1000 or not re.fullmatch('[a-f0-9]{40}', sha):
         raise ValueError('Trusted deploy user and full release revision required')
     release = pathlib.Path(__file__).resolve().parent
-    if release != ROOT / 'releases' / ('auth-ux-' + sha[:12]):
+    if release != ROOT / 'state/releases' / ('auth-ux-' + sha[:12]):
         raise ValueError('Isolated release directory required')
     if (release / 'result.json').exists():
         raise ValueError('Release already recorded; do not duplicate it')
