@@ -346,3 +346,30 @@ for (const mobileLocale of ["ru", "tg"] as const) {
     } finally { await a.close(); }
   });
 }
+
+for (const [width, locale] of [[390, "tg"], [1440, "ru"]] as const) {
+  test(`mandatory checkout keeps guest shopping public without automatic SMS ${width} ${locale}`, async ({ page, context, request, baseURL }) => {
+    const phone = `+99293${String(randomInt(10_000_000)).padStart(7, "0")}`;
+    const origin = await requireFixture(request, baseURL, phone);
+    await context.addCookies([{ name: "df-language", value: locale, url: origin }]);
+    await page.setViewportSize({ width, height: 900 });
+    let sends = 0;
+    page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname.endsWith("/customer-auth/code")) sends++; });
+    await catalogCart(page, locale, "0.75", true);
+    const location = page.locator(width < 1024 ? ".header-location--mobile" : ".header-location--desktop");
+    await expect(location).toBeEnabled();
+    await location.click();
+    await expect(page.locator(".address-picker")).toBeVisible();
+    await page.locator(".address-picker").getByRole("button", { name: translate(locale, "Закрыть форму"), exact: true }).click();
+    await page.goto("/checkout");
+    await expect(page.locator(".checkout-login-invitation")).toContainText(translate(locale, "Войдите, чтобы оформить заказ"));
+    await expect(page.locator(".customer-login")).toHaveCount(0);
+    const rejected = await page.request.post("/api/v1/checkout/orders", { headers: { Origin: origin }, data: {} });
+    expect(rejected.status()).toBe(401);
+    await page.goto("/cart");
+    await expect(page.locator(".cart-item")).toHaveCount(1);
+    await expect(page.locator(".cart-item output")).toContainText("0,75");
+    expect(sends).toBe(0);
+    expect((await (await request.get(`${gateway}/captured?phone=${encodeURIComponent(phone)}`, { headers })).json()).code === null).toBe(true);
+  });
+}

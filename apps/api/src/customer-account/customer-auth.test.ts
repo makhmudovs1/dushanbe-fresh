@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CustomerAuthService, CustomerSmsGateway, customerPhone } from "./customer-auth.service";
 import { parseAddress } from "./customer-address.validation";
+import { CustomerSmsBudgetService } from "./customer-sms-budget.service";
+
+function authService(sms = new CustomerSmsGateway()) {
+  const prisma = {} as never;
+  return new CustomerAuthService(prisma, sms, new CustomerSmsBudgetService(prisma));
+}
 
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 function templateConfiguration() {
@@ -10,9 +16,9 @@ function templateConfiguration() {
   vi.stubEnv("CUSTOMER_OTP_SECRET", "test-only-secret-that-is-long-enough");
 }
 describe("customer configuration and SMS gateway", () => {
-  it("is disabled without a configured provider and never requires checkout login", () => {
+  it("is disabled without a configured provider but still requires checkout login", () => {
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true"); vi.stubEnv("CUSTOMER_SMS_URL", "");
-    expect(new CustomerAuthService({} as never, new CustomerSmsGateway()).status()).toEqual({ enabled: false, requiredForCheckout: false });
+    expect(authService().status()).toEqual({ enabled: false, requiredForCheckout: true });
   });
   it("requires HTTPS in production and uses secure host-only session cookies", () => {
     templateConfiguration();
@@ -20,7 +26,7 @@ describe("customer configuration and SMS gateway", () => {
     const gateway = new CustomerSmsGateway(); expect(gateway.configured()).toBe(false);
     vi.stubEnv("CUSTOMER_SMS_URL", "https://sms.example.test/api/message");
     expect(gateway.configured()).toBe(true);
-    const service = new CustomerAuthService({} as never, gateway);
+    const service = authService(gateway);
     expect(service.cookie("opaque")).toContain("__Host-df_customer=opaque");
     expect(service.cookie("opaque")).toMatch(/HttpOnly; Secure; SameSite=Lax/);
   });
@@ -32,8 +38,8 @@ describe("customer configuration and SMS gateway", () => {
     vi.stubEnv("CUSTOMER_SMS_SENDER", "DFRESH");
     const send = vi.fn().mockResolvedValue(new Response(JSON.stringify({ accepted: true })));
     vi.stubGlobal("fetch", send); const gateway = new CustomerSmsGateway();
-    const service = new CustomerAuthService({} as never, gateway);
-    expect(service.status()).toEqual({ enabled: false, requiredForCheckout: false });
+    const service = authService(gateway);
+    expect(service.status()).toEqual({ enabled: false, requiredForCheckout: true });
     await expect(service.requestCode("+992900000000", "127.0.0.1")).rejects.toThrow("Вход по SMS пока недоступен");
     await expect(gateway.send("+992900000000", "123456", "request")).rejects.toThrow("Не удалось отправить SMS");
     expect(send).not.toHaveBeenCalled();
@@ -41,7 +47,7 @@ describe("customer configuration and SMS gateway", () => {
   it("does not enable login merely because every provider setting is filled", async () => {
     templateConfiguration(); vi.stubEnv("CUSTOMER_AUTH_ENABLED", "false"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
     const send = vi.fn(); vi.stubGlobal("fetch", send);
-    const service = new CustomerAuthService({} as never, new CustomerSmsGateway());
+    const service = authService();
     expect(service.status()).toEqual({ enabled: false, requiredForCheckout: false });
     await expect(service.requestCode("+992900000000", "127.0.0.1")).rejects.toThrow("Вход по SMS пока недоступен");
     expect(send).not.toHaveBeenCalled();
@@ -50,21 +56,34 @@ describe("customer configuration and SMS gateway", () => {
     templateConfiguration(); vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
     vi.stubEnv("CUSTOMER_SMS_CODE_VARIABLE", ""); delete process.env.CUSTOMER_SMS_CODE_VARIABLE;
     const send = vi.fn(); vi.stubGlobal("fetch", send);
-    const service = new CustomerAuthService({} as never, new CustomerSmsGateway());
-    expect(service.status()).toEqual({ enabled: false, requiredForCheckout: false });
+    const service = authService();
+    expect(service.status()).toEqual({ enabled: false, requiredForCheckout: true });
     await expect(service.requestCode("+992900000000", "127.0.0.1")).rejects.toThrow("Вход по SMS пока недоступен");
     expect(send).not.toHaveBeenCalled();
   });
   it("keeps optional login independent from mandatory checkout verification", () => {
     templateConfiguration(); vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
-    expect(new CustomerAuthService({} as never, new CustomerSmsGateway()).status()).toEqual({ enabled: true, requiredForCheckout: false });
+    expect(authService().status()).toEqual({ enabled: true, requiredForCheckout: false });
+  });
+  it.each(["CUSTOMER_SMS_MAX_PER_HOUR", "CUSTOMER_SMS_MAX_PER_DAY"])("fails closed for invalid %s without relaxing mandatory checkout", async key => {
+    templateConfiguration(); vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
+    vi.stubEnv(key, "invalid");
+    const send = vi.fn(); vi.stubGlobal("fetch", send);
+    const service = authService();
+    expect(service.status()).toEqual({ enabled: false, requiredForCheckout: true });
+    await expect(service.requestCode("+992900000000", "127.0.0.1")).rejects.toThrow("Вход по SMS пока недоступен");
+    expect(send).not.toHaveBeenCalled();
+  });
+  it("keeps checkout mandatory even when login is explicitly disabled", () => {
+    vi.stubEnv("CUSTOMER_AUTH_ENABLED", "false"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
+    expect(authService().status()).toEqual({ enabled: false, requiredForCheckout: true });
   });
   it("fails closed in production for the wrong gateway or sender before any SMS", async () => {
     templateConfiguration(); vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("CUSTOMER_TRUST_LOCAL_PROXY", "true");
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
     const send = vi.fn(); vi.stubGlobal("fetch", send);
-    const service = new CustomerAuthService({} as never, new CustomerSmsGateway());
+    const service = authService();
     expect(service.status().enabled).toBe(false);
     vi.stubEnv("CUSTOMER_SMS_URL", "https://gateway.payom.tj/api/message");
     vi.stubEnv("CUSTOMER_SMS_SENDER", "Other"); expect(service.status().enabled).toBe(false);

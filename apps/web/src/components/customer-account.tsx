@@ -88,7 +88,7 @@ function CustomerAccountContent() {
     <div className="account-welcome__content"><h2>{t("Войдите в аккаунт")}</h2><p>{t("Чтобы заказывать продукты и сохранять любимое")}</p>
       <p className="account-welcome__privacy"><LockKeyhole size={20} aria-hidden="true" />{t("Корзина и выбранный адрес сохранятся после входа")}</p>
       <button className="primary-action" type="button" onClick={customer.login}>{t("Войти")}</button>
-      {!customer.status.enabled ? <p role="status" className="customer-form__hint">{t("Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p> : null}
+      {!customer.status.enabled ? <p role="status" className="customer-form__hint">{t(customer.status.requiredForCheckout ? "Вход по SMS пока недоступен. Пожалуйста, попробуйте позже." : "Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p> : null}
     </div>
   </section></>;
   const labels = { home: "Дом", work: "Работа", other: "Другой" };

@@ -89,6 +89,8 @@ describe.skipIf(!target)(
       vi.stubEnv("MOBILE_CUSTOMER_API_ENABLED", "true");
       vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true");
       vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
+      vi.stubEnv("CUSTOMER_SMS_MAX_PER_HOUR", "500");
+      vi.stubEnv("CUSTOMER_SMS_MAX_PER_DAY", "1000");
       vi.stubEnv("CUSTOMER_OTP_SECRET", randomBytes(32).toString("hex"));
       vi.stubEnv("MOBILE_QUOTA_SECRET", randomBytes(32).toString("hex"));
       gateway = createServer(async (req, res) => {

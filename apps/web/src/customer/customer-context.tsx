@@ -48,7 +48,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       setUser(null); setResolved(true); setError("");
     } }}>
     {children}
-    {open ? <CustomerLogin available={status.enabled} onClose={() => { setOpen(false); afterLogin.current = null; void refresh(); }} onSuccess={value => {
+    {open ? <CustomerLogin available={status.enabled} requiredForCheckout={status.requiredForCheckout} onClose={() => { setOpen(false); afterLogin.current = null; void refresh(); }} onSuccess={value => {
       requestVersion.current++;
       setUser(value); setResolved(true); setLoading(false); setError(""); setOpen(false); const action = afterLogin.current; afterLogin.current = null; action?.();
     }} /> : null}

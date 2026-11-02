@@ -1,0 +1,20 @@
+.banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-left: 3px solid #65843e;
+  background: #f0f6eb;
+  color: #30452b;
+  overflow-wrap: anywhere;
+}
+
+.banner svg { flex-shrink: 0; color: #836319; }
+.banner span { flex: 1 1 240px; }
+.banner a { color: inherit; text-decoration: underline; padding: 8px 0; }
+.section { margin: 24px 0; scroll-margin-top: 24px; }
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px 24px; }
+.counts dt { font-weight: 600; }
+.counts dd { margin: 4px 0 0; overflow-wrap: anywhere; }

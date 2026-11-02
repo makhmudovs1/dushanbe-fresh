@@ -63,7 +63,46 @@ def api_service():
                     '/srv/dushanbe-fresh/images:/data/images']}
 
 
+def normal_api(root=deploy.ROOT):
+    revision = 'b' * 40
+    return {'container_name': 'df-customer-api-' + revision[:12], 'image': 'df-tarena-api-commerce:' + revision[:12],
+            'network_mode': 'host', 'command': list(deploy.NORMAL_COMMAND), 'environment': dict(deploy.NORMAL_ENV),
+            'labels': {'df.production.revision': revision}, 'env_file': ['/etc/dushanbe-fresh/app.env'],
+            'volumes': [str(root / 'images') + ':/data/images']}
+
+
 class HelperTests(unittest.TestCase):
+    def test_strict_normal_api_and_running_contract(self):
+        api = normal_api()
+        running = {'Config': {'Image': api['image'], 'Cmd': api['command'], 'Labels': api['labels'],
+                             'Env': [f'{k}={v}' for k, v in api['environment'].items()] + ['DATABASE_URL=private']}}
+        self.assertEqual(deploy.validate_api(api, running), api['container_name'])
+        # A later root app.env budget edit must not require a publisher/code change.
+        running['Config']['Env'] += ['CUSTOMER_SMS_MAX_PER_HOUR=25', 'CUSTOMER_SMS_MAX_PER_DAY=100']
+        self.assertEqual(deploy.validate_api(api, running), api['container_name'])
+        self.assertNotIn('CUSTOMER_SMS_MAX_PER_HOUR', api['environment'])
+        self.assertNotIn('CUSTOMER_SMS_MAX_PER_DAY', api['environment'])
+        for patch_env in [{'API_PORT': '4014'}, {'PORT': '4013'}, {'CUSTOMER_REQUIRE_PHONE': 'false'},
+                          {'CUSTOMER_SMS_MAX_PER_HOUR': '11'}, {'CUSTOMER_SMS_MAX_PER_DAY': '51'},
+                          {'DATABASE_URL': 'private'}, {'CUSTOMER_SMS_PILOT_ID': ''}]:
+            broken = copy.deepcopy(api)
+            broken['environment'].update(patch_env)
+            with self.subTest(env=patch_env), self.assertRaises(ValueError):
+                deploy.validate_api(broken)
+        for changes in [{'container_name': api['container_name'] + '-shadow'}, {'env_file': []},
+                        {'volumes': ['/private/ledger:/probe']}, {'ports': ['4013:4013']},
+                        {'entrypoint': ['node']}, {'image': 'stale'}, {'labels': {'df.production.revision': 'c' * 40}}]:
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                deploy.validate_api({**api, **changes})
+        for extra in ['CUSTOMER_SMS_PILOT_PHONE=private', 'PAYOM_PILOT_API_PORT=4013', 'API_PORT=4014']:
+            row = copy.deepcopy(running)
+            row['Config']['Env'].append(extra)
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                deploy.validate_api(api, row)
+        running['Config']['Labels'] = {}
+        with self.assertRaises(ValueError):
+            deploy.validate_api(api, running)
+
     def test_clone_preserves_every_runtime_option_and_excludes_api(self):
         service = web_service('/private/maps.env')
         source = {'services': {'web': service, 'api': {'never': 'copy'}}, 'volumes': {'never': {}}}
@@ -345,6 +384,25 @@ class RolloutTests(unittest.TestCase):
         self.assertIn('/var/log/caddy:uid=1000,gid=1000,mode=0700,size=8m', validator)
         self.assertEqual(validator[validator.index('--network') + 1], 'none')
         self.assertFalse(any('migrat' in str(call) or 'sms' in str(call).lower() for call in self.calls))
+        self.assertEqual([call for call in self.calls if call[:2] == ['docker', 'stop']],
+                         [['docker', 'stop', '--time', '20', OLD]])
+
+    def test_normal_api_is_resolved_from_current_pointer_without_restarting_it(self):
+        api = normal_api(self.root)
+        self.api_compose = self.root / ('state/releases/customer-' + api['container_name'][-12:] + '/compose.json')
+        self.api_compose.parent.mkdir()
+        self.api_compose.write_text(json.dumps({'services': {'api': api}}))
+        self.api_before = self.api_compose.read_bytes()
+        current = json.loads(self.pointer.read_text())
+        current['apiCompose'] = str(self.api_compose)
+        self.pointer.write_text(json.dumps(current))
+        self.rows[api['container_name']] = self.rows.pop(deploy.API)
+        self.rows[api['container_name']]['Config'] = {'Image': api['image'], 'Cmd': api['command'],
+            'Labels': api['labels'], 'Env': [f'{k}={v}' for k, v in api['environment'].items()]}
+        result = self.publish()
+        self.assertEqual(result['apiContainer'], api['container_name'])
+        self.assertEqual(json.loads(self.pointer.read_text())['apiCompose'], str(self.api_compose))
+        self.assertEqual(self.api_compose.read_bytes(), self.api_before)
         self.assertEqual([call for call in self.calls if call[:2] == ['docker', 'stop']],
                          [['docker', 'stop', '--time', '20', OLD]])
 

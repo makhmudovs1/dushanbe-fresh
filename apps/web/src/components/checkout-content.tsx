@@ -294,7 +294,7 @@ export function CheckoutContent() {
         {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
         {error || (currentQuote && !currentQuote.valid) ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
         <label className="checkout-option"><input type="checkbox" checked={accepted} disabled={!currentQuote?.valid || pending || sending} onChange={e => setAccepted(e.target.checked)} /><span>{t("Я проверил товары, стоимость и время доставки")}</span></label>
-        <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || !parseDeliveryAddress(currentAddress) || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Подтвердить телефон и продолжить" : "Подтвердить заказ")}</button>
+        <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || !parseDeliveryAddress(currentAddress) || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Войти и продолжить" : "Подтвердить заказ")}</button>
       </aside>
     </form>
   </>;

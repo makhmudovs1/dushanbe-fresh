@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/account", useSearchPara
 vi.mock("./use-mobile-viewport", () => ({ useMobileViewport: () => true }));
 
 describe("customer experience surfaces", () => {
-  beforeEach(() => { session.user = null; session.status.enabled = false; });
+  beforeEach(() => { session.user = null; session.status.enabled = false; session.status.requiredForCheckout = false; });
   it("keeps a visible entry and honest guest fallback without an SMS provider", () => {
     const profile = renderToStaticMarkup(<CustomerAccount />);
     expect(profile).toContain("Войдите в аккаунт");
@@ -36,6 +36,17 @@ describe("customer experience surfaces", () => {
     expect(html).toContain('autoComplete="tel-national"');
     expect(html).not.toContain('autoComplete="name"');
     expect(html).not.toContain("Код отправлен");
+  });
+  it("does not offer guest ordering when account verification is mandatory but temporarily unavailable", () => {
+    session.status.requiredForCheckout = true;
+    const profile = renderToStaticMarkup(<CustomerAccount />);
+    expect(profile).toContain("Пожалуйста, попробуйте позже.");
+    expect(profile).not.toContain("Можно оформить заказ без входа.");
+    const login = renderToStaticMarkup(<CustomerLogin available={false} requiredForCheckout onClose={() => {}} onSuccess={() => {}} />);
+    expect(login).toContain("Пожалуйста, попробуйте позже.");
+    expect(login).not.toContain("Можно оформить заказ без входа.");
+    const tj = renderToStaticMarkup(<LanguageProvider initialLocale="tg"><CustomerLogin available={false} requiredForCheckout onClose={() => {}} onSuccess={() => {}} /></LanguageProvider>);
+    expect(tj).toContain("Лутфан, баъдтар кӯшиш кунед.");
   });
   it("shows only real account sections and a fifth icon-only profile navigation link", () => {
     session.user = { id: "owner", name: "Тест Пользователь", phone: "+992900000001", phoneVerifiedAt: new Date(0).toISOString() };

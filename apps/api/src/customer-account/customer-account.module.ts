@@ -7,7 +7,9 @@ import { CustomerAccountService } from "./customer-account.service";
 import { CustomerAccountController } from "./customer-account.controller";
 import { CustomerShoppingController } from "./customer-shopping.controller";
 import { CustomerShoppingService } from "./customer-shopping.service";
+import { CustomerSmsBudgetService } from "./customer-sms-budget.service";
+import { CustomerSmsAdminController } from "./customer-sms-admin.controller";
 
-@Module({ imports: [PrismaModule, CatalogModule], controllers: [CustomerAuthController, CustomerAccountController, CustomerShoppingController],
-  providers: [CustomerSmsGateway, CustomerAuthService, CustomerAccountService, CustomerShoppingService], exports: [CustomerAuthService, CustomerAccountService, CustomerShoppingService] })
+@Module({ imports: [PrismaModule, CatalogModule], controllers: [CustomerAuthController, CustomerAccountController, CustomerShoppingController, CustomerSmsAdminController],
+  providers: [CustomerSmsGateway, CustomerSmsBudgetService, CustomerAuthService, CustomerAccountService, CustomerShoppingService], exports: [CustomerSmsBudgetService, CustomerAuthService, CustomerAccountService, CustomerShoppingService] })
 export class CustomerAccountModule {}

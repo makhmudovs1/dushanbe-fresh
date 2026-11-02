@@ -99,6 +99,7 @@ async function main() {
   });
   if (!previewOnly) await new Promise<void>(resolve => gateway.listen(gatewayPort, "127.0.0.1", resolve));
   Object.assign(process.env, { CUSTOMER_AUTH_ENABLED: previewOnly ? "false" : "true", CUSTOMER_REQUIRE_PHONE: previewOnly ? "false" : "true", CUSTOMER_OTP_SECRET: randomBytes(32).toString("hex"),
+    CUSTOMER_SMS_MAX_PER_HOUR: "500", CUSTOMER_SMS_MAX_PER_DAY: "1000",
     CUSTOMER_SMS_URL: `http://127.0.0.1:${gatewayPort}/api/message`, CUSTOMER_SMS_API_KEY: key, CUSTOMER_SMS_SENDER: "LocalTest",
     CUSTOMER_SMS_TEMPLATE_ID: "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31", CUSTOMER_SMS_CODE_VARIABLE: "code-1", WEB_ORIGIN: web.origin });
   // Invented IDs and captured OTPs belong only to this isolated loopback fixture.

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { StaffUser } from "@dushanbe-fresh/shared";
 import { canOpenStaffPage, logoutStaff, refreshStaff, roleLabels, staffEvent, staffHome } from "@/lib/staff-auth";
+import { SmsUsageBanner, SmsUsageProvider } from "@/components/sms-usage";
 
 const StaffContext = createContext<StaffUser | null>(null);
 export function useStaff() {
@@ -46,6 +47,7 @@ export function StaffLayout({ children }: { children: React.ReactNode }) {
         }}>Выйти</button></div>
     </div></header>
     <nav className="shell operations-nav staff-nav" aria-label="Разделы сотрудников">{links.map(([href, label]) => <Link key={href} href={href} aria-current={pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`)) ? "page" : undefined}>{label}</Link>)}</nav>
-    {error ? <p role="alert" className="shell notice">{error}</p> : null}{children}
+    {error ? <p role="alert" className="shell notice">{error}</p> : null}
+    {user.roles.includes("admin") ? <SmsUsageProvider key={user.id}><SmsUsageBanner />{children}</SmsUsageProvider> : children}
   </div></StaffContext.Provider>;
 }

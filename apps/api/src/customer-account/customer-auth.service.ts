@@ -7,6 +7,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { normalizePhone } from "../customers/phone";
 import { PayomSmsAdapter } from "./payom-sms.adapter";
 import { otpSecretReady, payomReadiness, smsPilotConfiguration } from "./payom-configuration";
+import { parseCustomerSmsBudgetConfiguration } from "./customer-sms-budget.configuration";
+import { CustomerSmsBudgetService } from "./customer-sms-budget.service";
 
 export function customerPhone(value: unknown) {
   if (typeof value !== "string" || value.length > 32) throw new BadRequestException("Введите номер телефона +992.");
@@ -30,16 +32,17 @@ export class CustomerSmsGateway {
 @Injectable()
 export class CustomerAuthService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CustomerSmsGateway) private readonly sms: CustomerSmsGateway) {}
+    @Inject(CustomerSmsGateway) private readonly sms: CustomerSmsGateway,
+    @Inject(CustomerSmsBudgetService) private readonly smsBudget: CustomerSmsBudgetService) {}
 
   status() {
     const productionReady = process.env.NODE_ENV !== "production" || payomReadiness().configurationReady;
-    const enabled = process.env.CUSTOMER_AUTH_ENABLED === "true" && productionReady && otpSecretReady() && smsPilotConfiguration().valid && this.sms.configured();
-    return { enabled, requiredForCheckout: enabled && process.env.CUSTOMER_REQUIRE_PHONE === "true" };
+    const enabled = process.env.CUSTOMER_AUTH_ENABLED === "true" && productionReady && otpSecretReady() && smsPilotConfiguration().valid && parseCustomerSmsBudgetConfiguration() !== null && this.sms.configured();
+    return { enabled, requiredForCheckout: process.env.CUSTOMER_REQUIRE_PHONE === "true" };
   }
 
   private enabled() {
-    if (!this.status().enabled) throw new ServiceUnavailableException("Вход по SMS пока недоступен. Можно оформить заказ без входа.");
+    if (!this.status().enabled) throw new ServiceUnavailableException("Вход по SMS пока недоступен. Пожалуйста, попробуйте позже.");
   }
 
   private hmac(value: string) { return createHmac("sha256", process.env.CUSTOMER_OTP_SECRET!).update(value).digest("hex"); }
@@ -79,10 +82,17 @@ export class CustomerAuthService {
       }
       await tx.customerOtpChallenge.updateMany({ where: { phone, consumedAt: null }, data: { consumedAt: new Date() } });
       await tx.customerOtpChallenge.create({ data: { id, phone, codeHash: this.hmac(`${id}:${phone}:${code}`), expiresAt: new Date(Date.now() + 300000) } });
-      return true;
+      return this.smsBudget.reserve(tx);
     });
     if (!created) throw new HttpException("Новый код можно запросить через минуту.", 429);
-    await this.sms.send(phone, code, id);
+    this.smsBudget.logReservation(created);
+    try {
+      await this.sms.send(phone, code, id);
+    } catch (error) {
+      this.smsBudget.logOutcome(created, "failed_or_unknown");
+      throw error;
+    }
+    this.smsBudget.logOutcome(created, "accepted");
     // This existing marker means provider acceptance, not confirmed handset delivery.
     await this.prisma.customerOtpChallenge.update({ where: { id }, data: { sentAt: new Date() } });
     return { challengeId: id, retryAfter: 60, expiresIn: 300 };

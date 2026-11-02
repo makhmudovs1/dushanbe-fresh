@@ -8,7 +8,7 @@ import { CUSTOMER_OTP_LENGTH, formatNationalPhone, nationalPhone } from "@/lib/c
 import { useI18n } from "@/i18n/provider";
 import { CustomerDialog } from "./customer-dialog";
 
-export function CustomerLogin({ onClose, onSuccess, available = true }: { onClose: () => void; onSuccess: (user: CustomerProfile) => void; available?: boolean }) {
+export function CustomerLogin({ onClose, onSuccess, available = true, requiredForCheckout = false }: { onClose: () => void; onSuccess: (user: CustomerProfile) => void; available?: boolean; requiredForCheckout?: boolean }) {
   const { t } = useI18n();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -83,7 +83,7 @@ export function CustomerLogin({ onClose, onSuccess, available = true }: { onClos
     <span className="customer-login__balance" aria-hidden="true" />
   </>;
   return <CustomerDialog title={t(title)} className={`customer-login customer-login--${step}`} busy={busy} onClose={onClose} headerContent={header}>
-    {!available ? <div className="customer-form"><p role="status">{t("Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p>
+    {!available ? <div className="customer-form"><p role="status">{t(requiredForCheckout ? "Вход по SMS пока недоступен. Пожалуйста, попробуйте позже." : "Вход по SMS пока недоступен. Можно оформить заказ без входа.")}</p>
       <button type="button" className="primary-action" onClick={onClose}>{t("Продолжить покупки")}</button></div> :
     <form onSubmit={event => void submit(event)} className="customer-login__form" aria-busy={busy}>
       <div className="customer-login__intro" key={step}><h1>{t(title)}</h1>

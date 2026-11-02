@@ -45,6 +45,7 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     if (!new URL(url!).pathname.includes("test")) throw new Error("Dedicated test database required");
     vi.stubEnv("DATABASE_URL", url!); vi.stubEnv("WEB_ORIGIN", "http://localhost:3000");
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
+    vi.stubEnv("CUSTOMER_SMS_MAX_PER_HOUR", "500"); vi.stubEnv("CUSTOMER_SMS_MAX_PER_DAY", "1000");
     vi.stubEnv("CUSTOMER_OTP_SECRET", randomBytes(32).toString("hex"));
     vi.stubEnv("CUSTOMER_SMS_URL", "https://sms.example.invalid/api/message"); vi.stubEnv("CUSTOMER_SMS_API_KEY", "test-only");
     vi.stubEnv("CUSTOMER_SMS_SENDER", "DFRESH"); vi.stubEnv("CUSTOMER_SMS_TEMPLATE_ID", "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31");
@@ -79,6 +80,7 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     await db.$disconnect(); vi.restoreAllMocks(); vi.unstubAllEnvs();
   });
   it("keeps guest checkout enabled until a real provider is configured", async () => {
+    vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
     vi.stubEnv("CUSTOMER_SMS_API_KEY", "");
     expect(await (await request("/customer-auth/status")).json()).toEqual({ enabled: false, requiredForCheckout: false });
     expect((await request("/customer-auth/code", "POST", { phone: phones[0] })).status).toBe(503);
@@ -89,6 +91,7 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     const receipt = await guest.json();
     expect((await db.order.findUniqueOrThrow({ where: { orderNumber: receipt.orderNumber } })).accountUserId).toBeNull();
     vi.stubEnv("CUSTOMER_SMS_API_KEY", "test-only");
+    vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true");
     expect((await request("/checkout/orders", "POST", {})).status).toBe(401);
   });
   it("requires exact origin, returns no code, and allows a code only once under concurrency", async () => {
@@ -327,6 +330,29 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
       vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true"); vi.stubEnv("NODE_ENV", previousNodeEnv ?? "test");
       vi.stubEnv("CUSTOMER_SMS_URL", previousUrl ?? "");
       vi.stubEnv("CUSTOMER_TRUST_LOCAL_PROXY", previousProxy ?? "false");
+    }
+  });
+
+  it("keeps mandatory checkout closed when the SMS provider configuration is unavailable", async () => {
+    const configuredUrl = process.env.CUSTOMER_SMS_URL;
+    const configuredKey = process.env.CUSTOMER_SMS_API_KEY;
+    const native = process.env.MOBILE_CUSTOMER_API_ENABLED;
+    vi.stubEnv("CUSTOMER_SMS_URL", "");
+    vi.stubEnv("CUSTOMER_SMS_API_KEY", "");
+    vi.stubEnv("MOBILE_CUSTOMER_API_ENABLED", "true");
+    try {
+      expect(await (await request("/customer-auth/status")).json()).toEqual({ enabled: false, requiredForCheckout: true });
+      expect(await (await request("/mobile/auth/status")).json()).toMatchObject({ enabled: false, requiredForCheckout: true });
+      expect((await request("/products", "GET", undefined, "")).status).toBe(200);
+      expect((await request("/delivery-slots", "GET", undefined, "")).status).toBe(200);
+      expect((await request("/checkout/orders", "POST", {}, "")).status).toBe(401);
+      expect((await request("/mobile/checkout/orders", "POST", {}, "", "")).status).toBe(403);
+      const nativeRequest = await fetch(`${base}/mobile/checkout/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      expect(nativeRequest.status).toBe(401);
+    } finally {
+      vi.stubEnv("CUSTOMER_SMS_URL", configuredUrl ?? "");
+      vi.stubEnv("CUSTOMER_SMS_API_KEY", configuredKey ?? "");
+      vi.stubEnv("MOBILE_CUSTOMER_API_ENABLED", native ?? "false");
     }
   });
 

@@ -9,8 +9,8 @@ Run as uid 1000, only after separate deployment approval:
         --expected-web df-pricing-web-71200edb6b0f --old-port 3005 --new-port 3006
 
 All four arguments are required. Subsequent releases use the current pointer's
-Web name/port explicitly. The unchanged API must retain its current pilot wrapper
-and PAYOM_PILOT_API_PORT=4013, not a generic PORT environment variable.
+Web name/port explicitly. The API pointer must describe either the retained
+pricing pilot or a strict df-customer-api-SHA12 ordinary API on API_PORT=4013.
 Failure before publication restores routing and leaves
 the old Web running; failed candidates remain for inspection. Stopping the old
 Web is post-success cleanup, never a reason to roll back to a possibly stopped
@@ -38,6 +38,11 @@ API = 'df-pricing-api-7769f79a22bd'
 DATABASE = 'df-production-postgres-1'
 PUBLIC = 'https://dushanbefresh.tj'
 PHASE = 'preflight'
+NORMAL_COMMAND = ['node', '/app/dist/main.js']
+NORMAL_ENV = {'NODE_ENV': 'production', 'API_HOST': '127.0.0.1', 'API_PORT': '4013',
+              'NODE_OPTIONS': '--max-old-space-size=192', 'CUSTOMER_AUTH_ENABLED': 'true',
+              'CUSTOMER_REQUIRE_PHONE': 'true', 'MOBILE_CUSTOMER_API_ENABLED': 'true',
+              'CUSTOMER_TRUST_LOCAL_PROXY': 'true'}
 
 
 def safe_path(value, directory=False):
@@ -96,15 +101,33 @@ def clone_web(source, sha, expected_web, old_port, new_port):
 
 
 def validate_api(api, running=None):
-    command = ['node', '/ops/payom-ui-pilot.cjs']
-    if (api['container_name'] != API or api.get('command') != command
-            or api.get('network_mode') != 'host' or api['environment'].get('PAYOM_PILOT_API_PORT') != '4013'):
+    name = api['container_name']
+    normal = re.fullmatch(r'df-customer-api-([a-f0-9]{12})', name)
+    command = NORMAL_COMMAND if normal else ['node', '/ops/payom-ui-pilot.cjs']
+    if normal:
+        revision = api.get('labels', {}).get('df.production.revision', '')
+        if (not re.fullmatch(r'[a-f0-9]{40}', revision) or normal[1] != revision[:12]
+                or api.get('image') != 'df-tarena-api-commerce:' + revision[:12]
+                or api.get('environment') != NORMAL_ENV
+                or api.get('env_file') != ['/etc/dushanbe-fresh/app.env']
+                or api.get('ports') or api.get('entrypoint')
+                or api.get('volumes') != [str(ROOT / 'images') + ':/data/images']):
+            raise ValueError('Current ordinary API contract mismatch')
+    elif name != API or api['environment'].get('PAYOM_PILOT_API_PORT') != '4013':
         raise ValueError('Current API pilot wrapper/port mismatch')
+    if api.get('command') != command or api.get('network_mode') != 'host':
+        raise ValueError('Current API command/network mismatch')
     if running is not None:
         config = running['Config']
         if (config['Image'] != api['image'] or config.get('Cmd') != command
                 or any(f'{key}={value}' not in config['Env'] for key, value in api['environment'].items())):
-            raise ValueError('API pointer does not describe the running pilot wrapper')
+            raise ValueError('API pointer does not describe the running API')
+        if normal and (config.get('Labels', {}).get('df.production.revision') != revision
+                       or any(item.split('=', 1)[0].startswith(('PAYOM_PILOT_', 'CUSTOMER_SMS_PILOT_'))
+                              for item in config['Env'])
+                       or any(sum(item.startswith(key + '=') for item in config['Env']) != 1 for key in NORMAL_ENV)):
+            raise ValueError('Running ordinary API revision/ENV mismatch')
+    return name
 
 
 def protected(env_files):
@@ -191,7 +214,9 @@ def publish(sha, expected_web, old_port, new_port, release, pointer):
         raise ValueError('Current Web revision mismatch')
     api_text = api_compose.read_text()
     api = json.loads(api_text)['services']['api']
-    validate_api(api)
+    api_name = validate_api(api)
+    if api_name.startswith('df-customer-api-') and api_compose.parent.name != 'customer-' + api_name[-12:]:
+        raise ValueError('Ordinary API pointer revision mismatch')
     document = clone_web(source, sha, expected_web, old_port, new_port)
     service = document['services']['web']
     env_files = service['env_file']
@@ -208,7 +233,7 @@ def publish(sha, expected_web, old_port, new_port, release, pointer):
     active = safe_path(ROOT / 'state/public-proxy/active.Caddyfile')
     previous = active.read_text()
     candidate = candidate_config(previous, old_port, new_port)
-    before = {name: base.inspect(name) for name in [API, DATABASE, base.PROXY, expected_web]}
+    before = {name: base.inspect(name) for name in [api_name, DATABASE, base.PROXY, expected_web]}
     if any(not row['State']['Running'] or row['State']['Pid'] <= 0
            or row['State'].get('Health', {}).get('Status', 'healthy') != 'healthy' for row in before.values()):
         raise ValueError('Current production must be healthy')
@@ -217,7 +242,7 @@ def publish(sha, expected_web, old_port, new_port, release, pointer):
             or old['Config']['Labels'].get('df.production.revision') != current['commit']
             or f'PORT={old_port}' not in old['Config']['Env']):
         raise ValueError('Expected Web is not the current running release')
-    validate_api(api, before[API])
+    validate_api(api, before[api_name])
     proxy = before[base.PROXY]
     if (proxy['Path'] != 'caddy' or proxy['Args'] != ['run', '--config', '/etc/caddy/Caddyfile', '--adapter', 'caddyfile']
             or not any(mount['Source'] == str(active) and mount['Destination'] == '/etc/caddy/Caddyfile'
@@ -286,7 +311,7 @@ def publish(sha, expected_web, old_port, new_port, release, pointer):
             raise ValueError('Production routing or pointer changed')
         result = {'deployedAtUTC': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'commit': sha,
             'webContainer': service['container_name'], 'webPort': new_port, 'webImage': image['Id'],
-            'apiContainer': API, 'apiPort': 4013, 'migrationRun': False, 'smsSent': False,
+            'apiContainer': api_name, 'apiPort': 4013, 'migrationRun': False, 'smsSent': False,
             'apiDatabaseProxyUnchanged': True, 'secretsAndPilotUnchanged': True, 'publicBuildIdVerified': new_build}
         PHASE = 'publish-pointer'
         updated = {**current, 'release': str(release), 'compose': str(compose), 'commit': sha}

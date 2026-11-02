@@ -26,6 +26,7 @@ describe.skipIf(!url)("one paid-attempt pilot over shared web/native OTP", () =>
   beforeAll(async () => {
     vi.stubEnv("DATABASE_URL", url!); vi.stubEnv("NODE_ENV", "test"); vi.stubEnv("WEB_ORIGIN", "http://localhost:3000");
     vi.stubEnv("CUSTOMER_AUTH_ENABLED", "true"); vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "false");
+    vi.stubEnv("CUSTOMER_SMS_MAX_PER_HOUR", "500"); vi.stubEnv("CUSTOMER_SMS_MAX_PER_DAY", "1000");
     vi.stubEnv("MOBILE_CUSTOMER_API_ENABLED", "true"); vi.stubEnv("CUSTOMER_OTP_SECRET", secret);
     vi.stubEnv("CUSTOMER_SMS_PILOT_PHONE", phone); vi.stubEnv("CUSTOMER_SMS_PILOT_ID", pilotId);
     vi.spyOn(CustomerSmsGateway.prototype, "configured").mockReturnValue(true);

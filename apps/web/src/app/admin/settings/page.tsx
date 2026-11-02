@@ -7,6 +7,7 @@ import { adminRequest } from "@/lib/operations";
 import type { StaffDto } from "@dushanbe-fresh/shared";
 import { OrderPricingSettings } from "@/components/order-pricing-settings";
 import { CatalogMarkupSettings } from "@/components/catalog-markup-settings";
+import { SmsUsageSettings } from "@/components/sms-usage";
 export default function SettingsPage() {
   const resource = useAdminResource<Array<{ key: string; value: string }>>("settings");
   const [threshold, setThreshold] = useState<string | null>(null);
@@ -16,6 +17,7 @@ export default function SettingsPage() {
     <AdminNotice error={resource.error} busy={resource.busy} />
     <OrderPricingSettings settings={resource.data} busy={resource.busy} run={resource.run} />
     <CatalogMarkupSettings />
+    <SmsUsageSettings />
     <p><Link className="secondary-link" href="/admin/settings/delivery-zone">Зона доставки</Link></p>
     <form className="operations-filters" onSubmit={event => { event.preventDefault(); void resource.run(() => adminRequest("settings/purchase-price-deviation", "PATCH", { value: threshold ?? resource.data?.find(setting => setting.key === "purchase_price_deviation_percent")?.value ?? "15" })); }}>
       <label className="field">Порог отклонения закупочной цены, %<input required inputMode="decimal" value={threshold ?? resource.data?.find(setting => setting.key === "purchase_price_deviation_percent")?.value ?? "15"} onChange={event => setThreshold(event.target.value.replace(",", "."))} /></label>
