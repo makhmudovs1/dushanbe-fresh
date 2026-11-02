@@ -51,6 +51,51 @@ def api_service(root):
 
 
 class HelperTests(unittest.TestCase):
+    def test_row_gate_excludes_only_intentionally_revoked_migration_metadata(self):
+        table_query = next(line.strip() for line in deploy.DATABASE_CHECK.splitlines() if 'const tables=' in line)
+        self.assertEqual(table_query, 'const tables=await tx.$queryRawUnsafe("SELECT tablename FROM pg_tables WHERE schemaname=\'public\' AND tablename<>\'_prisma_migrations\' ORDER BY tablename");')
+        self.assertNotIn('has_table_privilege', deploy.DATABASE_CHECK)
+
+    def test_database_failure_reports_only_prisma_and_sqlstate_codes(self):
+        report = {'databaseCheckFailed': True, 'prismaCode': 'P2010', 'sqlState': '42501',
+                  'message': 'private database/phone/token value', 'meta': {'message': 'private query'}}
+        with patch.object(deploy, 'tool', return_value=json.dumps(report)), self.assertRaises(deploy.DatabaseGateFailure) as caught:
+            deploy.database('approved-image', 'rows')
+        self.assertEqual(deploy.failure_reason(caught.exception),
+                         {'reason': 'database_gate_failed', 'prismaCode': 'P2010', 'sqlState': '42501'})
+        self.assertNotIn('private database', str(caught.exception))
+        error = deploy.DatabaseGateFailure({'prismaCode': 'private-value', 'sqlState': 'private-value'})
+        self.assertEqual(deploy.failure_reason(error), {'reason': 'database_gate_failed', 'prismaCode': None, 'sqlState': None})
+
+    def test_migration_permission_probe_uses_same_api_role_root_env_and_read_only_gate(self):
+        with patch.object(deploy, 'tool', return_value='{"migrationTableReadable":true}') as tool:
+            self.assertEqual(deploy.database('approved-image', 'migration-read'), {'migrationTableReadable': True})
+        self.assertEqual(tool.call_args.args, ('approved-image', ['node', '-e', deploy.DATABASE_CHECK, 'migration-read'],
+                                              'host', ['--env-file', deploy.APP_ENV]))
+        self.assertIn('SELECT 1 FROM public."_prisma_migrations" LIMIT 0', deploy.DATABASE_CHECK)
+        self.assertIn('READ ONLY', deploy.DATABASE_CHECK)
+
+    def test_port_free_allows_time_wait_but_rejects_a_live_listener(self):
+        class Socket:
+            reuse = False
+            listener = False
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def setsockopt(self, level, option, value):
+                self.reuse = (level, option, value) == (deploy.socket.SOL_SOCKET, deploy.socket.SO_REUSEADDR, 1)
+            def bind(self, address):
+                if self.listener or not self.reuse:
+                    raise OSError(98, 'Address already in use')
+        sock = Socket()
+        with patch.object(deploy.socket, 'socket', return_value=sock):
+            deploy.port_free(4013)
+            self.assertTrue(sock.reuse)
+            sock.listener = True
+            with self.assertRaises(OSError):
+                deploy.port_free(4013)
+
     def test_clone_removes_pilot_and_never_copies_secret_values(self):
         source = api_service(deploy.ROOT)
         original = copy.deepcopy(source)
@@ -234,6 +279,7 @@ class PromotionTests(unittest.TestCase):
         self.failure = self.http_failure = self.drift = None
         self.row_mismatch = self.private_drift = self.runtime_mismatch = False
         self.row_reads = 0
+        self.web_health_after_start = None
         self.effective_budget = {'maxPerHour': 10, 'maxPerDay': 50}
         self.existing_names = []
         self.args = deploy.arguments(['--deploy-approved', SHA, '--expected-api', OLD, '--expected-web', WEB, '--web-port', '3008'])
@@ -271,6 +317,8 @@ class PromotionTests(unittest.TestCase):
 
     def inspect(self, name):
         row = copy.deepcopy(self.rows[name])
+        if name == WEB and self.web_health_after_start and self.rows.get(NEW, {}).get('State', {}).get('Running'):
+            row['State']['Health']['Status'] = self.web_health_after_start
         if self.runtime_mismatch and name == SHADOW:
             if self.runtime_mismatch == 'env':
                 row['Config']['Env'] = [item for item in row['Config']['Env'] if not item.startswith('DATABASE_URL=')] + ['DATABASE_URL=different-private-value']
@@ -352,6 +400,91 @@ class PromotionTests(unittest.TestCase):
     def promote(self, allow=False):
         self.args.allow_optional_checkout_rollback = allow
         return deploy.main(self.args)
+
+    def stage_failed_release(self):
+        self.args.deploy_approved = None
+        self.args.resume_approved = SHA
+        for filename, shadow in [('compose.json', False), ('shadow.json', True)]:
+            service = deploy.clone_api(self.api, SHA, shadow)
+            document = {'name': 'df-customer-' + SHA[:12] + ('-shadow' if shadow else ''), 'services': {'api': service}}
+            (self.release / filename).write_text(json.dumps(document))
+            if shadow:
+                self.rows[SHADOW] = self.runtime(SHADOW, service)
+        for name in [OLD, SHADOW]:
+            self.rows[name]['State'].update(Running=False, Pid=0, ExitCode=143, OOMKilled=False)
+        self.existing_names = [OLD, SHADOW, WEB, deploy.web.DATABASE, deploy.base.PROXY]
+        maintenance = deploy.maintenance_config(CADDY, 3008)
+        self.active.write_text(maintenance)
+        for name, value in [('before-pointer.json', self.original_pointer), ('before.Caddyfile', CADDY), ('maintenance.Caddyfile', maintenance)]:
+            (self.release / name).write_text(value)
+
+    def test_resume_staged_release_starts_only_normal_api_and_keeps_web(self):
+        self.stage_failed_release()
+        result = self.promote()
+        self.assertTrue(result['resumedStagedRelease'])
+        self.assertEqual(result['protectedStateBaseline'], 'resume-entry')
+        self.assertEqual(self.active.read_text(), CADDY)
+        self.assertEqual(json.loads(self.pointer.read_text()), {**json.loads(self.original_pointer), 'apiCompose': str(self.release / 'compose.json')})
+        self.assertFalse(self.rows[OLD]['State']['Running'])
+        self.assertFalse(self.rows[SHADOW]['State']['Running'])
+        self.assertTrue(self.rows[NEW]['State']['Running'])
+        self.assertFalse(any(call[:2] in [['docker', 'start'], ['docker', 'stop']] for call in self.calls))
+        ups = [call for call in self.calls if call[:2] == ['docker', 'compose']]
+        self.assertEqual(len(ups), 1)
+        self.assertEqual(ups[0][3], str(self.release / 'compose.json'))
+        self.assertEqual(self.row_reads, 2)
+
+    def test_failed_resume_holds_maintenance_never_restarts_old(self):
+        self.stage_failed_release()
+        self.http_failure = lambda url, post: 400 if ':4013/' in url and post else None
+        with self.assertRaises(ValueError):
+            self.promote()
+        self.assertEqual(self.pointer.read_text(), self.original_pointer)
+        self.assertIn('respond ', self.active.read_text())
+        self.assertFalse(self.rows[OLD]['State']['Running'])
+        self.assertFalse(any(call[:2] == ['docker', 'start'] for call in self.calls))
+        self.assertTrue(deploy.ROLLBACK['maintenanceRetained'])
+
+    def test_resume_rejects_pointer_drift_before_mutation(self):
+        self.stage_failed_release()
+        self.pointer.write_text(self.original_pointer + '\n')
+        with self.assertRaises(ValueError):
+            self.promote()
+        self.run.assert_not_called()
+
+    def test_resume_allows_web_unhealthy_only_until_api_and_web_recover(self):
+        self.stage_failed_release()
+        self.rows[WEB]['State']['Health']['Status'] = 'unhealthy'
+        self.web_health_after_start = 'healthy'
+        result = self.promote()
+        self.assertTrue(result['resumedStagedRelease'])
+        self.assertEqual(self.inspect(WEB)['State']['Health']['Status'], 'healthy')
+        self.assertEqual(self.active.read_text(), CADDY)
+
+    def test_resume_web_health_timeout_keeps_maintenance_and_old_api_stopped(self):
+        self.stage_failed_release()
+        self.rows[WEB]['State']['Health']['Status'] = 'unhealthy'
+        with self.assertRaisesRegex(ValueError, 'Web health did not recover'):
+            self.promote()
+        self.assertEqual(self.pointer.read_text(), self.original_pointer)
+        self.assertIn('respond ', self.active.read_text())
+        self.assertFalse(self.rows[OLD]['State']['Running'])
+        self.assertFalse(any(call[:2] == ['docker', 'start'] for call in self.calls))
+
+    def test_resume_unhealthy_web_does_not_allow_process_identity_drift(self):
+        self.stage_failed_release()
+        self.rows[WEB]['State']['Health']['Status'] = 'unhealthy'
+        self.web_health_after_start = 'healthy'
+        self.drift = WEB
+        with self.assertRaisesRegex(ValueError, 'Existing production service changed'):
+            self.promote()
+        self.assertIn('respond ', self.active.read_text())
+
+    def test_fresh_promotion_still_requires_healthy_web_before_start(self):
+        self.rows[WEB]['State']['Health']['Status'] = 'unhealthy'
+        with self.assertRaisesRegex(ValueError, 'Existing production service changed'):
+            self.promote()
+        self.run.assert_not_called()
 
     def previous_normal(self):
         self.api = deploy.clone_api(self.api, 'b' * 40)

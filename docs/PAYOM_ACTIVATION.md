@@ -6,10 +6,14 @@
 77.95.0.94 on 2026-10-31; old Web/API/PostgreSQL are stopped. Fresh OTP secret,
 token and approved template are configured privately. Two authorized real SMS
 confirmed `CUSTOMER_SMS_CODE_VARIABLE=code-1` and successful Web login;
-the owner confirmed profile/cart persistence after reload. A one-recipient
-pilot runs on port 4012; mass SMS and mandatory checkout auth remain off.
-Use [PAYOM_PILOT_20261031.md](PAYOM_PILOT_20261031.md) for current evidence,
-routing and remaining rollout steps. Everything below is historical preparation.
+the owner confirmed profile/cart persistence after reload. With explicit owner
+approval on 2026-11-02, ordinary Web/native SMS login and mandatory account
+authentication for order creation replaced the pilot. Guest shopping remains
+public. Global limits are 10 provider attempts/hour and 50/day, with an in-app
+admin warning at 80% of the daily limit. No automatic paid SMS was sent.
+Use [PAYOM_PUBLIC_LAUNCH.md](PAYOM_PUBLIC_LAUNCH.md) for active policy, runtime
+ENV precedence and verification evidence. The old pilot report and everything
+below are historical preparation, not instructions to reactivate old services.
 
 ## Deployment Update
 

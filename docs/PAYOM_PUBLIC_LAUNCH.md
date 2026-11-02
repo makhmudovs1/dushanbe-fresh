@@ -85,6 +85,8 @@ Structured server log events contain only quantity, aggregate counters/reset
 times and a fixed event/outcome label: reservation, provider acceptance or
 failed/unknown. Acceptance is not delivery. Never log raw transport exceptions,
 request bodies, authorization headers, phones or OTPs.
+The ordinary API retains these events in Docker's private `local` log driver,
+bounded to three files of 5 MB each. The retired pilot's logging is unchanged.
 
 ## Safe Activation
 
@@ -108,3 +110,51 @@ request bodies, authorization headers, phones or OTPs.
 The actual published revision and final verification belong in the activation
 receipt below. A real two-device paid SMS test is intentionally not performed
 automatically.
+
+## Activation Receipt, 2026-11-02
+
+- Application revision: `adde91551b1c2b355d77621468c2a50b60b96200`.
+  Both linux/amd64 images were built outside the VPS; transferred layers,
+  effective image configuration and full revision labels matched locally.
+- Ordinary API was published at **20:15 UTC**, on the existing loopback :4013.
+  Web was published at **20:18 UTC**, on :3009. Both containers are healthy;
+  PostgreSQL and the public HTTPS proxy were not restarted.
+- Promotion initially held maintenance after a post-stop TCP TIME_WAIT bind
+  refusal. Recovery uses SO_REUSEADDR while still rejecting a live listener.
+  A second gate exposed the API role's intentional denial of migration-table
+  access. The row gate now excludes only `_prisma_migrations`, matching the
+  existing deployment convention; no grants or database changes were made.
+  These operator errors extended maintenance approximately 17 minutes.
+- Recovery required the exact staged Compose, original pointer and maintenance
+  configuration, stopped old/shadow identities, fresh backup and private ENV
+  proof. All business-table row fingerprints matched before/after starting the
+  ordinary API. Existing users, orders, sessions, secrets and pilot files were
+  preserved. No migration, seed, successful order or identity/session write was
+  part of deployment. The protected-state comparison baseline for the resumed
+  operation is its entry state, not a claimed pre-maintenance snapshot.
+- Runtime read-only usage confirmed **0/10 hourly, 0/50 daily**, configured true,
+  with no provider calls. The admin usage endpoint returns 401 anonymously.
+- Public production smoke passed at **20:19 UTC**: Chromium 1440 px/RU and
+  WebKit 390 px/TJ, HTTPS, blank login, guest cart/reload, required checkout gate,
+  browser/native policy, and invalid anonymous order requests returning 401.
+  Zero attempted browser mutations, zero created orders and zero paid SMS.
+  Artifacts: `test-results/customer-sms-launch-production-20261102/` (ignored).
+
+## Focused Verification
+
+- Full isolated workspace tests: **1,050 passed**, zero skips: shared 24,
+  Web 444, API 582. Disposable local PostgreSQL only; no production data in tests.
+- Browser regressions: **34 passed**, 17 Chromium and 17 WebKit. Includes device
+  A registration/data -> device B same-profile login -> both sessions retained;
+  no repeat name; idempotent MAX cart merge; guest shopping/required checkout;
+  admin 80% warning, polling, stale responses, errors and role separation.
+- Deployment-helper regressions: **85 passed**, including live-listener vs
+  TIME_WAIT, maintenance recovery, migration-table isolation, bounded logging,
+  preserved rows/ENV and failure paths. Workspace lint/typecheck and production
+  Shared/API/Web builds passed.
+
+Production Payom handset delivery and code verification were already confirmed
+by the owner during the authorized October 31 pilot. This release does not
+claim a new paid handset or physical iOS/Android test; native contracts and
+independent session behavior were checked with the existing HTTP/integration
+tests. Further handset checks remain manual, without automatic resend.

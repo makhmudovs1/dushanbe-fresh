@@ -115,9 +115,9 @@ production ENV/data into this fixture.
 - Synthetic browser fixture shut down with owned cleanup; its disposable local
   PostgreSQL was removed. Temporary map build input was removed, not user ENV.
 
-### Existing Production SMS Restriction
+### Historical Pilot Restriction Before Activation
 
-Read-only inspection confirmed that the current API still starts through
+Read-only inspection at the time of the first Web release confirmed that its API still started through
 `payom-ui-pilot.cjs`: one approved recipient, one persistent provider slot, already
 used. Public auth status being enabled does **not** remove this restriction.
 It prevents a further real SMS even though returning-account/session logic works.
@@ -127,4 +127,8 @@ authorization, alter secrets or enable general paid sends. Switching from this
 pilot to normal customer SMS login needs separate owner approval and controlled
 API/configuration activation, preserving the OTP secret, existing sessions and
 all quotas, with `CUSTOMER_REQUIRE_PHONE=false`. No additional paid handset test
-was performed. The owner has been asked explicitly about that activation.
+was performed. This historical optional-checkout policy was subsequently
+superseded by explicit owner approval: normal SMS login and required account
+authentication at checkout are now active. See
+[PAYOM_PUBLIC_LAUNCH.md](PAYOM_PUBLIC_LAUNCH.md) for the November 2 activation,
+additional tests, quotas and preserved-session/data verification.

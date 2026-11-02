@@ -17,6 +17,12 @@ credentials and must return 401 before validation/storage. ENV values and privat
 database/ledger fingerprints are never printed or copied into release files.
 Budget variables are inherited only from app.env (backend defaults: 10/50).
 Initial promotion requires effective 10/hour and 50/day, without pinning Compose.
+For an existing failed release, replace --deploy-approved with --diagnose-release
+to read filtered metadata and fixed GET status codes only. This never resumes,
+reloads, starts/stops containers, follows redirects, or reopens optional checkout.
+--resume-approved is separate approval to continue a staged release under its
+saved maintenance configuration, with old and shadow APIs stopped (143, no OOM).
+Resume never starts the old API or permits optional-checkout fallback.
 """
 import argparse
 import copy
@@ -29,6 +35,7 @@ import os
 import pathlib
 import re
 import socket
+import ssl
 import sys
 import time
 import urllib.error
@@ -39,7 +46,37 @@ web = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(web)
 base, ROOT = web.base, web.ROOT
 APP_ENV = '/etc/dushanbe-fresh/app.env'
-PHASE, ROLLBACK = 'preflight', {}
+PHASE, ROLLBACK, STEP = 'preflight', {}, 'preflight'
+
+
+class ProbeFailure(ValueError):
+    def __init__(self, diagnostic):
+        super().__init__('Expected routing/readiness was not observed')
+        self.diagnostic = diagnostic
+
+
+class DatabaseGateFailure(ValueError):
+    def __init__(self, report):
+        super().__init__('Private read-only database gate failed')
+        self.diagnostic = {'reason': 'database_gate_failed',
+                           'prismaCode': report.get('prismaCode') if re.fullmatch(r'P[0-9]{4}', str(report.get('prismaCode'))) else None,
+                           'sqlState': report.get('sqlState') if re.fullmatch(r'[0-9A-Z]{5}', str(report.get('sqlState'))) else None}
+
+
+def failure_reason(error):
+    if isinstance(error, (ProbeFailure, DatabaseGateFailure)):
+        return error.diagnostic
+    if isinstance(error, urllib.error.URLError):
+        error = error.reason
+    if isinstance(error, ssl.SSLError):
+        return {'reason': 'tls_error'}
+    if isinstance(error, socket.gaierror):
+        return {'reason': 'dns_error'}
+    if isinstance(error, (TimeoutError, base.subprocess.TimeoutExpired)):
+        return {'reason': 'timeout'}
+    if isinstance(error, ConnectionError):
+        return {'reason': 'connection_error'}
+    return {'reason': 'operation_failed'}
 
 ENV_CHECK = r"""
 try {
@@ -63,13 +100,17 @@ const u=new URL(process.env.DATABASE_URL);u.searchParams.set('connection_limit',
 const db=new PrismaClient();
 (async()=>{try{const result=await db.$transaction(async tx=>{
  await tx.$executeRawUnsafe('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
+ if(process.argv[1]==='migration-read') {await tx.$queryRawUnsafe('SELECT 1 FROM public."_prisma_migrations" LIMIT 0');return {migrationTableReadable:true};}
  if(process.argv[1]==='capacity') return (await tx.$queryRawUnsafe("SELECT current_setting('max_connections')::int AS maximum,current_setting('superuser_reserved_connections')::int AS reserved,(SELECT count(*)::int FROM pg_stat_activity) AS used"))[0];
- const tables=await tx.$queryRawUnsafe("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename");
+ const tables=await tx.$queryRawUnsafe("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename<>'_prisma_migrations' ORDER BY tablename");
  const hashes={};
  for(const {tablename} of tables){if(!/^[a-z_]+$/.test(tablename))throw Error();
   hashes[tablename]=(await tx.$queryRawUnsafe(`SELECT count(*)::text AS rows,encode(sha256(convert_to(coalesce(string_agg(to_jsonb(t)::text,E'\n' ORDER BY to_jsonb(t)::text),''),'UTF8')),'hex') AS digest FROM public."${tablename}" t`))[0];}
  return hashes;
- },{timeout:30000});console.log(JSON.stringify(result));}finally{await db.$disconnect()}})().catch(()=>{console.error('Private read-only database gate failed');process.exitCode=1});
+ },{timeout:30000});console.log(JSON.stringify(result));}finally{await db.$disconnect()}})().catch(e=>{
+ console.log(JSON.stringify({databaseCheckFailed:true,prismaCode:/^P[0-9]{4}$/.test(e?.code)?e.code:null,
+  sqlState:/^[0-9A-Z]{5}$/.test(e?.meta?.code)?e.meta.code:null}));
+});
 """
 
 
@@ -81,7 +122,10 @@ def tool(image, args, network='none', extra=()):
 
 
 def database(image, mode):
-    return json.loads(tool(image, ['node', '-e', DATABASE_CHECK, mode], 'host', ['--env-file', APP_ENV]))
+    result = json.loads(tool(image, ['node', '-e', DATABASE_CHECK, mode], 'host', ['--env-file', APP_ENV]))
+    if result.get('databaseCheckFailed') is True:
+        raise DatabaseGateFailure(result)
+    return result
 
 
 def protected(env_files):
@@ -111,15 +155,17 @@ def request(url, post=False):
 
 
 def wait(url, status=200):
+    diagnostic = {'reason': 'no_response'}
     for _ in range(40):
         try:
             code, body = request(url)
             if code == status:
                 return body
-        except Exception:
-            pass
+            diagnostic = {'reason': 'unexpected_http_status', 'observedStatus': code}
+        except Exception as error:
+            diagnostic = failure_reason(error)
         time.sleep(0.5)
-    raise ValueError('Expected routing/readiness was not observed')
+    raise ProbeFailure({**diagnostic, 'expectedStatus': status})
 
 
 def check_api(origin):
@@ -227,6 +273,7 @@ def verify_runtime(service, image, env_hashes):
 
 def port_free(port):
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind(('127.0.0.1', port))
 
 
@@ -242,8 +289,61 @@ def reload_proxy(active, content):
     base.run(['docker', 'kill', '--signal', 'USR1', base.PROXY])
 
 
-def promote(args, release, pointer):
-    global PHASE, ROLLBACK
+def wait_web_healthy(name):
+    for _ in range(40):
+        row = base.inspect(name)
+        if not row['State']['Running']:
+            raise ValueError('Existing Web stopped while waiting for API recovery')
+        if row['State'].get('Health', {}).get('Status') == 'healthy':
+            return
+        time.sleep(1)
+    raise ValueError('Existing Web health did not recover after API startup')
+
+
+def diagnose(args, release):
+    """No mutating commands, provider calls, response bodies, ENV or raw errors."""
+    before = json.loads(web.safe_path(release / 'before-pointer.json').read_text())
+    pointer = web.safe_path(ROOT / 'state/web-current.json')
+    current = json.loads(pointer.read_text())
+    active = web.safe_path(ROOT / 'state/public-proxy/active.Caddyfile')
+    content = active.read_text()
+    result = {'readOnly': True, 'phase': 'diagnose-existing-release',
+              'pointerMatchesBefore': current == before,
+              'pointerMatchesCandidate': current == {**before, 'apiCompose': str(release / 'compose.json')},
+              'activeMatchesBefore': content == web.safe_path(release / 'before.Caddyfile').read_text(),
+              'activeMatchesMaintenance': content == web.safe_path(release / 'maintenance.Caddyfile').read_text(),
+              'containers': {}, 'http': {}}
+    names = set(base.run(['docker', 'ps', '-a', '--format', '{{.Names}}']).splitlines())
+    for role, name in [('oldApi', args.expected_api), ('shadow', 'df-customer-api-' + args.diagnose_release[:12] + '-shadow'),
+                       ('normalApi', 'df-customer-api-' + args.diagnose_release[:12]), ('web', args.expected_web),
+                       ('database', web.DATABASE), ('proxy', base.PROXY)]:
+        row = {'present': name in names}
+        if row['present']:
+            inspected = base.inspect(name)
+            health = inspected['State'].get('Health', {}).get('Status')
+            row.update(running=inspected['State']['Running'], health=health if health in ['healthy', 'unhealthy', 'starting'] else None)
+            if role == 'proxy':
+                row['reloadContractMatches'] = (inspected.get('Path') == 'caddy' and inspected.get('Args') ==
+                    ['run', '--config', '/etc/caddy/Caddyfile', '--adapter', 'caddyfile'] and
+                    any(m['Source'] == str(active) and m['Destination'] == '/etc/caddy/Caddyfile' for m in inspected['Mounts']))
+        result['containers'][role] = row
+    for label, origin in [('apex', web.PUBLIC), ('www', 'https://www.dushanbefresh.tj'),
+                          ('api4013', 'http://127.0.0.1:4013'), ('shadow4014', 'http://127.0.0.1:4014')]:
+        for path_label, path in [('root', '/'), ('ready', '/api/v1/health/ready')]:
+            if label.startswith(('api', 'shadow')) and path_label == 'root':
+                continue
+            try:
+                status, _ = request(origin + path)
+                result['http'][label + '.' + path_label] = {'status': status}
+            except Exception as error:
+                result['http'][label + '.' + path_label] = failure_reason(error)
+    result['observationsStable'] = active.read_text() == content and json.loads(pointer.read_text()) == current
+    print(json.dumps(result))
+    return result
+
+
+def promote(args, release, pointer, resume=False):
+    global PHASE, ROLLBACK, STEP
     text = pointer.read_text()
     current = json.loads(text)
     paths = [web.compose_path(current[key]) for key in ['compose', 'apiCompose']]
@@ -258,10 +358,17 @@ def promote(args, release, pointer):
     web.clone_web({'services': {'web': source_web}}, args.deploy_approved, args.expected_web, args.web_port, args.web_port + 1)
     service, shadow = [clone_api(source_api, args.deploy_approved, value) for value in [False, True]]
     active = web.safe_path(ROOT / 'state/public-proxy/active.Caddyfile')
-    previous = active.read_text()
+    previous = web.safe_path(release / 'before.Caddyfile').read_text() if resume else active.read_text()
     maintenance = maintenance_config(previous, args.web_port)
+    if resume and (web.safe_path(release / 'before-pointer.json').read_text() != text
+                   or web.safe_path(release / 'maintenance.Caddyfile').read_text() != maintenance
+                   or active.read_text() != maintenance):
+        raise ValueError('Resume requires exact original pointer and saved live maintenance')
     before = {name: base.inspect(name) for name in [args.expected_api, args.expected_web, web.DATABASE, base.PROXY]}
     web.validate_api(source_api, before[args.expected_api])
+    if resume and (before[args.expected_api]['State']['Running'] or before[args.expected_api]['State'].get('ExitCode') != 143
+                   or before[args.expected_api]['State'].get('OOMKilled') is not False):
+        raise ValueError('Resume requires retained old API stopped 143 without OOM')
     expected_mounts = sorted(tuple(m.split(':')[:2]) for m in source_api['volumes'])
     if sorted((m['Source'], m['Destination']) for m in before[args.expected_api]['Mounts'] if m['Type'] == 'bind') != expected_mounts:
         raise ValueError('Running API mounts do not match current pointer')
@@ -289,19 +396,27 @@ def promote(args, release, pointer):
         raise ValueError('Root-owned, deploy-readable private app ENV required')
     env_files = [APP_ENV, *source_web['env_file']]
     hashes = protected(env_files)
-    def unchanged(include_old=False):
+    def unchanged(include_old=False, allow_web_unhealthy=False):
         for name, row in before.items():
             if include_old or name != args.expected_api:
                 after = base.inspect(name)
-                if (not after['State']['Running'] or after['Id'] != row['Id'] or after['State']['Pid'] != row['State']['Pid']
-                        or after['State']['StartedAt'] != row['State']['StartedAt'] or after['State'].get('Health', {}).get('Status', 'healthy') != 'healthy'):
+                running = not (resume and name == args.expected_api)
+                require_health = running and not (resume and allow_web_unhealthy and name == args.expected_web)
+                if (after['State']['Running'] is not running or after['Id'] != row['Id'] or after['State']['Pid'] != row['State']['Pid']
+                        or after['State']['StartedAt'] != row['State']['StartedAt'] or (require_health and after['State'].get('Health', {}).get('Status', 'healthy') != 'healthy')):
                     raise ValueError('Existing production service changed')
         if protected(env_files) != hashes or pointer.read_text() != text or any(p.read_text() != value for p, value in originals.items()):
             raise ValueError('Private state or current pointer changed')
-    unchanged(True)
+    unchanged(True, allow_web_unhealthy=resume)
     names = base.run(['docker', 'ps', '-a', '--format', '{{.Names}}']).splitlines()
-    if any(s['container_name'] in names for s in [service, shadow]):
+    if service['container_name'] in names or (not resume and shadow['container_name'] in names):
         raise ValueError('Candidate names already exist')
+    if resume:
+        stopped = base.inspect(shadow['container_name'])
+        if (shadow['container_name'] not in names or stopped['State']['Running'] or stopped['State'].get('ExitCode') != 143
+                or stopped['State'].get('OOMKilled') is not False or stopped['Image'] != image['Id']
+                or stopped['Config'].get('Labels', {}).get('df.production.revision') != args.deploy_approved):
+            raise ValueError('Resume requires approved shadow stopped 143 without OOM')
     port_free(4014)
     headroom(service['image'])
     env_hashes = json.loads(tool(service['image'], ['node', '-e', ENV_CHECK, json.dumps(web.NORMAL_ENV)],
@@ -311,32 +426,51 @@ def promote(args, release, pointer):
         raise ValueError('Incomplete private ENV proof')
     compose, warm = release / 'compose.json', release / 'shadow.json'
     for path, value in [(compose, service), (warm, shadow)]:
-        web.write_new(path, json.dumps({'name': 'df-customer-' + args.deploy_approved[:12] + ('-shadow' if path == warm else ''), 'services': {'api': value}}, indent=2))
+        document = {'name': 'df-customer-' + args.deploy_approved[:12] + ('-shadow' if path == warm else ''), 'services': {'api': value}}
+        if resume:
+            raw = web.safe_path(path).read_text()
+            if json.loads(raw) != document:
+                raise ValueError('Staged API Compose differs from exact approved clone')
+            originals[path] = raw
+        else:
+            web.write_new(path, json.dumps(document, indent=2))
     for name, content in [('before-pointer.json', text), ('before.Caddyfile', previous), ('maintenance.Caddyfile', maintenance)]:
-        web.write_new(release / name, content)
+        if not resume:
+            web.write_new(release / name, content)
     web.validate_routes(adapt(release / 'before.Caddyfile', proxy), args.web_port)
     validate_maintenance(adapt(release / 'maintenance.Caddyfile', proxy))
-    warm_started = old_stopped = normal_started = maintenance_touched = pointer_touched = False
+    warm_started = old_stopped = normal_started = pointer_touched = False
+    maintenance_touched = resume
     baseline = None
     try:
-        PHASE = 'warm-shadow'
-        warm_started = True
-        base.run(['docker', 'compose', '-f', str(warm), 'up', '-d', '--no-deps', '--no-build', '--pull', 'never', 'api'], timeout=120)
-        check_api('http://127.0.0.1:4014')
-        verify_runtime(shadow, image, env_hashes)
-        unchanged(True)
-        if active.read_text() != previous:
+        PHASE = 'resume-maintenance' if resume else 'warm-shadow'
+        if not resume:
+            warm_started = True
+            base.run(['docker', 'compose', '-f', str(warm), 'up', '-d', '--no-deps', '--no-build', '--pull', 'never', 'api'], timeout=120)
+            check_api('http://127.0.0.1:4014')
+            verify_runtime(shadow, image, env_hashes)
+        unchanged(True, allow_web_unhealthy=resume)
+        if active.read_text() != (maintenance if resume else previous):
             raise ValueError('Public proxy changed during warmup')
         PHASE = 'maintenance-drain'
         maintenance_touched = True
-        reload_proxy(active, maintenance)
+        STEP = 'maintenance.reload'
+        if not resume:
+            reload_proxy(active, maintenance)
         for host in [web.PUBLIC, 'https://www.dushanbefresh.tj']:
+            STEP = 'maintenance.' + ('apex' if host == web.PUBLIC else 'www') + '.root'
             wait(host + '/', 503)
+            STEP = 'maintenance.' + ('apex' if host == web.PUBLIC else 'www') + '.ready'
             wait(host + '/api/v1/health/ready', 503)
-        time.sleep(5)
-        base.run(['docker', 'stop', '--time', '25', shadow['container_name']], timeout=40)
-        old_stopped = True
-        base.run(['docker', 'stop', '--time', '25', args.expected_api], timeout=40)
+        if not resume:
+            STEP = 'maintenance.drain'
+            time.sleep(5)
+            STEP = 'maintenance.stop-shadow'
+            base.run(['docker', 'stop', '--time', '25', shadow['container_name']], timeout=40)
+            old_stopped = True
+            STEP = 'maintenance.stop-old-api'
+            base.run(['docker', 'stop', '--time', '25', args.expected_api], timeout=40)
+        STEP = 'maintenance.bind-4013'
         port_free(4013)
         PHASE = 'frozen-integrity-gate'
         baseline = database(service['image'], 'rows')
@@ -345,6 +479,7 @@ def promote(args, release, pointer):
         PHASE = 'verify-normal-api'
         check_api('http://127.0.0.1:4013')
         verify_runtime(service, image, env_hashes)
+        wait_web_healthy(args.expected_web)
         if database(service['image'], 'rows') != baseline:
             raise ValueError('Existing identities/sessions/business rows changed')
         unchanged()
@@ -368,17 +503,23 @@ def promote(args, release, pointer):
                   'webContainer': args.expected_web, 'webPort': args.web_port, 'onlyApiComposeUpdated': True,
                   'mandatoryCheckout': True, 'nativeAvailable': True, 'existingRowHashesMatched': True,
                   'secretsAndPilotUnchanged': True, 'smsSent': False, 'migrationRun': False}
+        if resume:
+            result.update(resumedStagedRelease=True, protectedStateBaseline='resume-entry')
         web.write_new(release / 'result.json', json.dumps(result, indent=2))
         print(json.dumps(result))
         return result
-    except BaseException:
+    except BaseException as error:
         ROLLBACK = {'maintenanceRetained': maintenance_touched, 'oldApiRestarted': False,
+                    'failureDiagnostic': {'step': STEP if PHASE == 'maintenance-drain' else PHASE, **failure_reason(error)},
                     'mandatoryCheckoutFallback': source_api['environment'].get('CUSTOMER_REQUIRE_PHONE') == 'true'}
         try:
             if maintenance_touched:
+                STEP = 'rollback.maintenance.reload'
                 reload_proxy(active, maintenance)
                 for host in [web.PUBLIC, 'https://www.dushanbefresh.tj']:
+                    STEP = 'rollback.maintenance.' + ('apex' if host == web.PUBLIC else 'www') + '.ready'
                     wait(host + '/api/v1/health/ready', 503)
+            STEP = 'rollback.stop-candidates'
             for candidate, started in [(service, normal_started), (shadow, warm_started)]:
                 if started:
                     try:
@@ -386,21 +527,26 @@ def promote(args, release, pointer):
                     except Exception:
                         ROLLBACK['candidateCleanupIncomplete'] = True
             if old_stopped:
+                STEP = 'rollback.start-old-api'
                 if not base.inspect(args.expected_api)['State']['Running']:
                     port_free(4013)
                     base.run(['docker', 'start', args.expected_api])
                 wait('http://127.0.0.1:4013/api/v1/health/ready')
                 ROLLBACK['oldApiRestarted'] = True
             if pointer_touched:
+                STEP = 'rollback.restore-pointer'
                 base.rewrite(pointer, (release / 'before-pointer.json').read_text())
-            if maintenance_touched and (ROLLBACK['mandatoryCheckoutFallback'] or args.allow_optional_checkout_rollback):
+            if not resume and maintenance_touched and (ROLLBACK['mandatoryCheckoutFallback'] or args.allow_optional_checkout_rollback):
+                STEP = 'rollback.integrity-check'
                 if protected(env_files) != hashes or (baseline is not None and database(service['image'], 'rows') != baseline):
                     raise ValueError('Integrity changed; keep maintenance')
                 reload_proxy(active, previous)
                 ROLLBACK['maintenanceRetained'] = False
+                STEP = 'rollback.public-ready'
                 wait(web.PUBLIC + '/api/v1/health/ready')
-        except BaseException:
+        except BaseException as error:
             ROLLBACK['rollbackIncomplete'] = True
+            ROLLBACK['rollbackDiagnostic'] = {'step': STEP, **failure_reason(error)}
             if maintenance_touched:
                 try:
                     reload_proxy(active, maintenance)
@@ -412,26 +558,37 @@ def promote(args, release, pointer):
 
 
 def main(args):
-    global PHASE, ROLLBACK
-    PHASE, ROLLBACK = 'preflight', {}
-    if (os.getuid() != 1000 or not re.fullmatch(r'[a-f0-9]{40}', args.deploy_approved)
+    global PHASE, ROLLBACK, STEP
+    PHASE, ROLLBACK, STEP = 'preflight', {}, 'preflight'
+    revision = args.deploy_approved or args.diagnose_release or args.resume_approved
+    if (os.getuid() != 1000 or not re.fullmatch(r'[a-f0-9]{40}', revision)
             or not re.fullmatch(r'df-(?:pricing-api-7769f79a22bd|customer-api-[a-f0-9]{12})', args.expected_api)
             or not re.fullmatch(r'df-(?:pricing|storefront)-web-[a-f0-9]{12}', args.expected_web) or not 3000 <= args.web_port <= 3998):
         raise ValueError('Explicit full revision and expected production identities required')
     release = web.safe_path(pathlib.Path(__file__).absolute().parent, directory=True)
     web.safe_path(pathlib.Path(__file__).absolute())
-    if release != ROOT / 'state/releases' / ('customer-' + args.deploy_approved[:12]) or any(release.glob('*.json')) or any(release.glob('*.Caddyfile')):
+    if release != ROOT / 'state/releases' / ('customer-' + revision[:12]):
+        raise ValueError('Isolated customer release required')
+    if args.diagnose_release:
+        return diagnose(args, release)
+    if args.resume_approved and (args.allow_optional_checkout_rollback or (release / 'result.json').exists()):
+        raise ValueError('Resume cannot reopen optional checkout or repeat a completed release')
+    if not args.resume_approved and (any(release.glob('*.json')) or any(release.glob('*.Caddyfile'))):
         raise ValueError('Unused isolated customer release required')
     os.umask(0o077)
     pointer = web.safe_path(ROOT / 'state/web-current.json')
     with pointer.open() as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return promote(args, release, pointer)
+        args.deploy_approved = revision
+        return promote(args, release, pointer, resume=bool(args.resume_approved))
 
 
 def arguments(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter, allow_abbrev=False)
-    parser.add_argument('--deploy-approved', required=True)
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument('--deploy-approved')
+    action.add_argument('--diagnose-release')
+    action.add_argument('--resume-approved')
     parser.add_argument('--expected-api', required=True)
     parser.add_argument('--expected-web', required=True)
     parser.add_argument('--web-port', required=True, type=int)

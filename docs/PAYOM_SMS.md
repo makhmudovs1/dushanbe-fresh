@@ -6,10 +6,14 @@ Production is now 77.95.0.94, not Almaty. Old services are stopped and old
 secrets were not copied. On October 31, two authorized real SMS requests
 confirmed the literal key `code-1`; the owner completed Web login, saved a name
 and confirmed session/cart persistence after reload. Credentials and template
-UUID are in private ENV. A one-recipient pilot API is active; mass SMS login
-and mandatory checkout auth remain off. The third authorized send is unused.
-See [PAYOM_PILOT_20261031.md](PAYOM_PILOT_20261031.md) for evidence and the
-temporary port 4012 routing. Earlier sections below are historical; never run
+UUID are in private ENV. On November 2, with explicit owner approval, ordinary
+customer SMS login replaced the spent pilot. Web and native order creation now
+require an authenticated, verified account; guest browsing/address/cart remain
+available. Limits are 10 provider attempts per UTC hour and 50 per UTC day,
+with an admin warning at 80% of the daily limit. No automatic paid SMS was sent.
+See [PAYOM_PUBLIC_LAUNCH.md](PAYOM_PUBLIC_LAUNCH.md) for current runtime settings,
+checks and activation evidence. [PAYOM_PILOT_20261031.md](PAYOM_PILOT_20261031.md)
+records the retired pilot. Earlier sections below are historical; never run
 their old-host commands or interpret their missing-token status as current.
 
 ## Code Released, SMS Still Off
