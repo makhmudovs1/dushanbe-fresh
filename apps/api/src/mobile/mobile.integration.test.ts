@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { createServer, type Server } from "node:http";
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { NestFactory } from "@nestjs/core";
 import type { INestApplication } from "@nestjs/common";
 import { ServiceUnavailableException } from "@nestjs/common";
@@ -24,6 +25,8 @@ describe.skipIf(!target)(
   () => {
     const db = new PrismaClient({ datasources: { db: { url } } });
     const marker = `mobile-${randomUUID()}`;
+    const returningMarker = `${marker}-returning`;
+    const fixtureIds = [marker, returningMarker];
     const phones = Array.from(
       { length: 12 },
       (_, i) =>
@@ -125,18 +128,18 @@ describe.skipIf(!target)(
       await app?.close();
       await new Promise<void>((resolve) => gateway?.close(() => resolve()));
       const orders = await db.order.findMany({
-        where: { deliverySlotId: marker },
+        where: { deliverySlotId: { in: fixtureIds } },
         select: { id: true },
       });
       await clearTestFinances(
         db,
         orders.map((o) => o.id),
       );
-      await db.order.deleteMany({ where: { deliverySlotId: marker } });
-      await db.deliveryWave.deleteMany({ where: { deliverySlotId: marker } });
-      await db.deliverySlot.deleteMany({ where: { id: marker } });
-      await db.product.deleteMany({ where: { id: marker } });
-      await db.category.deleteMany({ where: { id: marker } });
+      await db.order.deleteMany({ where: { deliverySlotId: { in: fixtureIds } } });
+      await db.deliveryWave.deleteMany({ where: { deliverySlotId: { in: fixtureIds } } });
+      await db.deliverySlot.deleteMany({ where: { id: { in: fixtureIds } } });
+      await db.product.deleteMany({ where: { id: { in: fixtureIds } } });
+      await db.category.deleteMany({ where: { id: { in: fixtureIds } } });
       await db.customer.deleteMany({
         where: { phoneNormalized: { in: phones } },
       });
@@ -580,6 +583,130 @@ describe.skipIf(!target)(
         (await request("/mobile/auth/code", "POST", { phone: phones[0] }))
           .status,
       ).toBe(429);
+    });
+
+    it("shares a Web identity across two same-phone native sessions without cross-session refresh/logout revocation", async () => {
+      const phone = phones[7];
+      const before = providerCalls.length;
+      const codeLimitKey = createHmac("sha256", process.env.MOBILE_QUOTA_SECRET!).update("code:127.0.0.1").digest("hex");
+      const previousCodeLimit = await db.mobileApiLimit.findUnique({ where: { key: codeLimitKey } });
+      const originalFetch = globalThis.fetch;
+      const intercepted = vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+        if (String(url) !== gatewayUrl && new URL(String(url)).origin !== new URL(base).origin) throw new Error("External requests are forbidden in native OTP tests");
+        return originalFetch(url, init);
+      });
+      let webCookie = "";
+      const web = (path: string, method = "GET", body?: unknown) => request(path, method, body, undefined,
+        { Origin: process.env.WEB_ORIGIN ?? "http://localhost:3000", Cookie: webCookie });
+      const json = async (pending: Promise<Response>, status = 200) => {
+        const response = await pending;
+        expect(response.status).toBe(status);
+        return response.json();
+      };
+      const native = (path: string, access: string) => json(request(path, "GET", undefined, access));
+      const allowResend = () => db.customerOtpChallenge.updateMany({ where: { phone, consumedAt: { not: null } }, data: { createdAt: new Date(Date.now() - 61000) } });
+      try {
+        // Preserve the exhausted loopback quota from earlier tests; only this test gets a fresh native send budget.
+        await db.mobileApiLimit.deleteMany({ where: { key: codeLimitKey } });
+        expect(await db.user.count({ where: { phone } })).toBe(0);
+        const challenge = await json(web("/customer-auth/code", "POST", { phone }), 201);
+        expect(Object.hasOwn(challenge, "code")).toBe(false);
+        const verified = await web("/customer-auth/verify", "POST", { challengeId: challenge.challengeId, code: messages.get(phone)!.code });
+        expect(verified.status).toBe(201);
+        expect(verified.headers.get("set-cookie") !== null).toBe(true);
+        webCookie = verified.headers.get("set-cookie")!.split(";")[0];
+        const webUser = await verified.json();
+        const profile = { firstName: "Ситора", lastName: "Алиева", name: "Ситора Алиева" };
+        await json(web("/customer/profile", "PATCH", { firstName: profile.firstName, lastName: profile.lastName }));
+
+        await db.category.create({ data: { id: returningMarker, slug: returningMarker, name: "Returning customer" } });
+        await db.product.create({ data: { id: returningMarker, slug: returningMarker, categoryId: returningMarker, name: "Returning product",
+          unit: "kg", currentPurchasePrice: "8", currentSalePrice: "10", minQuantity: "0.5", quantityStep: "0.5", isWeighted: true } });
+        const item = { productId: returningMarker, slug: returningMarker, name: "Returning product", imageUrl: null, unit: "kg",
+          sellingPrice: "10", isWeighted: true, quantity: "2", minQuantity: "0.5", quantityStep: "0.5", qualityOptionId: null, qualityOptionLabel: null };
+        await json(web("/customer/cart", "PUT", { revision: 0, items: [item] }));
+        const addresses = await json(web("/customer/addresses", "POST", address), 201);
+        expect(addresses).toHaveLength(1);
+        expect(addresses[0]).toMatchObject(address);
+        await json(web(`/customer/favorites/${returningMarker}`, "PUT", { active: true }));
+        const customer = await db.customer.findUniqueOrThrow({ where: { phoneNormalized: phone } });
+        await db.deliverySlot.create({ data: { id: returningMarker, date: new Date("2099-01-01"), startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 100 } });
+        // Historical order fixture avoids changing global checkout settings for a session regression.
+        await db.order.create({ data: { id: returningMarker, orderNumber: returningMarker, accountUserId: webUser.id, customerId: customer.id,
+          deliverySlotId: returningMarker, deliveryAddressSnapshot: { ...address, phone, recipientName: profile.name }, substitutionPolicy: "contact_me",
+          itemsSubtotal: "20", deliveryFee: "5", totalEstimated: "25", items: { create: { productId: returningMarker, productNameSnapshot: item.name,
+            unit: "kg", requestedQuantity: "2", saleUnitPriceSnapshot: "10", estimatedTotal: "20" } } } });
+        const shared = [
+          ["cart", await json(web("/customer/cart"))],
+          ["addresses", await json(web("/customer/addresses"))],
+          ["orders", await json(web("/customer/orders"))],
+          [`orders/${returningMarker}`, await json(web(`/customer/orders/${returningMarker}`))]
+        ] as const;
+        expect(shared[0][1]).toMatchObject({ revision: 1, items: [{ productId: returningMarker, quantity: "2" }] });
+        expect(shared[2][1].length).toBe(1);
+        expect(shared[2][1][0].id).toBe(returningMarker);
+        const favorites = await json(web("/customer/favorites"));
+        expect(favorites).toEqual({ ids: [returningMarker] });
+
+        // Age only this phone's consumed challenges instead of sleeping or bypassing verification.
+        await allowResend();
+        const a = await login(phone);
+        await allowResend();
+        const b = await login(phone);
+        for (const device of [a, b]) expect(device.user).toMatchObject({ id: webUser.id, phone, ...profile });
+        expect(a.accessToken === b.accessToken).toBe(false);
+        expect(a.refreshToken === b.refreshToken).toBe(false);
+        const sessions = await db.mobileCustomerSession.findMany({ where: { userId: webUser.id }, select: { id: true, accessTokenHash: true, revokedAt: true, expiresAt: true } });
+        expect(sessions.length).toBe(2);
+        for (const device of [a, b]) {
+          const session = sessions.find(row => row.accessTokenHash === tokenHash(device.accessToken));
+          expect(session !== undefined).toBe(true);
+          expect(session!.revokedAt).toBeNull();
+          expect(session!.expiresAt.getTime()).toBeGreaterThan(Date.now());
+        }
+        expect(await db.user.count({ where: { phone } })).toBe(1);
+        expect(await db.customer.count({ where: { phoneNormalized: phone } })).toBe(1);
+        expect(await db.customer.findUniqueOrThrow({ where: { phoneNormalized: phone } })).toMatchObject({ id: customer.id, userId: webUser.id, displayName: profile.name });
+        expect(await db.customerSession.count({ where: { userId: webUser.id, revokedAt: null } })).toBe(1);
+        const assertNativeData = async (access: string) => {
+          expect(await native("/mobile/auth/me", access)).toEqual(b.user);
+          // Boolean comparisons keep private order links out of assertion failure output.
+          for (const [path, expected] of shared) expect(isDeepStrictEqual(await native(`/mobile/customer/${path}`, access), expected)).toBe(true);
+          const savedFavorites = await native("/mobile/customer/favorites", access);
+          expect(savedFavorites.ids).toEqual(favorites.ids);
+          expect(savedFavorites.products.map((product: { id: string }) => product.id)).toEqual(favorites.ids);
+        };
+        const assertWebData = async () => {
+          expect(await json(web("/customer-auth/me"))).toEqual(b.user);
+          for (const [path, expected] of shared) expect(isDeepStrictEqual(await json(web(`/customer/${path}`)), expected)).toBe(true);
+          expect(await json(web("/customer/favorites"))).toEqual(favorites);
+        };
+        await assertNativeData(a.accessToken);
+        await assertNativeData(b.accessToken);
+        await assertWebData();
+
+        const refreshed: MobileSessionDto = await json(request("/mobile/auth/refresh", "POST", { refreshToken: b.refreshToken }), 201);
+        expect(refreshed.accessToken === b.accessToken).toBe(false);
+        expect(refreshed.refreshToken === b.refreshToken).toBe(false);
+        expect((await request("/mobile/auth/me", "GET", undefined, b.accessToken)).status).toBe(401);
+        await assertNativeData(refreshed.accessToken);
+        await assertNativeData(a.accessToken);
+        await assertWebData();
+        await json(request("/mobile/auth/logout", "POST", { refreshToken: refreshed.refreshToken }), 201);
+        for (const path of ["/mobile/auth/me", "/mobile/customer/cart", "/mobile/customer/orders"]) expect((await request(path, "GET", undefined, refreshed.accessToken)).status).toBe(401);
+        expect((await request("/mobile/auth/refresh", "POST", { refreshToken: refreshed.refreshToken })).status).toBe(401);
+        await assertNativeData(a.accessToken);
+        const surviving: MobileSessionDto = await json(request("/mobile/auth/refresh", "POST", { refreshToken: a.refreshToken }), 201);
+        await assertNativeData(surviving.accessToken);
+        await assertWebData();
+        expect(await db.mobileCustomerSession.count({ where: { userId: webUser.id, revokedAt: null } })).toBe(1);
+        expect(await db.customerSession.count({ where: { userId: webUser.id, revokedAt: null } })).toBe(1);
+        expect(providerCalls.length - before).toBe(3);
+      } finally {
+        intercepted.mockRestore();
+        if (previousCodeLimit) await db.mobileApiLimit.upsert({ where: { key: codeLimitKey }, create: previousCodeLimit, update: previousCodeLimit });
+        else await db.mobileApiLimit.deleteMany({ where: { key: codeLimitKey } });
+      }
     });
   },
 );

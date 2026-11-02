@@ -9,6 +9,7 @@ import { ShoppingAddressPrompt } from "@/components/shopping-address-prompt";
 import { CustomerError, customerRequest } from "@/lib/customer";
 import { useI18n } from "@/i18n/provider";
 import { loadCheckoutDraft } from "@/lib/checkout-draft";
+import { refreshedDeliveryAddress } from "@/lib/delivery-address-refresh";
 import { emptyAddress, deliveryAddressLabel, DUSHANBE_BOUNDS, fetchSavedDeliveryAddresses, isWithinDeliveryBounds, loadGuestDeliveryAddress, loadGuestAddressList, saveGuestAddressList, parseDeliveryAddress, prepareDeliveryAddressStorage, saveGuestDeliveryAddress, updateCheckoutDraftAddress } from "@/lib/delivery-address";
 import { useCustomer } from "./customer-context";
 
@@ -39,11 +40,15 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
   const revision = useRef(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const refreshRequest = useRef<AbortController | null>(null);
+  const initializing = useRef(true);
+  const editing = useRef(false); editing.current = !!modal || saving;
   const ownerRef = useRef(owner); ownerRef.current = owner;
   const ready = owner !== "pending" && state.owner === owner;
   const selection = ready ? state.selection : null;
 
   useEffect(() => {
+    initializing.current = true;
     if (owner === "pending") return;
     const account = owner !== "guest";
     let initial: AddressInput | null = null;
@@ -60,7 +65,7 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
     if (!account) try { guestAddresses = loadGuestAddressList(window.sessionStorage); } catch { /* Storage is optional. */ }
     if (!account && !guestAddresses.length && guest) guestAddresses = [{ ...guest, id: "guest-current", label: "home", isDefault: true }];
     setState({ owner, selection: initial ? { address: initial, revision: revision.current, explicit: false } : null, addresses: guestAddresses, status: account ? "loading" : "ready" });
-    if (!account) return;
+    if (!account) { initializing.current = false; return; }
     const controller = new AbortController();
     void fetchSavedDeliveryAddresses(controller.signal).then(async existing => {
       let addresses = existing;
@@ -76,32 +81,55 @@ export function DeliveryAddressProvider({ children }: { children: ReactNode }) {
       });
     }).catch(() => {
       if (!controller.signal.aborted) setState(current => current.owner === owner ? { ...current, status: "unavailable" } : current);
+    }).finally(() => {
+      if (!controller.signal.aborted && ownerRef.current === owner) initializing.current = false;
     });
-    return () => controller.abort();
+    return () => { controller.abort(); refreshRequest.current?.abort(); refreshRequest.current = null; };
   }, [owner]);
 
   const openAddress = useCallback((initial?: AddressInput) => {
     if (!ready) return;
+    refreshRequest.current?.abort();
+    editing.current = true;
     let draft: AddressInput | null = null;
     try { draft = parseDeliveryAddress(loadCheckoutDraft(window.sessionStorage)?.address, false); } catch { /* Storage is optional. */ }
     const saved = initial && state.addresses.find(item => JSON.stringify(parseDeliveryAddress(item)) === JSON.stringify(parseDeliveryAddress(initial)));
     setModal({ owner, initial: initial ?? draft ?? selection?.address ?? { ...emptyAddress }, editingId: saved?.id, startWithNew: !!initial && !saved });
   }, [owner, ready, selection, state.addresses]);
 
-  const refreshAddresses = useCallback(async () => {
-    if (owner === "guest" || owner === "pending") return;
-    const addresses = await fetchSavedDeliveryAddresses(new AbortController().signal);
-    if (ownerRef.current !== owner) return;
-    setState(current => {
-      if (current.owner !== owner) return current;
-      const selected = current.selection?.address;
-      const previous = selected && current.addresses.find(item => JSON.stringify(parseDeliveryAddress(item)) === JSON.stringify(selected));
-      if (!previous) return { ...current, addresses, status: "ready" };
-      const replacement = addresses.find(item => item.id === previous.id) ?? addresses.find(item => item.isDefault);
-      revision.current++;
-      return { ...current, addresses, status: "ready", selection: replacement ? { address: parseDeliveryAddress(replacement)!, revision: revision.current, explicit: true } : null };
-    });
+  const refreshAddresses = useCallback(async (background = false) => {
+    if (owner === "guest" || owner === "pending" || ownerRef.current !== owner || initializing.current || editing.current) return;
+    if (background && refreshRequest.current && !refreshRequest.current.signal.aborted) return;
+    refreshRequest.current?.abort();
+    const controller = new AbortController();
+    refreshRequest.current = controller;
+    let requestRevision = revision.current;
+    const valid = () => !controller.signal.aborted && ownerRef.current === owner && !editing.current && revision.current === requestRevision;
+    try {
+      const addresses = await fetchSavedDeliveryAddresses(controller.signal);
+      if (!valid()) return;
+      let draft: AddressInput | null = null;
+      try { draft = parseDeliveryAddress(loadCheckoutDraft(window.sessionStorage)?.address, false); } catch { /* Storage is optional. */ }
+      requestRevision = ++revision.current;
+      setState(current => {
+        if (!valid() || current.owner !== owner) return current;
+        const address = refreshedDeliveryAddress(current.selection?.address ?? null, current.addresses, addresses, draft, background);
+        const selection = address === (current.selection?.address ?? null) ? current.selection
+          : address ? { address, revision: requestRevision, explicit: !background && !!current.selection } : null;
+        return { ...current, addresses, status: "ready", selection };
+      });
+    } finally { if (refreshRequest.current === controller) refreshRequest.current = null; }
   }, [owner]);
+
+  useEffect(() => {
+    if (owner === "guest" || owner === "pending") return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") void refreshAddresses(true).catch(() => { /* Keep the last usable addresses on a transient failure. */ });
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [owner, refreshAddresses]);
 
   function selectAddress(address: AddressInput) {
     const value = parseDeliveryAddress(address);

@@ -19,13 +19,16 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const refreshCustomer = customer?.refresh;
   const revision = useRef(0);
   const busy = useRef(new Set<string>());
+  const reloadQueued = useRef(false);
   const [state, setState] = useState({ owner: "loading", ids: [] as string[], ready: false });
   const [busyIds, setBusyIds] = useState(new Set<string>());
   const [prompt, setPrompt] = useState<string | null>(null);
   const [queued, setQueued] = useState<string | null>(null);
   const [error, setError] = useState("");
   const reload = useCallback(async () => {
-    if (owner === "loading" || busy.current.size) return;
+    if (owner === "loading") return;
+    if (busy.current.size) { reloadQueued.current = true; return; }
+    reloadQueued.current = false;
     const requestRevision = ++revision.current;
     try {
       const ids = owner === "guest" ? parseFavorites(localStorage.getItem(FAVORITES_KEY))
@@ -38,11 +41,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       if (error instanceof CustomerError && error.status === 401) void refreshCustomer?.();
     }
   }, [owner, refreshCustomer]);
-  useEffect(() => { busy.current.clear(); setBusyIds(new Set()); setError(""); void reload(); }, [reload]);
+  useEffect(() => { busy.current.clear(); reloadQueued.current = false; setBusyIds(new Set()); setError(""); void reload(); }, [reload]);
   useEffect(() => {
-    const focus = () => { void reload(); };
+    const focus = () => { if (document.visibilityState === "visible") void reload(); };
     window.addEventListener("focus", focus);
-    return () => window.removeEventListener("focus", focus);
+    document.addEventListener("visibilitychange", focus);
+    return () => { window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", focus); };
   }, [reload]);
   const change = useCallback(async (id: string, active: boolean) => {
     if (owner === "guest" || owner === "loading" || busy.current.has(id)) return;
@@ -57,9 +61,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         if (error instanceof CustomerError && error.status === 401) void refreshCustomer?.();
       }
     } finally {
-      if (ownerRef.current === owner) { busy.current.delete(id); setBusyIds(new Set(busy.current)); }
+      if (ownerRef.current === owner) {
+        busy.current.delete(id); setBusyIds(new Set(busy.current));
+        if (!busy.current.size && reloadQueued.current) void reload();
+      }
     }
-  }, [owner, refreshCustomer]);
+  }, [owner, refreshCustomer, reload]);
   const ready = state.owner === owner && state.ready;
   useEffect(() => { if (queued && ready && owner !== "guest") { setQueued(null); void change(queued, true); } }, [queued, ready, owner, change]);
   const ids = state.owner === owner ? state.ids : emptyIds;

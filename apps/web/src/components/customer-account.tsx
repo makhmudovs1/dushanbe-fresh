@@ -42,19 +42,35 @@ function CustomerAccountContent() {
   const [addressStage, setAddressStage] = useState<"street" | "details">("street");
   const userId = customer.user?.id;
   const owner = useRef(userId);
+  const loadVersion = useRef(0);
   owner.current = userId;
-  const load = useCallback(async () => {
+  const load = useCallback(async (background = false) => {
     const requestedOwner = owner.current;
     if (!requestedOwner) return;
-    setLoaded(false);
+    const version = ++loadVersion.current;
+    if (!background) setLoaded(false);
     try {
       const [a, o] = await Promise.all([sharedAddresses ? Promise.resolve([] as SavedAddress[]) : customerRequest<SavedAddress[]>("customer/addresses"), customerRequest<CustomerOrderSummary[]>("customer/orders")]);
-      if (owner.current !== requestedOwner) return;
+      if (owner.current !== requestedOwner || loadVersion.current !== version) return;
       setAddresses(a); setOrders(o); setMore(o.length === 50); setLoadError("");
-    } catch (error) { if (owner.current === requestedOwner) setLoadError(error instanceof Error ? error.message : "Не удалось загрузить личный кабинет."); }
-    finally { if (owner.current === requestedOwner) setLoaded(true); }
+    } catch (error) { if (owner.current === requestedOwner && loadVersion.current === version) setLoadError(error instanceof Error ? error.message : "Не удалось загрузить личный кабинет."); }
+    finally { if (owner.current === requestedOwner && loadVersion.current === version) setLoaded(true); }
   }, [sharedAddresses]);
-  useEffect(() => { if (userId) void load(); else { setAddresses([]); setOrders([]); setEditor(null); } }, [userId, load]);
+  useEffect(() => {
+    const version = loadVersion;
+    if (userId) void load(); else { setAddresses([]); setOrders([]); setEditor(null); }
+    return () => { version.current++; };
+  }, [userId, load]);
+  useEffect(() => {
+    if (!userId) return;
+    const refresh = () => { if (document.visibilityState === "visible") void load(true); };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [userId, load]);
   const initialName = editableName(customer.user);
   useEffect(() => { setProfileName({ firstName: initialName.firstName, lastName: initialName.lastName }); }, [initialName.firstName, initialName.lastName]);
   async function run(action: () => Promise<void>) {

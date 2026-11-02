@@ -100,6 +100,106 @@ const stored = (storage: Storage, owner = "alice") => JSON.parse(storage.getItem
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { sessions.splice(0).forEach(session => session.dispose()); vi.useRealTimers(); });
 
+describe("account cart passive cross-device refresh", () => {
+  it("loads another device's changes without blanking or writing the cart", async () => {
+    const api = server({ revision: 1, items: [item()] });
+    const h = harness(api.request as CartRequest);
+    await h.session.start();
+    const before = h.views.length;
+    api.replace({ revision: 2, items: [item("2"), item("1", "apples")] });
+    await h.session.refresh();
+    expect(h.view().state.items).toEqual(api.current().items);
+    expect(h.views.slice(before).every(view => view.hydrated)).toBe(true);
+    expect(stored(h.storage).snapshot).toEqual(api.current());
+    expect(api.request.mock.calls.every(([, method]) => !method)).toBe(true);
+  });
+
+  it("refreshes a remotely cleared cart without reviving the old snapshot", async () => {
+    const api = server({ revision: 1, items: [item()] });
+    const h = harness(api.request as CartRequest);
+    await h.session.start();
+    api.replace({ revision: 2, items: [] });
+    await h.session.refresh();
+    expect(h.view()).toMatchObject({ state: { items: [] }, hydrated: true, syncError: "" });
+    expect(stored(h.storage).snapshot).toEqual(api.current());
+  });
+
+  it("does not overwrite pending edits or silently resolve cross-device conflicts", async () => {
+    const api = server({ revision: 1, items: [item()] });
+    const h = harness(api.request as CartRequest);
+    await h.session.start();
+    h.session.apply({ type: "increment", key });
+    api.replace({ revision: 2, items: [item("3")] });
+    const calls = api.request.mock.calls.length;
+    await h.session.refresh();
+    expect(api.request).toHaveBeenCalledTimes(calls);
+    expect(h.view().state.items).toEqual([item("1.5")]);
+    await vi.advanceTimersByTimeAsync(50);
+    expect(h.view().syncError).toContain("другом устройстве");
+    await h.session.refresh();
+    expect(h.view().state.items).toEqual([item("1.5")]);
+    expect(stored(h.storage).pending.items).toEqual([item("1.5")]);
+    expect(api.current().items).toEqual([item("3")]);
+  });
+
+  it("ignores a delayed read if the customer edits meanwhile, then uses revision checking", async () => {
+    const api = server({ revision: 1, items: [item()] });
+    const remote = deferred<CartSnapshot>();
+    const request = vi.fn((path: string, method?: string, body?: unknown) => api.request(path, method, body));
+    const h = harness(request as CartRequest);
+    await h.session.start();
+    request.mockImplementationOnce(() => remote.promise);
+    const refresh = h.session.refresh();
+    await h.session.refresh();
+    expect(request).toHaveBeenCalledTimes(2);
+    h.session.apply({ type: "increment", key });
+    api.replace({ revision: 2, items: [item("3")] });
+    remote.resolve(api.current());
+    await refresh;
+    expect(h.view().state.items).toEqual([item("1.5")]);
+    expect(stored(h.storage).snapshot.revision).toBe(1);
+    await vi.advanceTimersByTimeAsync(50);
+    expect(h.view().syncError).toContain("другом устройстве");
+    expect(api.current().items).toEqual([item("3")]);
+  });
+
+  it("ignores stale revisions and responses after switching account", async () => {
+    const api = server({ revision: 2, items: [item("2")] });
+    const remote = deferred<CartSnapshot>();
+    const request = vi.fn((path: string, method?: string, body?: unknown) => api.request(path, method, body));
+    const h = harness(request as CartRequest);
+    await h.session.start();
+    request.mockImplementationOnce(() => remote.promise);
+    const refresh = h.session.refresh();
+    remote.resolve({ revision: 1, items: [item()] });
+    await refresh;
+    expect(h.view().state.items).toEqual([item("2")]);
+    const late = deferred<CartSnapshot>();
+    request.mockImplementationOnce(() => late.promise);
+    const pending = h.session.refresh();
+    const count = h.views.length;
+    h.session.dispose();
+    late.resolve({ revision: 3, items: [] });
+    await pending;
+    expect(h.views).toHaveLength(count);
+    expect(stored(h.storage).snapshot.revision).toBe(2);
+  });
+
+  it("keeps the visible cart on read failure and requires an explicit retry", async () => {
+    const api = server({ revision: 1, items: [item()] });
+    const request = vi.fn((path: string, method?: string, body?: unknown) => api.request(path, method, body));
+    const h = harness(request as CartRequest);
+    await h.session.start();
+    request.mockRejectedValueOnce(new Error("offline"));
+    await h.session.refresh();
+    expect(h.view()).toMatchObject({ state: { items: [item()] }, hydrated: true, syncing: false });
+    expect(h.view().syncError).not.toBe("");
+    const calls = request.mock.calls.length;
+    await h.session.refresh();
+    expect(request).toHaveBeenCalledTimes(calls);
+  });
+});
+
 describe("account cart pure reconciliation", () => {
   it("distinguishes a confirmed empty guest cart from unavailable or corrupt storage without overwriting it", () => {
     const storage = new MemoryStorage();

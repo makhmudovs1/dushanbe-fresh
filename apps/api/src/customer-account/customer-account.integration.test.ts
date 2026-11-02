@@ -1,5 +1,6 @@
 import "reflect-metadata";
-import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { randomBytes, randomUUID, createHash, createHmac } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -9,12 +10,14 @@ import { CustomerSmsGateway } from "./customer-auth.service";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { clearTestFinances } from "../delivery-finance/test-cleanup";
 import { PayomSmsAdapter } from "./payom-sms.adapter";
+import type { CartLine, CartSnapshot } from "./customer-shopping.validation";
 
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("customer accounts over HTTP", () => {
   const db = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
   const marker = `account-${randomUUID()}`;
-  const phones = Array.from({ length: 13 }, (_, index) => `+9929${String(Date.now()).slice(-6)}${String(index).padStart(2, "0")}`);
+  const phones = Array.from({ length: 14 }, (_, index) => `+9929${String(Date.now()).slice(-6)}${String(index).padStart(2, "0")}`);
+  const returningProductIds = ["overlap", "larger", "server", "guest"].map(kind => `${marker}-${kind}`);
   const messages = new Map<string, { code: string; id: string }>();
   let app: INestApplication; let base: string; let cookie = ""; let otherCookie = ""; let userId = "";
   let addressId = ""; let secondAddressId = ""; let orderId = "";
@@ -53,6 +56,8 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     for (const [key, value] of Object.entries({ minimum_order_amount: "0", delivery_fee: "5", service_fee: "0", service_fee_percent: "0" })) await db.appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
     await db.category.create({ data: { id: marker, slug: marker, name: "Категория теста" } });
     await db.product.create({ data: { id: marker, slug: marker, name: "Огурцы", nameTj: "Бодиринг", categoryId: marker, unit: "kg", currentPurchasePrice: "8", currentSalePrice: "10", minQuantity: "0.5", quantityStep: "0.25", isWeighted: true, qualityOptions: { create: { id: marker, label: "Выбранное предпочтение" } } } });
+    await db.product.createMany({ data: returningProductIds.map(id => ({ id, slug: id, name: id, categoryId: marker,
+      unit: "kg", currentPurchasePrice: "8", currentSalePrice: "10", minQuantity: "0.5", quantityStep: "0.25", isWeighted: true })) });
     await db.deliverySlot.create({ data: { id: marker, date: new Date("2099-01-01"), startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 100 } });
     await db.customer.create({ data: { id: marker, phoneNormalized: phones[0], displayName: "Прежний гость", riskStatus: "watch", codPolicy: "manual_review", adminNote: "Private risk history" } });
     await db.order.create({ data: { id: marker, orderNumber: marker, publicTrackingToken: guestToken, customerId: marker, deliverySlotId: marker, deliveryAddressSnapshot: { phone: phones[0], street: "Рудаки", building: "1" }, substitutionPolicy: "contact_me", itemsSubtotal: "20", deliveryFee: "5", totalEstimated: "25", items: { create: { productId: marker, productNameSnapshot: "Огурцы", unit: "kg", requestedQuantity: "2", saleUnitPriceSnapshot: "10", estimatedTotal: "20", qualityOptionId: marker } } } });
@@ -63,8 +68,9 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
     const orders = await db.order.findMany({ where: { deliverySlotId: marker }, select: { id: true } });
     await clearTestFinances(db, orders.map(order => order.id));
     await db.order.deleteMany({ where: { deliverySlotId: marker } });
+    await db.deliveryWave.deleteMany({ where: { deliverySlotId: marker } });
     await db.deliverySlot.deleteMany({ where: { id: marker } });
-    await db.product.deleteMany({ where: { id: marker } }); await db.category.deleteMany({ where: { id: marker } });
+    await db.product.deleteMany({ where: { id: { in: [marker, ...returningProductIds] } } }); await db.category.deleteMany({ where: { id: marker } });
     await db.customer.deleteMany({ where: { phoneNormalized: { in: phones } } });
     await db.user.deleteMany({ where: { phone: { in: phones } } });
     await db.customerOtpChallenge.deleteMany({ where: { phone: { in: phones } } });
@@ -321,6 +327,182 @@ describe.skipIf(!url)("customer accounts over HTTP", () => {
       vi.stubEnv("CUSTOMER_REQUIRE_PHONE", "true"); vi.stubEnv("NODE_ENV", previousNodeEnv ?? "test");
       vi.stubEnv("CUSTOMER_SMS_URL", previousUrl ?? "");
       vi.stubEnv("CUSTOMER_TRUST_LOCAL_PROXY", previousProxy ?? "false");
+    }
+  });
+
+  it("preserves a returning customer's identity and server data across two independent OTP sessions", async () => {
+    const telephone = phones[13];
+    const [overlapId, serverLargerId, serverOnlyId, guestOnlyId] = returningProductIds;
+    const name = { firstName: "Ситора", lastName: "Алиева", name: "Ситора Алиева" };
+    const ipLimitKey = createHmac("sha256", process.env.CUSTOMER_OTP_SECRET!).update("send-ip:127.0.0.1").digest("hex");
+    const previousIpLimit = await db.customerAuthLimit.findUnique({ where: { key: ipLimitKey } });
+    const originalFetch = globalThis.fetch;
+    const send = vi.mocked(CustomerSmsGateway.prototype.send);
+    const previousSend = send.getMockImplementation()!;
+    let providerCalls = 0, deliveredCode = "";
+    const intercepted = vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+      if (String(url) !== "https://sms.example.invalid/api/message") {
+        if (new URL(String(url)).origin !== new URL(base).origin) throw new Error("External requests are forbidden in OTP tests");
+        return originalFetch(url, init);
+      }
+      providerCalls++;
+      expect(init?.method).toBe("POST");
+      expect(init?.redirect).toBe("error");
+      expect(new Headers(init?.headers).get("authorization") === "Bearer test-only").toBe(true);
+      const payload = JSON.parse(init!.body as string);
+      // Assert the contract without including OTPs or credentials in failure output.
+      expect(Object.keys(payload).sort()).toEqual(["senderName", "telephone", "templateMessage", "type"]);
+      expect(payload.telephone).toBe(telephone);
+      expect(payload.senderName).toBe("DFRESH");
+      expect(payload.type).toBe("SMS");
+      expect(payload.templateMessage.templateId).toBe(process.env.CUSTOMER_SMS_TEMPLATE_ID);
+      expect(Object.keys(payload.templateMessage.variables)).toEqual(["code-1"]);
+      deliveredCode = payload.templateMessage.variables["code-1"];
+      expect(/^\d{6}$/.test(deliveredCode)).toBe(true);
+      return Promise.resolve(new Response(JSON.stringify({ id: randomUUID(), deliveryStatus: "SERVICE_ACCEPTED" }), { status: 201 }));
+    });
+    send.mockImplementation(async (phone, code) => { await new PayomSmsAdapter().send(phone, code); });
+    const read = async (path: string, session: string) => {
+      const response = await request(path, "GET", undefined, session);
+      expect(response.status).toBe(200);
+      return response.json();
+    };
+    const authenticate = async (phone: string) => {
+      deliveredCode = "";
+      const response = await request("/customer-auth/code", "POST", { phone }, "");
+      expect(response.status).toBe(201);
+      const challenge = await response.json();
+      expect(Object.hasOwn(challenge, "code")).toBe(false);
+      expect(/^\d{6}$/.test(deliveredCode)).toBe(true);
+      const verified = await request("/customer-auth/verify", "POST", { challengeId: challenge.challengeId, code: deliveredCode }, "");
+      expect(verified.status).toBe(201);
+      const header = verified.headers.get("set-cookie");
+      expect(header !== null).toBe(true);
+      for (const attribute of ["HttpOnly", "SameSite=Lax", "Path=/"]) expect(header!.includes(attribute)).toBe(true);
+      const persisted = await db.customerOtpChallenge.findUniqueOrThrow({ where: { id: challenge.challengeId }, select: { phone: true, sentAt: true, consumedAt: true } });
+      expect(persisted.phone).toBe(telephone);
+      expect(persisted.sentAt).not.toBeNull();
+      expect(persisted.consumedAt).not.toBeNull();
+      return { user: await verified.json(), cookie: header!.split(";")[0], challengeId: challenge.challengeId };
+    };
+    const line = (productId: string, quantity: string): CartLine => ({ productId, slug: productId, name: productId,
+      imageUrl: null, unit: "kg", sellingPrice: "10", isWeighted: true, quantity, minQuantity: "0.5", quantityStep: "0.25",
+      qualityOptionId: null, qualityOptionLabel: null });
+    try {
+      // Earlier scenarios exhaust this suite's loopback budget; isolate only its secret-scoped bucket and restore it below.
+      await db.customerAuthLimit.deleteMany({ where: { key: ipLimitKey } });
+      expect(await db.user.count({ where: { phone: telephone } })).toBe(0);
+      expect(await db.customer.count({ where: { phoneNormalized: telephone } })).toBe(0);
+      expect(await read("/customer-auth/me", "")).toBeNull();
+      const a = await authenticate(telephone);
+      expect(a.user).toMatchObject({ phone: telephone, name: null, firstName: null, lastName: null });
+      expect((await request("/customer/profile", "PATCH", { firstName: name.firstName, lastName: name.lastName }, a.cookie)).status).toBe(200);
+      const savedAddress = await request("/customer/addresses", "POST", address, a.cookie);
+      expect(savedAddress.status).toBe(201);
+      const addresses = await savedAddress.json();
+      expect(addresses).toHaveLength(1);
+      expect(addresses[0]).toMatchObject(address);
+      const favorite = await request(`/customer/favorites/${overlapId}`, "PUT", { active: true }, a.cookie);
+      expect(favorite.status).toBe(200);
+      expect(await favorite.json()).toEqual({ ids: [overlapId] });
+      const emptyCart: CartSnapshot = await read("/customer/cart", a.cookie);
+      expect(emptyCart).toEqual({ revision: 0, items: [] });
+      const savedCart = await request("/customer/cart", "PUT", { revision: emptyCart.revision, items: [line(overlapId, "2"), line(serverLargerId, "4"), line(serverOnlyId, "1")] }, a.cookie);
+      expect(savedCart.status).toBe(200);
+      const cart: CartSnapshot = await savedCart.json();
+      expect(cart).toMatchObject({ revision: 1, items: [
+        { productId: overlapId, quantity: "2" }, { productId: serverLargerId, quantity: "4" }, { productId: serverOnlyId, quantity: "1" }
+      ] });
+      const input = { deliverySlotId: marker, items: cart.items.map(item => ({ productId: item.productId, quantity: item.quantity, qualityOptionId: null })) };
+      const validation = await request("/checkout/validate", "POST", input, a.cookie);
+      expect(validation.status).toBe(201);
+      const quote = await validation.json();
+      expect(quote.valid).toBe(true);
+      const checkout = await request("/checkout/orders", "POST", { ...input, name: name.name, phone: telephone, address,
+        substitutionPolicy: "contact_me", reviewToken: quote.reviewToken, requestId: randomUUID() }, a.cookie);
+      expect(checkout.status).toBe(201);
+      const receipt = await checkout.json();
+      expect(receipt.address).toMatchObject({ phone: telephone, recipientName: name.name });
+      const order = await db.order.findUniqueOrThrow({ where: { orderNumber: receipt.orderNumber }, select: { id: true, accountUserId: true, customerId: true, status: true } });
+      const customer = await db.customer.findUniqueOrThrow({ where: { phoneNormalized: telephone } });
+      expect(order).toMatchObject({ accountUserId: a.user.id, customerId: customer.id, status: "confirmed" });
+      const orders = await read("/customer/orders", a.cookie);
+      expect(orders.length).toBe(1);
+      expect(orders[0].id).toBe(order.id);
+      expect(orders[0].orderNumber).toBe(receipt.orderNumber);
+      const detail = await read(`/customer/orders/${order.id}`, a.cookie);
+      expect(detail.orderNumber).toBe(receipt.orderNumber);
+      expect(detail.address).toMatchObject({ street: address.street, building: address.building, apartment: address.apartment });
+
+      // Advance only this consumed challenge past the resend cooldown, without sleeping or changing auth rules.
+      await db.customerOtpChallenge.update({ where: { id: a.challengeId }, data: { createdAt: new Date(Date.now() - 61000) } });
+      const national = telephone.slice(4);
+      const b = await authenticate(`+992 (${national.slice(0, 2)}) ${national.slice(2, 5)}-${national.slice(5, 7)}-${national.slice(7)}`);
+      expect(b.challengeId === a.challengeId).toBe(false);
+      expect(b.cookie === a.cookie).toBe(false);
+      expect(b.user).toMatchObject({ id: a.user.id, phone: telephone, ...name });
+      expect(providerCalls).toBe(2);
+      expect(await db.user.count({ where: { phone: telephone } })).toBe(1);
+      expect(await db.customer.count({ where: { phoneNormalized: telephone } })).toBe(1);
+      expect(await db.customer.findUniqueOrThrow({ where: { phoneNormalized: telephone } })).toMatchObject({ id: customer.id, userId: a.user.id, displayName: name.name });
+      const sessions = [];
+      for (const device of [a, b]) {
+        const hash = createHash("sha256").update(device.cookie.split("=")[1]).digest("hex");
+        const session = await db.customerSession.findUniqueOrThrow({ where: { tokenHash: hash }, select: { id: true, userId: true, revokedAt: true, expiresAt: true } });
+        expect(session).toMatchObject({ userId: a.user.id, revokedAt: null });
+        expect(session.expiresAt.getTime()).toBeGreaterThan(Date.now());
+        sessions.push(session);
+        expect(await read("/customer-auth/me", device.cookie)).toEqual(b.user);
+        expect(await read("/customer/addresses", device.cookie)).toEqual(addresses);
+        expect(await read("/customer/favorites", device.cookie)).toEqual({ ids: [overlapId] });
+        expect(await read("/customer/cart", device.cookie)).toEqual(cart);
+        expect(isDeepStrictEqual(await read("/customer/orders", device.cookie), orders)).toBe(true);
+        expect(isDeepStrictEqual(await read(`/customer/orders/${order.id}`, device.cookie), detail)).toBe(true);
+      }
+      expect(sessions[0].id === sessions[1].id).toBe(false);
+      expect(await db.customerSession.count({ where: { userId: a.user.id, revokedAt: null } })).toBe(2);
+      expect(await db.customerAddress.count({ where: { userId: a.user.id } })).toBe(1);
+
+      const guestCart = { sourceId: randomUUID(), items: [line(overlapId, "3"), line(serverLargerId, "1"), line(guestOnlyId, "1")] };
+      const imported = await request("/customer/cart/import", "POST", guestCart, b.cookie);
+      expect(imported.status).toBe(200);
+      const merged: CartSnapshot = await imported.json();
+      expect(merged).toMatchObject({ revision: cart.revision + 1, items: [
+        { productId: overlapId, quantity: "3" }, { productId: serverLargerId, quantity: "4" },
+        { productId: serverOnlyId, quantity: "1" }, { productId: guestOnlyId, quantity: "1" }
+      ] });
+      expect(merged.items).toHaveLength(4);
+      for (const device of [b, a]) {
+        const retry = await request("/customer/cart/import", "POST", guestCart, device.cookie);
+        expect(retry.status).toBe(200);
+        expect(await retry.json()).toEqual(merged);
+        expect(await read("/customer/cart", device.cookie)).toEqual(merged);
+      }
+      expect(await db.customerCartImport.count({ where: { userId: a.user.id, sourceId: guestCart.sourceId } })).toBe(1);
+      expect(await db.customerCart.findUniqueOrThrow({ where: { userId: a.user.id } })).toMatchObject(merged);
+      expect(await db.order.count({ where: { accountUserId: a.user.id } })).toBe(1);
+
+      const logout = await request("/customer-auth/logout", "POST", {}, b.cookie);
+      expect(logout.status).toBe(201);
+      expect(logout.headers.get("set-cookie")?.includes("Max-Age=0")).toBe(true);
+      expect(await read("/customer-auth/me", b.cookie)).toBeNull();
+      for (const path of ["/customer/cart", "/customer/addresses", "/customer/favorites", "/customer/orders", `/customer/orders/${order.id}`]) {
+        expect((await request(path, "GET", undefined, b.cookie)).status).toBe(401);
+      }
+      expect((await db.customerSession.findUniqueOrThrow({ where: { id: sessions[1].id } })).revokedAt).not.toBeNull();
+      expect((await db.customerSession.findUniqueOrThrow({ where: { id: sessions[0].id } })).revokedAt).toBeNull();
+      expect(await read("/customer-auth/me", a.cookie)).toEqual(b.user);
+      expect(await read("/customer/cart", a.cookie)).toEqual(merged);
+      expect(await read("/customer/addresses", a.cookie)).toEqual(addresses);
+      expect(await read("/customer/favorites", a.cookie)).toEqual({ ids: [overlapId] });
+      expect(isDeepStrictEqual(await read("/customer/orders", a.cookie), orders)).toBe(true);
+      expect(isDeepStrictEqual(await read(`/customer/orders/${order.id}`, a.cookie), detail)).toBe(true);
+    } finally {
+      send.mockImplementation(previousSend);
+      intercepted.mockRestore();
+      deliveredCode = "";
+      if (previousIpLimit) await db.customerAuthLimit.upsert({ where: { key: ipLimitKey }, create: previousIpLimit, update: previousIpLimit });
+      else await db.customerAuthLimit.deleteMany({ where: { key: ipLimitKey } });
     }
   });
 });

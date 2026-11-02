@@ -1,5 +1,13 @@
 # Customer Accounts
 
+## Returning Login Audit, 2026-11-02
+
+See [CUSTOMER_MULTIDEVICE_LOGIN.md](CUSTOMER_MULTIDEVICE_LOGIN.md) for the current
+identity/session audit and two-device Web/native regression. Same-number login,
+preserved names and independent sessions already exist; only passive Web data
+refresh needed adjustment. Earlier release/configuration notes below are dated
+history, not instructions to disable the working Payom integration.
+
 ## Status And Ownership
 
 Deployed behind disabled auth flags on 2026-10-24 in commit `4e35e96`.

@@ -398,6 +398,28 @@ export class AccountCartSync {
     }
   }
 
+  async refresh() {
+    if (!this.active || this.busy || !this.ready || this.view.syncError || this.record.pending || this.record.guestImport || this.record.legacyReview) return;
+    this.busy = true;
+    const version = this.editVersion;
+    this.emit({ syncing: true });
+    try {
+      const remote = await this.request<CartSnapshot>("customer/cart");
+      if (!this.active || version !== this.editVersion || this.record.pending) return;
+      if (!isSnapshot(remote)) throw new Error("Invalid cart snapshot");
+      if (remote.revision < (this.record.snapshot?.revision ?? 0)) return;
+      this.record.snapshot = remote;
+      this.persist();
+      this.emit({ state: { items: remote.items } });
+    } catch {
+      if (this.active) this.emit({ syncError: this.storageFailed ? STORAGE_FAILURE : FAILURE });
+    } finally {
+      this.busy = false;
+      this.emit({ syncing: false });
+      this.schedule();
+    }
+  }
+
   private async save() {
     if (!this.active || this.busy || !this.ready || this.view.syncError || !this.record.pending) return;
     this.busy = true;

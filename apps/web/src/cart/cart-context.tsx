@@ -78,6 +78,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [owner]);
 
+  useEffect(() => {
+    if (!owner || owner === "pending") return;
+    const refresh = () => {
+      const current = runtime.current;
+      if (document.visibilityState === "visible" && current?.owner === owner) void current.session?.refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [owner]);
+
   const apply = useCallback((action: CartAction) => {
     const current = runtime.current;
     if (!current || current.owner !== owner) return false;

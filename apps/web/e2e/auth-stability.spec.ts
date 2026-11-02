@@ -105,7 +105,14 @@ for (const { width, locale } of [{ width: 375, locale: "ru" }, { width: 390, loc
     release();
     await expect(page.locator(".cart-item")).toHaveCount(1);
     expect(await page.evaluate(() => (window as unknown as { authUxEmptyStates: string[] }).authUxEmptyStates)).toEqual([]);
-    await expect(page.locator(".summary-total")).toContainText("10");
+    const quoted = await page.request.post("/api/v1/checkout/validate", {
+      headers: { Origin: new URL(baseURL!).origin },
+      data: { deliverySlotId: marker, items: [{ productId: marker, quantity: "1", qualityOptionId: null }] }
+    });
+    expect(quoted.ok()).toBe(true);
+    const preview = await quoted.json();
+    const money = (value: string) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number(value));
+    await expect(page.locator(".summary-total")).toContainText(money(preview.totalEstimated));
     await capture(page, info, "04-cart-restored");
     await page.unroute("**/api/v1/customer-auth/me");
     await page.unroute("**/api/v1/customer/cart");

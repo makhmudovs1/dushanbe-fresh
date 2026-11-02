@@ -19,6 +19,7 @@ async function cleanup(db: PrismaClient, marker: string, phones: string[] = []) 
   const orders = await db.order.findMany({ where: { deliverySlotId: marker }, select: { id: true } });
   await clearTestFinances(db, orders.map(order => order.id));
   await db.order.deleteMany({ where: { deliverySlotId: marker } });
+  await db.deliveryWave.deleteMany({ where: { deliverySlotId: marker } });
   await db.deliverySlot.deleteMany({ where: { id: marker } });
   await db.product.deleteMany({ where: { id: marker } }); await db.category.deleteMany({ where: { id: marker } });
   const users = await db.user.findMany({ where: { OR: [{ name: { startsWith: "Browser customer " } }, { phone: { in: phones } }] }, select: { id: true, phone: true } });
@@ -109,7 +110,7 @@ async function main() {
   const tomorrow = new Date(); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); tomorrow.setUTCHours(0, 0, 0, 0);
   await db.deliverySlot.upsert({ where: { id: marker }, create: { id: marker, date: tomorrow, startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 100 }, update: { date: tomorrow } });
   for (const [key, value] of Object.entries({ minimum_order_amount: "0", delivery_fee: "5", service_fee: "0", service_fee_percent: "0" })) await db.appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
-  const app = await NestFactory.create(AppModule, { logger: false }); app.setGlobalPrefix("api/v1"); await app.listen(apiPort, "localhost");
+  const app = await NestFactory.create(AppModule, { logger: false }); app.setGlobalPrefix("api/v1"); await app.listen(apiPort, "127.0.0.1");
   console.log(previewOnly ? `Local preview ready on ${apiPort}; SMS disabled, test gateway not running.` : `Local-only customer browser fixture ready on ${apiPort} (SMS gateway on ${gatewayPort}). No codes are logged.`);
   async function close() {
     await app.close(); if (gateway.listening) gateway.close();
