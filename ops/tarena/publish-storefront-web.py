@@ -39,6 +39,7 @@ DATABASE = 'df-production-postgres-1'
 PUBLIC = 'https://dushanbefresh.tj'
 PHASE = 'preflight'
 NORMAL_COMMAND = ['node', '/app/dist/main.js']
+NORMAL_LOGGING = {'driver': 'local', 'options': {'max-size': '5m', 'max-file': '3'}}
 NORMAL_ENV = {'NODE_ENV': 'production', 'API_HOST': '127.0.0.1', 'API_PORT': '4013',
               'NODE_OPTIONS': '--max-old-space-size=192', 'CUSTOMER_AUTH_ENABLED': 'true',
               'CUSTOMER_REQUIRE_PHONE': 'true', 'MOBILE_CUSTOMER_API_ENABLED': 'true',
@@ -110,6 +111,7 @@ def validate_api(api, running=None):
                 or api.get('image') != 'df-tarena-api-commerce:' + revision[:12]
                 or api.get('environment') != NORMAL_ENV
                 or api.get('env_file') != ['/etc/dushanbe-fresh/app.env']
+                or api.get('logging') != NORMAL_LOGGING
                 or api.get('ports') or api.get('entrypoint')
                 or api.get('volumes') != [str(ROOT / 'images') + ':/data/images']):
             raise ValueError('Current ordinary API contract mismatch')
@@ -123,10 +125,12 @@ def validate_api(api, running=None):
                 or any(f'{key}={value}' not in config['Env'] for key, value in api['environment'].items())):
             raise ValueError('API pointer does not describe the running API')
         if normal and (config.get('Labels', {}).get('df.production.revision') != revision
+                       or running.get('HostConfig', {}).get('LogConfig') !=
+                       {'Type': NORMAL_LOGGING['driver'], 'Config': NORMAL_LOGGING['options']}
                        or any(item.split('=', 1)[0].startswith(('PAYOM_PILOT_', 'CUSTOMER_SMS_PILOT_'))
                               for item in config['Env'])
                        or any(sum(item.startswith(key + '=') for item in config['Env']) != 1 for key in NORMAL_ENV)):
-            raise ValueError('Running ordinary API revision/ENV mismatch')
+            raise ValueError('Running ordinary API revision/ENV/logging mismatch')
     return name
 
 

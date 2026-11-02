@@ -65,7 +65,7 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(shadow['environment']['API_PORT'], '4014')
         self.assertEqual(shadow['container_name'], SHADOW)
         self.assertEqual(shadow['restart'], 'no')
-        for key in ['read_only', 'init', 'network_mode', 'mem_limit', 'pids_limit', 'cap_drop', 'security_opt', 'tmpfs', 'logging']:
+        for key in ['read_only', 'init', 'network_mode', 'mem_limit', 'pids_limit', 'cap_drop', 'security_opt', 'tmpfs']:
             self.assertEqual(final[key], source[key])
         deploy.web.validate_api(final)
         for changes in [{'environment': {**source['environment'], 'DATABASE_URL': 'private'}},
@@ -73,6 +73,22 @@ class HelperTests(unittest.TestCase):
                         {'read_only': False}, {'mem_limit': '1g'}, {'logging': {'driver': 'json-file'}}]:
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 deploy.clone_api({**source, **changes}, SHA)
+
+    def test_normal_and_shadow_use_bounded_local_logs_without_mutating_pilot(self):
+        source = api_service(deploy.ROOT)
+        expected = {'driver': 'local', 'options': {'max-size': '5m', 'max-file': '3'}}
+        final, shadow = [deploy.clone_api(source, SHA, value) for value in [False, True]]
+        self.assertEqual(final['logging'], expected)
+        self.assertEqual(shadow['logging'], expected)
+        self.assertEqual(source['logging'], {'driver': 'none'})
+        following = deploy.clone_api(final, 'b' * 40)
+        self.assertEqual(following['logging'], expected)
+        final['logging']['options']['max-file'] = '9'
+        self.assertEqual(shadow['logging'], expected)
+        self.assertEqual(following['logging'], expected)
+        self.assertEqual(deploy.web.NORMAL_LOGGING, expected)
+        with self.assertRaises(ValueError):
+            deploy.clone_api(final, 'c' * 40)
 
     def test_maintenance_removes_both_upstreams_without_touching_other_config(self):
         original = '{\n admin off\n}\n' + CADDY
@@ -246,7 +262,10 @@ class PromotionTests(unittest.TestCase):
         return {'Id': name + '-id', 'Image': image,
                 'State': {'Running': True, 'Pid': pid, 'StartedAt': 'before', 'Health': {'Status': 'healthy'}},
                 'Config': {'Image': service.get('image'), 'Cmd': service.get('command'), 'Labels': service.get('labels', {}),
-                           'Env': [f'{k}={v}' for k, v in env.items()]}, 'HostConfig': {'NetworkMode': 'host'},
+                           'Env': [f'{k}={v}' for k, v in env.items()]},
+                'HostConfig': {'NetworkMode': 'host', 'LogConfig': {
+                    'Type': service.get('logging', {}).get('driver', 'none'),
+                    'Config': copy.deepcopy(service.get('logging', {}).get('options', {}))}},
                 'Mounts': [{'Type': 'bind', 'Source': m.split(':')[0], 'Destination': m.split(':')[1]}
                            for m in service.get('volumes', [str(self.root / 'images') + ':/data/images'])]}
 
@@ -255,6 +274,8 @@ class PromotionTests(unittest.TestCase):
         if self.runtime_mismatch and name == SHADOW:
             if self.runtime_mismatch == 'env':
                 row['Config']['Env'] = [item for item in row['Config']['Env'] if not item.startswith('DATABASE_URL=')] + ['DATABASE_URL=different-private-value']
+            elif self.runtime_mismatch == 'logging':
+                row['HostConfig']['LogConfig'] = {'Type': 'none', 'Config': {}}
             else:
                 row['Image'] = 'wrong-image'
         if self.drift and deploy.PHASE == 'verify-normal-api' and name == self.drift:
@@ -473,6 +494,29 @@ class PromotionTests(unittest.TestCase):
             self.promote()
         self.assert_preserved()
         self.assertEqual(self.active.read_text(), CADDY)
+
+    def test_missing_actual_shadow_log_retention_rejected_before_maintenance(self):
+        self.runtime_mismatch = 'logging'
+        with self.assertRaises(ValueError):
+            self.promote()
+        self.assert_preserved()
+        self.assertEqual(self.active.read_text(), CADDY)
+
+    def test_normal_runtime_requires_exact_service_and_actual_logging_limits(self):
+        service = deploy.clone_api(self.api, SHA)
+        self.rows[NEW] = self.runtime(NEW, service)
+        hashes = {k: hashlib.sha256(v.encode()).hexdigest() for k, v in APP_ENV.items()}
+        deploy.verify_runtime(service, self.rows[self.image], hashes)
+        for log_config in [None, {'Type': 'none', 'Config': {}}, {'Type': 'local', 'Config': {}},
+                           {'Type': 'local', 'Config': {'max-size': '50m', 'max-file': '3'}},
+                           {'Type': 'local', 'Config': {'max-size': '5m', 'max-file': '9'}}]:
+            self.rows[NEW]['HostConfig']['LogConfig'] = log_config
+            with self.subTest(log_config=log_config), self.assertRaises(ValueError):
+                deploy.verify_runtime(service, self.rows[self.image], hashes)
+        self.rows[NEW] = self.runtime(NEW, service)
+        for logging in [None, {'driver': 'none'}, {'driver': 'local'}]:
+            with self.subTest(logging=logging), self.assertRaises(ValueError):
+                deploy.verify_runtime({**service, 'logging': logging}, self.rows[self.image], hashes)
 
     def test_effective_candidate_budget_must_be_initial_approved_10_50(self):
         self.effective_budget['maxPerHour'] = 11

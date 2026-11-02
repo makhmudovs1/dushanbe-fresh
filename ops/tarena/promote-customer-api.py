@@ -181,7 +181,7 @@ def clone_api(source, sha, shadow=False):
             or source.get('cap_drop') != ['ALL'] or source.get('security_opt') != ['no-new-privileges:true']
             or source.get('mem_limit') != '384m' or source.get('pids_limit') != 128
             or source.get('restart') != 'unless-stopped' or source.get('tmpfs') != ['/tmp:size=16m,mode=1777']
-            or source.get('logging') != {'driver': 'none'}
+            or source.get('logging') != ({'driver': 'none'} if source['container_name'] == web.API else web.NORMAL_LOGGING)
             or source.get('env_file', []) not in [[], [APP_ENV]]):
         raise ValueError('Unexpected source API runtime or embedded ENV')
     if source['container_name'] == web.API and source['environment'] != {'PAYOM_PILOT_API_PORT': '4013', 'NODE_OPTIONS': '--max-old-space-size=192'}:
@@ -195,6 +195,7 @@ def clone_api(source, sha, shadow=False):
     service = copy.deepcopy(source)
     service.update(image='df-tarena-api-commerce:' + sha[:12], container_name='df-customer-api-' + sha[:12] + ('-shadow' if shadow else ''),
                    command=list(web.NORMAL_COMMAND), environment=dict(web.NORMAL_ENV), env_file=[APP_ENV],
+                   logging=copy.deepcopy(web.NORMAL_LOGGING),
                    volumes=[str(ROOT / 'images') + ':/data/images'], restart='no' if shadow else 'unless-stopped')
     service['environment']['API_PORT'] = '4014' if shadow else '4013'
     service['labels'] = {'df.production.revision': sha}
@@ -214,6 +215,8 @@ def verify_runtime(service, image, env_hashes):
             or any(k.startswith(('PAYOM_PILOT_', 'CUSTOMER_SMS_PILOT_')) for k in env)
             or any(hashlib.sha256(env.get(k, '').encode()).hexdigest() != v for k, v in env_hashes.items() if k not in service['environment'])
             or row['HostConfig']['NetworkMode'] != 'host'
+            or service.get('logging') != web.NORMAL_LOGGING
+            or row['HostConfig'].get('LogConfig') != {'Type': web.NORMAL_LOGGING['driver'], 'Config': web.NORMAL_LOGGING['options']}
             or [(m['Source'], m['Destination']) for m in row['Mounts'] if m['Type'] == 'bind'] != [(str(ROOT / 'images'), '/data/images')]):
         raise ValueError('Warmed ordinary API identity/private ENV mismatch')
     budget = json.loads(base.run(['docker', 'exec', service['container_name'], 'node', '-e', BUDGET_CHECK]))

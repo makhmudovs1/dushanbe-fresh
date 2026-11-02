@@ -68,6 +68,7 @@ def normal_api(root=deploy.ROOT):
     return {'container_name': 'df-customer-api-' + revision[:12], 'image': 'df-tarena-api-commerce:' + revision[:12],
             'network_mode': 'host', 'command': list(deploy.NORMAL_COMMAND), 'environment': dict(deploy.NORMAL_ENV),
             'labels': {'df.production.revision': revision}, 'env_file': ['/etc/dushanbe-fresh/app.env'],
+            'logging': copy.deepcopy(deploy.NORMAL_LOGGING),
             'volumes': [str(root / 'images') + ':/data/images']}
 
 
@@ -75,7 +76,8 @@ class HelperTests(unittest.TestCase):
     def test_strict_normal_api_and_running_contract(self):
         api = normal_api()
         running = {'Config': {'Image': api['image'], 'Cmd': api['command'], 'Labels': api['labels'],
-                             'Env': [f'{k}={v}' for k, v in api['environment'].items()] + ['DATABASE_URL=private']}}
+                             'Env': [f'{k}={v}' for k, v in api['environment'].items()] + ['DATABASE_URL=private']},
+                   'HostConfig': {'LogConfig': {'Type': 'local', 'Config': {'max-size': '5m', 'max-file': '3'}}}}
         self.assertEqual(deploy.validate_api(api, running), api['container_name'])
         # A later root app.env budget edit must not require a publisher/code change.
         running['Config']['Env'] += ['CUSTOMER_SMS_MAX_PER_HOUR=25', 'CUSTOMER_SMS_MAX_PER_DAY=100']
@@ -102,6 +104,24 @@ class HelperTests(unittest.TestCase):
         running['Config']['Labels'] = {}
         with self.assertRaises(ValueError):
             deploy.validate_api(api, running)
+
+    def test_normal_api_requires_bounded_local_service_and_actual_docker_logs(self):
+        api = normal_api()
+        running = {'Config': {'Image': api['image'], 'Cmd': api['command'], 'Labels': api['labels'],
+                             'Env': [f'{k}={v}' for k, v in api['environment'].items()]},
+                   'HostConfig': {'LogConfig': {'Type': 'local', 'Config': {'max-size': '5m', 'max-file': '3'}}}}
+        deploy.validate_api(api, running)
+        for logging in [None, {'driver': 'none'}, {'driver': 'local'},
+                        {'driver': 'local', 'options': {'max-size': '50m', 'max-file': '3'}},
+                        {'driver': 'local', 'options': {'max-size': '5m', 'max-file': '30'}}]:
+            with self.subTest(logging=logging), self.assertRaises(ValueError):
+                deploy.validate_api({**api, 'logging': logging})
+        for log_config in [None, {'Type': 'none', 'Config': {}}, {'Type': 'local', 'Config': {}},
+                           {'Type': 'local', 'Config': {'max-size': '5m', 'max-file': '9'}}]:
+            row = copy.deepcopy(running)
+            row['HostConfig']['LogConfig'] = log_config
+            with self.subTest(log_config=log_config), self.assertRaises(ValueError):
+                deploy.validate_api(api, row)
 
     def test_clone_preserves_every_runtime_option_and_excludes_api(self):
         service = web_service('/private/maps.env')
@@ -399,6 +419,8 @@ class RolloutTests(unittest.TestCase):
         self.rows[api['container_name']] = self.rows.pop(deploy.API)
         self.rows[api['container_name']]['Config'] = {'Image': api['image'], 'Cmd': api['command'],
             'Labels': api['labels'], 'Env': [f'{k}={v}' for k, v in api['environment'].items()]}
+        self.rows[api['container_name']]['HostConfig'] = {
+            'LogConfig': {'Type': 'local', 'Config': {'max-size': '5m', 'max-file': '3'}}}
         result = self.publish()
         self.assertEqual(result['apiContainer'], api['container_name'])
         self.assertEqual(json.loads(self.pointer.read_text())['apiCompose'], str(self.api_compose))
