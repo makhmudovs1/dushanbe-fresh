@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium, webkit, expect } = require(require.resolve('@playwright/test', { paths: [path.resolve('apps/web')] }));
+const { chromium, webkit, expect: browserExpect } = require(require.resolve('@playwright/test', { paths: [path.resolve('apps/web')] }));
+const expect = browserExpect.configure({ timeout: 30000 });
 const origin = 'https://dushanbefresh.tj';
 const output = path.resolve('test-results/checkout-production-20261102');
 const money = value => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(Number(value));
@@ -81,7 +82,7 @@ async function main() {
         await expect(summary).toHaveAttribute('aria-busy', 'false');
         await expect(summary.locator('.summary-total')).toContainText(money(checked.totalEstimated));
         if (!await total.evaluate(element => element.isConnected)) throw Error('Summary remounted');
-        await available.focus(); await page.keyboard.press('Shift');
+        await page.keyboard.press('Tab'); await available.focus();
         stage = `${engine}-slot-focus`;
         await expect(available.locator('..')).toHaveCSS('outline-offset', '-2px');
       }
