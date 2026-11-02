@@ -70,11 +70,24 @@ def main(sha):
     try:
         base.rewrite(active, candidate)
         base.run(['docker', 'kill', '--signal', 'USR1', base.PROXY])
+        PHASE = 'wait-public-build-identity'
+        for _ in range(40):
+            try:
+                if base.get('https://dushanbefresh.tj/_next/static/' + build_id + '/_buildManifest.js')[0] == 200:
+                    break
+            except Exception:
+                pass
+            time.sleep(0.5)
+        else:
+            raise ValueError('New Web routing not yet active')
         for path in ['/admin', '/admin/settings', '/cart', '/checkout', '/api/v1/health/ready', '/_next/static/' + build_id + '/_buildManifest.js']:
+            PHASE = 'public-check-' + path.split('/')[1]
             if base.get('https://dushanbefresh.tj' + path)[0] != 200:
                 raise ValueError('Public check failed')
+        PHASE = 'unchanged-service-check'
         if any(base.inspect(name)['State']['Pid'] != states[name]['Pid'] for name in names):
             raise ValueError('Unrelated service restarted')
+        PHASE = 'protected-state-check'
         if base.protected() != protected or hashlib.sha256(secret.read_bytes()).hexdigest() != secret_hash:
             raise ValueError('Protected secrets/pilot changed')
     except Exception:
