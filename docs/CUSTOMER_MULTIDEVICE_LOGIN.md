@@ -96,3 +96,35 @@ corepack pnpm --filter @dushanbe-fresh/web exec playwright test \
 Repeat with `PLAYWRIGHT_BROWSER=webkit`. Use the fixture's protected loopback
 `/shutdown` endpoint for owned test cleanup. Do not send codes to Payom or copy
 production ENV/data into this fixture.
+
+## Verification And Publication, 2026-11-02
+
+- Full isolated suite: **1,018 passed**, no skips (Web 443, API 551, shared 24).
+  Existing migrations applied only to a new loopback disposable PostgreSQL.
+- Browser suite: **20 passed**, 10 Chromium plus 10 WebKit, covering the A/B
+  scenario and the existing registration/login/cart stability regressions.
+  Artifact root: `test-results/customer-multidevice-20261102/` (not in Git).
+- Workspace lint and typecheck passed. API/shared/Web production builds passed;
+  the final linux/amd64 Web image built with no source lint/type warnings.
+- Published Web revision `48b71addcbf9022c25f8aa35368a47e49f5bf28a` on TARENA
+  at 18:43 UTC. API/PostgreSQL/proxy processes, protected ENV and the existing SMS
+  pilot ledger were unchanged. No production migrations or customer data writes.
+- Public HTTPS/account/login/policy smoke passed in Chromium desktop RU and
+  WebKit mobile TJ at 18:46 UTC. Public checkout preview/control smoke passed in
+  both at 18:52 UTC, without order creation or paid SMS.
+- Synthetic browser fixture shut down with owned cleanup; its disposable local
+  PostgreSQL was removed. Temporary map build input was removed, not user ENV.
+
+### Existing Production SMS Restriction
+
+Read-only inspection confirmed that the current API still starts through
+`payom-ui-pilot.cjs`: one approved recipient, one persistent provider slot, already
+used. Public auth status being enabled does **not** remove this restriction.
+It prevents a further real SMS even though returning-account/session logic works.
+
+The Web release deliberately does not reset the pilot, spend the remaining SMS
+authorization, alter secrets or enable general paid sends. Switching from this
+pilot to normal customer SMS login needs separate owner approval and controlled
+API/configuration activation, preserving the OTP secret, existing sessions and
+all quotas, with `CUSTOMER_REQUIRE_PHONE=false`. No additional paid handset test
+was performed. The owner has been asked explicitly about that activation.

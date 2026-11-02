@@ -44,9 +44,11 @@ async function main() {
       await expect(page.locator('.address-invitation')).toBeVisible();
       await page.locator('.address-invitation .secondary-link').click();
       stage = `${engine}-preview`;
-      const previewResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/checkout/validate' && response.request().method() === 'POST');
-      await page.goto(origin + '/checkout', { waitUntil: 'domcontentloaded' });
-      const preview = await (await previewResponse).json();
+      const [previewResponse] = await Promise.all([
+        page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/checkout/validate' && response.request().method() === 'POST', { timeout: 60000 }),
+        page.goto(origin + '/checkout', { waitUntil: 'domcontentloaded' })
+      ]);
+      const preview = await previewResponse.json();
       const summary = page.locator('.checkout-summary');
       stage = `${engine}-preview-total`;
       await expect(summary.locator('.summary-total')).toContainText(money(preview.totalEstimated));
