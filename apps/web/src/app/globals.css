@@ -587,6 +587,10 @@ button:disabled {
   font-weight: 800;
 }
 
+.field {
+  min-width: 0;
+}
+
 .quality-options {
   display: grid;
   gap: 10px;
@@ -869,14 +873,23 @@ button:disabled {
   padding: 10px 0;
   font-size: 16px;
   line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .checkout-option input {
-  flex: 0 0 auto;
+  flex: 0 0 18px;
   width: 18px;
   height: 18px;
-  margin-top: 3px;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 0;
   accent-color: var(--color-primary);
+}
+
+.checkout-option > span {
+  flex: 1;
+  min-width: 0;
 }
 
 .checkout-option small {
@@ -889,6 +902,8 @@ button:disabled {
 }
 
 .delivery-options {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   max-height: 260px;
   overflow-y: auto;
   gap: 0;

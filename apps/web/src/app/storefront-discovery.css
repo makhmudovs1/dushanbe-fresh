@@ -1,7 +1,9 @@
 .home-quick-links, .home-products-title--mobile, .category-screen--mobile { display: none; }
 .category-showcase { display: grid; gap: 28px; }
 .catalog-sidebar .category-menu-icon--favorite { color: #ff4d4f; background: transparent; }
-.catalog-sidebar__sections > a[href="/favorites"], .catalog-sidebar__sections > a[href="/favorites"]:hover { background: transparent; color: var(--color-text); }
+.catalog-sidebar .category-menu-icon--discount { color: #ef7819; }
+.catalog-sidebar .catalog-sidebar__desktop-link, .catalog-sidebar__desktop-label { display: none; }
+.catalog-sidebar__sections > a[href="/favorites"]:not(.is-active), .catalog-sidebar__sections > a[href="/favorites"]:not(.is-active):hover { background: transparent; color: var(--color-text); }
 .favorites-page-heading { margin-bottom: 28px; }
 .favorites-page-heading h1 { margin: 0; font-size: 42px; line-height: 1.15; }
 .favorites-empty { min-height: 450px; padding: 24px 16px 64px; align-content: start; gap: 12px; }
@@ -15,11 +17,16 @@
 .favorites-empty .secondary-link { margin-top: 4px; min-height: 44px; color: #1f1f1f; background: transparent; }
 
 @media (min-width: 1024px) {
+  .catalog-sidebar .catalog-sidebar__desktop-link { display: flex; }
+  .catalog-sidebar__desktop-label { display: inline; }
+  .catalog-sidebar__mobile-label { display: none; }
+  .catalog-sidebar__sections > a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
   .home-available-products .product-grid > :nth-child(n+9) { display: none; }
   .product-card .favorite-button { background: transparent; box-shadow: none; border: 0; }
 }
 
 @media (max-width: 1023px) {
+  .catalog-sidebar__sections > a[href="/favorites"].is-active, .catalog-sidebar__sections > a[href="/favorites"].is-active:hover { background: transparent; color: var(--color-text); }
   .site-header .header-location--mobile { gap: 10px; padding: 0; min-height: 44px; }
   .delivery-address-trigger__brand { display: block; flex: 0 0 108px; width: 108px; height: 38px; object-fit: contain; }
   .site-header .header-location--mobile .delivery-address-trigger__city { display: none; }

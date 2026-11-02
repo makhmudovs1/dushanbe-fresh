@@ -15,13 +15,15 @@ import { CustomerError, customerRequest } from "@/lib/customer";
 import { CHECKOUT_DRAFT_KEY, loadCheckoutDraft, saveCheckoutDraft } from "@/lib/checkout-draft";
 import { AddressFields, emptyAddress } from "./address-fields";
 import { useCart } from "@/cart/cart-context";
-import { hasLegacyCartItems } from "@/cart/cart";
+import { calculateCartSubtotalMinor, formatMoneyFromMinor, hasLegacyCartItems } from "@/cart/cart";
 import { LegacyCartNotice } from "./legacy-cart-notice";
 import { AccountCartNotice } from "./account-cart-notice";
 import { CustomerDialog } from "./customer-dialog";
 import { CheckoutError, finishCheckout, getDeliverySlots, validateCheckout } from "@/lib/checkout";
 import { decimalLabel } from "@/lib/format";
-import { CheckoutSkeleton, DeliverySlotsSkeleton, SummarySkeleton } from "./loading-state";
+import { CheckoutSkeleton, DeliverySlotsSkeleton } from "./loading-state";
+import { checkoutPreviewSlot } from "@/lib/checkout-preview";
+import { optimisticCartQuote } from "@/lib/cart-pricing-preview";
 import { ArrowLeft } from "lucide-react";
 const noSavedAddresses: SavedAddress[] = [];
 
@@ -50,6 +52,7 @@ export function CheckoutContent() {
   const [deliverySlotId, setDeliverySlotId] = useState("");
   const [quote, setQuote] = useState<CheckoutQuote | null>(null);
   const [quotedInput, setQuotedInput] = useState("");
+  const [quoteOwner, setQuoteOwner] = useState("");
   const [pending, setPending] = useState(false);
   const [sending, setSending] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -67,6 +70,9 @@ export function CheckoutContent() {
       qualityOptionId: item.qualityOptionId ?? null, observedPrice: item.sellingPrice })), deliverySlotId,
     ...(parseDeliveryAddress(currentAddress) ? { address: currentAddress } : {})
   } satisfies CheckoutInput);
+  const owner = customerId ?? "guest";
+  const pricingInputKey = JSON.stringify({ ...JSON.parse(inputKey) as CheckoutInput,
+    deliverySlotId: checkoutPreviewSlot(deliverySlotId, slots) });
 
   async function loadSlots() {
     setSlotsPending(true);
@@ -134,21 +140,26 @@ export function CheckoutContent() {
     });
   }, [draftReady, savedAddresses]);
   useEffect(() => {
-    const input = JSON.parse(inputKey) as CheckoutInput;
-    if (!hydrated || legacy || accountSyncBlocked || !input.items.length || !input.deliverySlotId) return;
-    let cancelled = false;
+    const input = JSON.parse(pricingInputKey) as CheckoutInput;
+    if (!hydrated || !draftReady || customer.loading || legacy || accountSyncBlocked || !input.items.length || !input.deliverySlotId) {
+      setPending(false); return;
+    }
+    const controller = new AbortController();
     setPending(true);
     setAccepted(false);
     setError("");
-    void validateCheckout(input).then(result => {
-      if (!cancelled) { setQuote(result); setQuotedInput(inputKey); }
+    const timer = setTimeout(() => { void validateCheckout(input, controller.signal).then(result => {
+      if (!controller.signal.aborted) { setQuote(result); setQuotedInput(pricingInputKey); setQuoteOwner(owner); }
     }).catch(error => {
-      if (!cancelled) { setQuotedInput(""); setError(error instanceof CheckoutError ? error.message : "Не удалось проверить заказ. Попробуйте ещё раз."); }
-    }).finally(() => { if (!cancelled) setPending(false); });
-    return () => { cancelled = true; };
-  }, [hydrated, inputKey, retry, legacy, accountSyncBlocked]);
+      if (!controller.signal.aborted) { setQuotedInput(""); setError(error instanceof CheckoutError ? error.message : "Не удалось проверить заказ. Попробуйте ещё раз."); }
+    }).finally(() => { if (!controller.signal.aborted) setPending(false); }); }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [hydrated, draftReady, customer.loading, owner, inputKey, pricingInputKey, retry, legacy, accountSyncBlocked]);
 
-  const currentQuote = quotedInput === inputKey ? quote : null;
+  const currentQuote = deliverySlotId && quoteOwner === owner && quotedInput === inputKey ? quote : null;
+  const summaryQuote = quoteOwner === owner && quote
+    ? quotedInput === pricingInputKey ? quote : optimisticCartQuote(quote, state) : null;
+  const goodsSubtotal = summaryQuote?.itemsSubtotal ?? formatMoneyFromMinor(calculateCartSubtotalMinor(state));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,7 +191,7 @@ export function CheckoutContent() {
       if (error instanceof CheckoutError) {
         setError(error.message);
         if (error.quote) {
-          setQuote(error.quote); setQuotedInput(inputKey); setAccepted(false);
+          setQuote(error.quote); setQuotedInput(inputKey); setQuoteOwner(owner); setAccepted(false);
           void loadSlots();
         }
       } else setError("Не удалось получить подтверждение. Повторите отправку: второй заказ не создастся.");
@@ -261,13 +272,10 @@ export function CheckoutContent() {
             <label className="checkout-option" key={value}><input type="radio" name="substitution" checked={policy === value} onChange={() => setPolicy(value)} /><span>{t(label)}</span></label>)}
         </fieldset>
       </fieldset>
-      <aside className="checkout-summary">
+      <aside className="checkout-summary" aria-busy={pending}>
         <h2>{t("Итого")}</h2>
-        {!deliverySlotId ? <><div className="summary-row"><span>{t("Товары")}</span><span>—</span></div><div className="summary-row"><span>{t("Доставка")}</span><span>—</span></div><p className="commerce-caption">{t("Выберите окно доставки, чтобы проверить сумму")}</p></> : null}
-        {pending ? <SummarySkeleton /> : null}
-        {currentQuote && !pending ? <>
-          {currentQuote.items.some(item => item.errors.length || item.warnings.length) ? <ul className="checkout-lines checkout-lines--issues">
-            {currentQuote.items.map((item, index) => item.errors.length || item.warnings.length ? <li key={`${item.productId}:${index}`}>
+        {summaryQuote?.items.some(item => item.errors.length || item.warnings.length) ? <ul className="checkout-lines checkout-lines--issues">
+            {summaryQuote.items.map((item, index) => item.errors.length || item.warnings.length ? <li key={`${item.productId}:${index}`}>
               <strong>{name(item)}</strong>
               {item.qualityOption ? <p>{label(item.qualityOption)}</p> : null}
               {item.warnings.map(warning => <p className="notice" key={t(warning)}>{t(warning)}</p>)}
@@ -275,16 +283,16 @@ export function CheckoutContent() {
               {item.errors.length ? <button className="secondary-link" type="button" disabled={sending} onClick={() => removeItem(state.items[index])}>{t("Удалить ")}{name(item)}</button> : null}
             </li> : null)}
           </ul> : null}
-          <div className="summary-row"><span>{t("Товары")}</span><span>{decimalLabel(currentQuote.itemsSubtotal)}{t(" сомони")}</span></div>
-          <div className="summary-row"><span>{t("Доставка")}</span><span>{decimalLabel(currentQuote.deliveryFee)}{t(" сомони")}</span></div>
-          {currentQuote.serviceFee !== "0.00" ? <div className="summary-row"><span>{t("Сервисный сбор")}</span><span>{decimalLabel(currentQuote.serviceFee)}{t(" сомони")}</span></div> : null}
-          <div className="summary-row summary-total"><strong>{t("К оплате")}</strong><strong>{decimalLabel(currentQuote.totalEstimated)}{t(" сомони")}</strong></div>
-          {currentQuote.errors.map(error => <p className="checkout-error" role="alert" key={t(error)}>{t(error)}</p>)}
-          {currentQuote.items.some(item => item.isWeighted) ? <p className="commerce-caption">{t("Точную стоимость весовых товаров определим после сборки")}</p> : null}
+          <div className="summary-row"><span>{t("Товары")}</span><span>{decimalLabel(goodsSubtotal)}{t(" сомони")}</span></div>
+          <div className="summary-row"><span>{t("Доставка")}</span><span>{summaryQuote ? `${decimalLabel(summaryQuote.deliveryFee)}${t(" сомони")}` : "—"}</span></div>
+          {summaryQuote && Number(summaryQuote.serviceFee) > 0 ? <div className="summary-row"><span>{t("Сервисный сбор")}</span><span>{decimalLabel(summaryQuote.serviceFee)}{t(" сомони")}</span></div> : null}
+          <div className="summary-row summary-total"><strong>{t(summaryQuote ? "К оплате" : "Итого товаров")}</strong><strong>{decimalLabel(summaryQuote?.totalEstimated ?? goodsSubtotal)}{t(" сомони")}</strong></div>
+          {!deliverySlotId ? <p className="commerce-caption">{t("Выберите время доставки для подтверждения")}</p> : null}
+          {currentQuote?.errors.map(error => <p className="checkout-error" role="alert" key={t(error)}>{t(error)}</p>)}
+          {state.items.some(item => item.isWeighted) ? <p className="commerce-caption">{t("Точную стоимость весовых товаров определим после сборки")}</p> : null}
           <p className="commerce-caption">{t("Оплата наличными при получении")}</p>
-        </> : null}
         {error ? <p role="alert" className="checkout-error">{t(error)}</p> : null}
-        {deliverySlotId && (error || (currentQuote && !currentQuote.valid)) ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
+        {error || (currentQuote && !currentQuote.valid) ? <button className="secondary-link" type="button" disabled={sending || pending} onClick={() => setRetry(retry + 1)}>{t("Проверить заказ ещё раз")}</button> : null}
         <label className="checkout-option"><input type="checkbox" checked={accepted} disabled={!currentQuote?.valid || pending || sending} onChange={e => setAccepted(e.target.checked)} /><span>{t("Я проверил товары, стоимость и время доставки")}</span></label>
         <button className="primary-action" type="submit" disabled={!currentQuote?.valid || !accepted || !parseDeliveryAddress(currentAddress) || pending || sending || customer.loading}>{t(sending ? "Оформляем заказ..." : customer.status.requiredForCheckout && !customer.user ? "Подтвердить телефон и продолжить" : "Подтвердить заказ")}</button>
       </aside>
