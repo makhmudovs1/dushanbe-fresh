@@ -19,6 +19,9 @@ RUN --mount=type=secret,id=geoapify_map_key \
     test -n "$GEOAPIFY_MAP_KEY_REVISION"; \
     if [ -f /run/secrets/geoapify_map_key ]; then export NEXT_PUBLIC_GEOAPIFY_MAP_API_KEY="$(cat /run/secrets/geoapify_map_key)"; fi; \
     pnpm db:generate && pnpm build
+
+# Web needs only its standalone build, not another API dependency resolution.
+FROM build AS api-dependencies
 RUN mkdir -p /out && pnpm --filter @dushanbe-fresh/api list --prod --depth Infinity --json > /out/trusted-dependencies.json \
     && pnpm --filter @dushanbe-fresh/api deploy --prod /out/api \
     && pnpm --dir /out/api list --prod --depth Infinity --json > /out/runtime-dependencies.json
@@ -41,9 +44,9 @@ USER node
 
 FROM base AS api
 WORKDIR /app
-COPY --from=build --chown=node:node /out/api/node_modules ./node_modules
-COPY --from=build --chown=node:node /out/api/dist ./dist
-COPY --from=build --chown=node:node /out/api/package.json ./package.json
+COPY --from=api-dependencies --chown=node:node /out/api/node_modules ./node_modules
+COPY --from=api-dependencies --chown=node:node /out/api/dist ./dist
+COPY --from=api-dependencies --chown=node:node /out/api/package.json ./package.json
 RUN node -e 'const c=new(require("@prisma/client").PrismaClient)();c.$disconnect();require("sharp");require("@dushanbe-fresh/shared");'
 CMD ["node", "dist/main.js"]
 
@@ -58,6 +61,6 @@ CMD ["node", "apps/web/server.js"]
 # Migration tools are a separate, one-shot artifact, never the runtime API.
 FROM base AS migrator
 WORKDIR /app
-COPY --from=build --chown=node:node /out/migrator/node_modules ./node_modules
+COPY --from=api-dependencies --chown=node:node /out/migrator/node_modules ./node_modules
 COPY --from=build --chown=node:node /workspace/apps/api/prisma ./prisma
 ENTRYPOINT ["node", "node_modules/prisma/build/index.js", "migrate", "deploy", "--schema", "prisma/schema.prisma"]
