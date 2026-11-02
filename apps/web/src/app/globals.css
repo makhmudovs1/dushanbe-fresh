@@ -903,6 +903,7 @@ button:disabled {
 
 .delivery-options {
   grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
   align-content: start;
   max-height: 260px;
   overflow-y: auto;

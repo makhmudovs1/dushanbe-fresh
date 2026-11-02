@@ -47,21 +47,33 @@ async function main() {
       await page.goto(origin + '/checkout', { waitUntil: 'domcontentloaded' });
       const preview = await (await previewResponse).json();
       const summary = page.locator('.checkout-summary');
+      stage = `${engine}-preview-total`;
       await expect(summary.locator('.summary-total')).toContainText(money(preview.totalEstimated));
+      stage = `${engine}-preview-goods`;
       await expect(summary.locator('.summary-row').first()).toContainText(money(preview.itemsSubtotal));
+      stage = `${engine}-preview-delivery`;
       await expect(summary.locator('.summary-row').nth(1)).toContainText(money(preview.deliveryFee));
+      stage = `${engine}-preview-unselected`;
       await expect(page.locator('input[name="delivery-slot"]:checked')).toHaveCount(0);
       await expect(summary.locator('input[type="checkbox"]')).toBeDisabled();
       await expect(summary.locator('button[type="submit"]')).toBeDisabled();
+      stage = `${engine}-status-containment`;
+      await page.screenshot({ path: path.join(output, `${engine}-${width}-before-slot.png`), fullPage: true, animations: 'disabled' });
       for (const reason of await page.locator('.delivery-options small').all()) {
         if (!await reason.evaluate(element => {
           const row = element.closest('label').getBoundingClientRect(), box = element.getBoundingClientRect();
           return box.left >= row.left && box.right <= row.right + 1 && box.top >= row.top && box.bottom <= row.bottom + 1;
-        })) throw Error('Unavailable reason overflows');
+        })) {
+          console.log(JSON.stringify({ statusBounds: await reason.evaluate(element => {
+            const row = element.closest('label').getBoundingClientRect(), box = element.getBoundingClientRect();
+            return { row: row.toJSON(), box: box.toJSON() };
+          }) }));
+          throw Error('Unavailable reason overflows');
+        }
       }
-      await page.screenshot({ path: path.join(output, `${engine}-${width}-before-slot.png`), fullPage: true, animations: 'disabled' });
       const available = page.locator('input[name="delivery-slot"]:enabled').first();
       if (await available.count()) {
+        stage = `${engine}-select-slot`;
         const total = await summary.locator('.summary-total').elementHandle();
         const checkedResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/checkout/validate' && response.request().method() === 'POST');
         await available.check();
@@ -70,6 +82,7 @@ async function main() {
         await expect(summary.locator('.summary-total')).toContainText(money(checked.totalEstimated));
         if (!await total.evaluate(element => element.isConnected)) throw Error('Summary remounted');
         await available.focus(); await page.keyboard.press('Shift');
+        stage = `${engine}-slot-focus`;
         await expect(available.locator('..')).toHaveCSS('outline-offset', '-2px');
       }
       if (!await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)) throw Error('Horizontal overflow');
@@ -82,4 +95,6 @@ async function main() {
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
 }
-main().catch(() => { console.error(JSON.stringify({ productionCheckoutControlsFailed: true, stage, detailsWithheld: true })); process.exitCode = 1; });
+main().catch(error => { console.error(JSON.stringify({ productionCheckoutControlsFailed: true, stage,
+  errorType: error.name, sourceLine: error.stack?.match(/checkout-controls-public-smoke\.cjs:(\d+):/)?.[1],
+  detailsWithheld: true })); process.exitCode = 1; });

@@ -39,7 +39,8 @@ async function setup(page: Page, baseURL: string, locale: Locale) {
         "/api/v1/delivery-zone": unrestrictedDeliveryZone,
         "/api/v1/delivery-slots": [
           { ...slot, id: "expired", available: false, unavailableReasons: ["cutoff_passed", "wave_closed"] },
-          slot, { ...slot, id: "later", startsAt: "18:00", endsAt: "20:00" }
+          slot, { ...slot, id: "later", startsAt: "18:00", endsAt: "20:00" },
+          ...Array.from({ length: 18 }, (_, index) => ({ ...slot, id: `future-${index}` }))
         ],
         "/api/address-search": { status: "unavailable", city: "Dushanbe", bounds: [68.65, 38.45, 68.90, 38.68] }
       };
@@ -85,7 +86,7 @@ for (const [width, locale] of [[320, "ru"], [375, "ru"], [768, "ru"], [1440, "ru
     const blocked = await setup(page, baseURL!, locale);
     const t = (text: string) => translate(locale, text);
     const options = page.locator(".delivery-options .checkout-option");
-    await expect(options).toHaveCount(3);
+    await expect(options).toHaveCount(21);
     await expect(options.first()).toContainText(t("Время заказа прошло"));
     const expired = options.first().getByRole("radio");
     await expect(expired).toBeDisabled();
@@ -108,6 +109,12 @@ for (const [width, locale] of [[320, "ru"], [375, "ru"], [768, "ru"], [1440, "ru
       expect(box.height).toBe(18);
     }
     await expectContained(options.locator("span, small"));
+    for (const reason of await options.locator("small").all()) {
+      expect(await reason.evaluate(el => {
+        const row = el.closest("label")!.getBoundingClientRect(), box = el.getBoundingClientRect();
+        return box.top >= row.top && box.bottom <= row.bottom + 1;
+      })).toBe(true);
+    }
     await expectContained(page.locator(".commerce-checkout .field input"));
     await expectStableFocus(page, page.getByLabel(t("Улица"), { exact: true }));
     await page.screenshot({ path: info.outputPath("checkout-field-focus.png"), animations: "disabled" });
