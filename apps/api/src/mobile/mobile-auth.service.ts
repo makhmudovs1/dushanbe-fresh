@@ -79,7 +79,9 @@ export class MobileAuthService {
   private enabled() {
     if (!this.status().enabled)
       throw new ServiceUnavailableException(
-        "Вход по SMS пока недоступен. Можно оформить заказ без входа.",
+        this.status().requiredForCheckout
+          ? "Вход по SMS пока недоступен. Пожалуйста, попробуйте позже."
+          : "Вход по SMS пока недоступен. Можно оформить заказ без входа.",
       );
   }
   async code(body: { phone?: unknown }, ip: string) {

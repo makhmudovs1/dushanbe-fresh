@@ -93,6 +93,7 @@ model User {
   favorites       CustomerFavorite[]
   cart            CustomerCart?
   cartImports     CustomerCartImport[]
+  deletionRequest CustomerAccountDeletionRequest?
 
   @@map("users")
 }
@@ -770,4 +771,29 @@ model MobileApiLimit {
   resetsAt DateTime @map("resets_at")
   @@index([resetsAt])
   @@map("mobile_api_limits")
+}
+
+model MobileGeocoderGrant {
+  tokenHash    String   @id @map("token_hash")
+  identityHash String   @map("identity_hash")
+  remaining    Int      @default(30)
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("mobile_geocoder_grants")
+}
+
+// Deletion initiation only; actual data erasure needs an approved retention policy.
+model CustomerAccountDeletionRequest {
+  id            String   @id
+  userId        String?  @unique @map("user_id")
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  policyVersion String   @map("policy_version")
+  status        String   @default("requested")
+  requestedAt   DateTime @default(now()) @map("requested_at")
+  completedAt   DateTime? @map("completed_at")
+
+  @@index([status, requestedAt])
+  @@map("customer_account_deletion_requests")
 }

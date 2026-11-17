@@ -7,8 +7,10 @@ import { MobileAuthService } from "./mobile-auth.service";
 import { MobileAuthController } from "./mobile-auth.controller";
 import { MobileCustomerController } from "./mobile-customer.controller";
 import { MobileCheckoutController } from "./mobile-checkout.controller";
+import { MobileGeocodingController } from "./geocoding/geocoding.controller";
 
 @Module({ imports: [PrismaModule, CustomerAccountModule, CheckoutModule],
   providers: [MobileQuotaService, MobileAuthService],
-  controllers: [MobileAuthController, MobileCustomerController, MobileCheckoutController] })
+  controllers: [MobileAuthController, MobileCustomerController, MobileCheckoutController, MobileGeocodingController],
+  exports: [MobileAuthService, MobileQuotaService] })
 export class MobileModule {}

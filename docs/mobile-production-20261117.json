@@ -1,0 +1,168 @@
+{
+  "auditedAt": "2026-11-17T16:11:20.970Z",
+  "origin": "https://dushanbefresh.tj",
+  "transport": "HTTPS; certificate verification enabled; no Origin/cookies/credentials",
+  "mutations": 0,
+  "web": {
+    "status": 200,
+    "htmlSha256": "8d07ff9206525ec05851c9c0787f0f298c227bd16f56fdf505659f3958a26aa4",
+    "title": "Dushanbe Fresh — доставка свежих продуктов в Душанбе"
+  },
+  "results": [
+    {
+      "path": "/health",
+      "status": 200,
+      "milliseconds": 1364,
+      "cacheControl": null,
+      "summary": {}
+    },
+    {
+      "path": "/products",
+      "status": 200,
+      "milliseconds": 1446,
+      "cacheControl": null,
+      "summary": {
+        "count": 46,
+        "firstItemKeys": [
+          "category",
+          "description",
+          "descriptionTj",
+          "id",
+          "image",
+          "images",
+          "isWeighted",
+          "minQuantity",
+          "name",
+          "nameTj",
+          "priceDrop",
+          "qualityOptions",
+          "quantityStep",
+          "sellingPrice",
+          "slug",
+          "unit"
+        ]
+      }
+    },
+    {
+      "path": "/categories",
+      "status": 200,
+      "milliseconds": 1436,
+      "cacheControl": null,
+      "summary": {
+        "count": 5,
+        "firstItemKeys": [
+          "iconUrl",
+          "id",
+          "imageUrl",
+          "name",
+          "nameTj",
+          "parentId",
+          "slug",
+          "sortOrder"
+        ]
+      }
+    },
+    {
+      "path": "/delivery-slots",
+      "status": 200,
+      "milliseconds": 1341,
+      "cacheControl": null,
+      "summary": {
+        "count": 21,
+        "firstItemKeys": [
+          "available",
+          "date",
+          "endsAt",
+          "id",
+          "remainingCapacity",
+          "startsAt",
+          "unavailableReasons"
+        ]
+      }
+    },
+    {
+      "path": "/delivery-zone",
+      "status": 200,
+      "milliseconds": 1367,
+      "cacheControl": "no-store",
+      "summary": {}
+    },
+    {
+      "path": "/customer-auth/status",
+      "status": 200,
+      "milliseconds": 1337,
+      "cacheControl": null,
+      "summary": {
+        "enabled": true,
+        "requiredForCheckout": true
+      }
+    },
+    {
+      "path": "/mobile/auth/status",
+      "status": 200,
+      "milliseconds": 1247,
+      "cacheControl": "private, no-store",
+      "summary": {
+        "enabled": true,
+        "available": true,
+        "requiredForCheckout": true
+      }
+    },
+    {
+      "path": "/mobile/geocoding/status",
+      "status": 404,
+      "milliseconds": 1333,
+      "cacheControl": null,
+      "summary": {}
+    },
+    {
+      "path": "/mobile/customer/account-deletion/status",
+      "status": 404,
+      "milliseconds": 1247,
+      "cacheControl": null,
+      "summary": {}
+    },
+    {
+      "path": "/customer/account-deletion/status",
+      "status": 404,
+      "milliseconds": 1341,
+      "cacheControl": null,
+      "summary": {}
+    },
+    {
+      "path": "/mobile/auth/me",
+      "status": 401,
+      "milliseconds": 1241,
+      "cacheControl": "private, no-store",
+      "summary": {}
+    },
+    {
+      "path": "/mobile/customer/cart",
+      "status": 401,
+      "milliseconds": 1328,
+      "cacheControl": "private, no-store",
+      "summary": {}
+    },
+    {
+      "path": "/mobile/customer/favorites",
+      "status": 401,
+      "milliseconds": 1241,
+      "cacheControl": "private, no-store",
+      "summary": {}
+    },
+    {
+      "path": "/mobile/customer/addresses",
+      "status": 401,
+      "milliseconds": 1338,
+      "cacheControl": "private, no-store",
+      "summary": {}
+    },
+    {
+      "path": "/mobile/customer/orders",
+      "status": 401,
+      "milliseconds": 5717,
+      "cacheControl": "private, no-store",
+      "summary": {}
+    }
+  ]
+}

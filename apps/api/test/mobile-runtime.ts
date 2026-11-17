@@ -4,17 +4,14 @@ import { NestFactory } from "@nestjs/core";
 import { PrismaClient } from "@prisma/client";
 import { createServer } from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
+import { hash } from "bcryptjs";
 import { writeFileSync } from "node:fs";
 import { AppModule } from "../src/app.module";
-import { CustomerSmsGateway } from "../src/customer-account/customer-auth.service";
 import { clearTestFinances } from "../src/delivery-finance/test-cleanup";
-const url = new URL(process.env.DATABASE_URL ?? "http://invalid");
+import { isOwnedMobileTestTarget } from "../src/mobile/mobile-runtime-target.test-support";
 if (
   process.env.NODE_ENV !== "test" ||
-  !["localhost", "127.0.0.1"].includes(url.hostname) ||
-  url.username !== "dushanbe_fresh" ||
-  url.pathname !== "/df_payom_native_client_test_20261029_a1" ||
-  url.port !== "5432" ||
+  !isOwnedMobileTestTarget(process.env.DATABASE_URL) ||
   !/^\/(?:private\/)?tmp\/df-mobile-[a-z0-9-]+\.json$/.test(process.env.MOBILE_RUNTIME_CONFIG??"")
 )
   throw new Error("Guarded isolated local mobile purchase runtime required");
@@ -26,16 +23,24 @@ const phones = new Set<string>();
 const messages = new Map<string, { challengeId: string; code: string }>();
 process.env.MOBILE_CUSTOMER_API_ENABLED = "true";
 process.env.CUSTOMER_AUTH_ENABLED = "true";
-process.env.CUSTOMER_REQUIRE_PHONE = "false";
+process.env.CUSTOMER_REQUIRE_PHONE = "true";
 process.env.CUSTOMER_OTP_SECRET = randomBytes(32).toString("hex");
 process.env.MOBILE_QUOTA_SECRET = randomBytes(32).toString("hex");
 process.env.MOBILE_GEOCODER_ENABLED = "false";
+process.env.STAFF_JWT_SECRET = randomBytes(32).toString("hex");
+delete process.env.CUSTOMER_SMS_PILOT_PHONE;
+delete process.env.CUSTOMER_SMS_PILOT_ID;
 // Never inherit a live provider while the test-only loopback gateway is starting.
 process.env.CUSTOMER_SMS_API_KEY = "";
 process.env.CUSTOMER_SMS_URL = "http://127.0.0.1:1/api/message";
 const productId = randomUUID();
 const secondProductId = randomUUID();
 const slotId = randomUUID();
+const operationsSlotId = randomUUID();
+const staffPassword = randomBytes(32).toString("base64url");
+const staffRoles = ["admin", "picker", "courier"] as const;
+const staff = Object.fromEntries(staffRoles.map(role => [role, { id: `${marker}-${role}`, email: `${marker}-${role}@test.invalid`, password: staffPassword }]));
+process.env.WEB_ORIGIN = "http://127.0.0.1:3146";
 const settings = {
   minimum_order_amount: "2",
   delivery_fee: "5",
@@ -43,6 +48,7 @@ const settings = {
   service_fee_percent: "0",
 };
 async function reset() {
+  process.env.CUSTOMER_REQUIRE_PHONE = "true";
   for (const [key, value] of Object.entries(settings))
     await db.appSetting.upsert({
       where: { key },
@@ -107,6 +113,9 @@ async function main() {
       capacityOrders: 100,
     },
   });
+  await db.deliverySlot.create({ data: { id: operationsSlotId, date: new Date("2099-01-02"), startsAt: new Date("1970-01-01T10:00:00Z"), endsAt: new Date("1970-01-01T12:00:00Z"), capacityOrders: 100 } });
+  const passwordHash = await hash(staffPassword, 10);
+  for (const role of staffRoles) await db.user.create({ data: { id: staff[role].id, email: staff[role].email, name: `Локальный ${role}`, role, roles: [role], passwordHash } });
   await reset();
   const app = await NestFactory.create(AppModule, { logger: false });
   app.setGlobalPrefix("api/v1");
@@ -124,7 +133,7 @@ async function main() {
     await app.close();
     await new Promise<void>((resolve) => gateway.close(() => resolve()));
     const orders = await db.order.findMany({
-      where: { deliverySlotId: slotId },
+      where: { deliverySlotId: { in: [slotId, operationsSlotId] } },
       select: { id: true },
     });
     await clearTestFinances(
@@ -132,17 +141,20 @@ async function main() {
       orders.map((o) => o.id),
     );
     const waves = await db.deliveryWave.findMany({
-      where: { deliverySlotId: slotId },
+      where: { deliverySlotId: { in: [slotId, operationsSlotId] } },
       select: { id: true },
     });
-    await db.order.deleteMany({ where: { deliverySlotId: slotId } });
+    await db.order.deleteMany({ where: { deliverySlotId: { in: [slotId, operationsSlotId] } } });
     await db.waveItem.deleteMany({
       where: { deliveryWaveId: { in: waves.map((w) => w.id) } },
     });
-    await db.deliveryWave.deleteMany({ where: { deliverySlotId: slotId } });
-    await db.deliverySlot.delete({ where: { id: slotId } });
+    await db.deliveryWave.deleteMany({ where: { deliverySlotId: { in: [slotId, operationsSlotId] } } });
+    await db.deliverySlot.deleteMany({ where: { id: { in: [slotId, operationsSlotId] } } });
+    await db.productPriceHistory.deleteMany({ where: { product: { categoryId: marker } } });
+    await db.productImage.deleteMany({ where: { product: { categoryId: marker } } });
+    await db.pricingAudit.deleteMany({ where: { actorId: { in: staffRoles.map(role => staff[role].id) } } });
     await db.product.deleteMany({
-      where: { id: { in: [productId, secondProductId] } },
+      where: { categoryId: marker },
     });
     await db.category.delete({ where: { id: marker } });
     await db.customer.deleteMany({
@@ -152,11 +164,14 @@ async function main() {
     await db.customerOtpChallenge.deleteMany({
       where: { phone: { in: [...phones] } },
     });
+    await db.operationalAudit.deleteMany({ where: { userId: { in: staffRoles.map(role => staff[role].id) } } });
+    await db.user.deleteMany({ where: { id: { in: staffRoles.map(role => staff[role].id) } } });
     await db.$disconnect();
     process.exitCode = 0;
   };
   const gateway = createServer(async (req, res) => {
-    if (req.headers["x-mobile-test-secret"] !== secret) {
+    const provider = req.url === "/api/message";
+    if (provider ? req.headers.authorization !== `Bearer ${secret}` : req.headers["x-mobile-test-secret"] !== secret) {
       res.writeHead(403);
       res.end();
       return;
@@ -179,18 +194,16 @@ async function main() {
     };
     try {
       const body = raw ? JSON.parse(raw) : {};
-      if (req.url === "/sms") {
-        phones.add(body.phone);
-        messages.set(body.phone, {
-          challengeId: body.challengeId,
-          code: body.code,
-        });
-        reply({ accepted: true });
+      if (provider) {
+        const code = body.templateMessage?.variables?.["code-1"];
+        if (typeof body.telephone !== "string" || !/^\+992\d{9}$/.test(body.telephone) || typeof code !== "string" || !/^\d{6}$/.test(code) || body.text !== undefined || body.templateMessage?.templateId !== "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31") { reply({}, 422); return; }
+        phones.add(body.telephone);
+        messages.set(body.telephone, { challengeId: "", code });
+        reply({ id: randomUUID(), type: "SMS", telephone: body.telephone, deliveryStatus: "SERVICE_ACCEPTED" }, 201);
       } else if (req.url === "/challenge") {
-        reply(
-          messages.get(body.phone) ?? {},
-          messages.has(body.phone) ? 200 : 404,
-        );
+        const message = messages.get(body.phone);
+        const challenge = message ? await db.customerOtpChallenge.findFirst({ where: { phone: body.phone }, orderBy: { createdAt: "desc" }, select: { id: true } }) : null;
+        reply(message && challenge ? { challengeId: challenge.id, code: message.code } : {}, message && challenge ? 200 : 404);
       } else if (req.url === "/control") {
         if (["inspect-order", "advance-order"].includes(body.action)) {
           if (typeof body.trackingToken !== "string" || !/^[a-f0-9]{64}$/.test(body.trackingToken)) { reply({}, 400); return; }
@@ -202,6 +215,9 @@ async function main() {
           return;
         }
         if (body.action === "reset") await reset();
+        else if (body.action === "require-login") process.env.CUSTOMER_REQUIRE_PHONE = "true";
+        else if (body.action === "optional-login") process.env.CUSTOMER_REQUIRE_PHONE = "false";
+        else if (body.action === "elapsed-sms-cooldown") await db.customerOtpChallenge.updateMany({ where: { phone: { in: [...phones] }, consumedAt: { not: null } }, data: { createdAt: new Date(Date.now() - 65000) } });
         else if (body.action === "price")
           await db.product.update({
             where: { id: productId },
@@ -246,7 +262,7 @@ async function main() {
         reply({ ok: true });
       } else if (req.url === "/counts") {
         reply({
-          orders: await db.order.count({ where: { deliverySlotId: slotId } }),
+          orders: await db.order.count({ where: { deliverySlotId: { in: [slotId, operationsSlotId] } } }),
         });
       } else if (req.url === "/shutdown") {
         reply({ ok: true });
@@ -260,15 +276,14 @@ async function main() {
   });
   await new Promise<void>((resolve) => gateway.listen(0, "127.0.0.1", resolve));
   const gatewayUrl = `http://127.0.0.1:${(gateway.address() as { port: number }).port}`;
-  CustomerSmsGateway.prototype.configured = () => true;
-  CustomerSmsGateway.prototype.send = async (phone, code, challengeId) => {
-    const response = await fetch(`${gatewayUrl}/sms`, {
-      method: "POST",
-      headers: { "X-Mobile-Test-Secret": secret },
-      body: JSON.stringify({ phone, code, challengeId }),
-    });
-    if (!response.ok) throw new Error("Mock gateway rejected");
-  };
+  // Genuine production adapter/template/201 parsing against a protected loopback gateway.
+  process.env.CUSTOMER_SMS_URL = `${gatewayUrl}/api/message`;
+  process.env.CUSTOMER_SMS_API_KEY = secret;
+  process.env.CUSTOMER_SMS_SENDER = "LocalTest";
+  process.env.CUSTOMER_SMS_TEMPLATE_ID = "e6c7243f-7dd1-4bed-b0c4-7ada31cdfa31";
+  process.env.CUSTOMER_SMS_CODE_VARIABLE = "code-1";
+  process.env.CUSTOMER_SMS_MAX_PER_HOUR = "500";
+  process.env.CUSTOMER_SMS_MAX_PER_DAY = "1000";
   writeFileSync(
     process.env.MOBILE_RUNTIME_CONFIG!,
     JSON.stringify({
@@ -279,6 +294,9 @@ async function main() {
       productId,
       secondProductId,
       slotId,
+      operationsSlotId,
+      categoryId: marker,
+      staff,
     }),
     { mode: 0o600 },
   );

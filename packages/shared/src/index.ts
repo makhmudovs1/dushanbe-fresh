@@ -16,3 +16,4 @@ export * from "./tracking";
 export * from "./delivery-zone";
 export * from "./mobile";
 export type * from "./pricing";
+export type * from "./account-deletion";

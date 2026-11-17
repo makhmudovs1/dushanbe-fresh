@@ -14,6 +14,7 @@ import { PublicOrdersModule } from "./public-orders/public-orders.module";
 import { CustomerAccountModule } from "./customer-account/customer-account.module";
 import { DeliveryZoneModule } from "./delivery-zone/delivery-zone.module";
 import { MobileModule } from "./mobile/mobile.module";
+import { AccountDeletionModule } from "./account-deletion/account-deletion.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MobileModule } from "./mobile/mobile.module";
     AuthModule,
     CustomerAccountModule,
     MobileModule,
+    AccountDeletionModule,
     DeliveryZoneModule,
     MediaModule,
     StaffModule,
