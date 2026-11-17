@@ -6,6 +6,11 @@ appId: tj.dushanbefresh.app.preview
 - extendedWaitUntil:
     visible: "Все продукты"
     timeout: 30000
+# PRODUCT_NAME must be an available product in the first visible catalog row.
+# A heading alone is also present in the loading skeleton.
+- extendedWaitUntil:
+    visible: '(Добавить в корзину|Увеличить количество): ${PRODUCT_NAME}'
+    timeout: 60000
 - takeScreenshot: ios-home
 - scrollUntilVisible:
     element: "${PRODUCT_NAME}"

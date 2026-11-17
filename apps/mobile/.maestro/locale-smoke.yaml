@@ -1,0 +1,29 @@
+# Local language persistence only. No account mutations, SMS or orders.
+appId: tj.dushanbefresh.app.preview
+---
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Забон"
+    commands:
+      - tapOn: "Забон"
+      - tapOn: "Русский"
+- tapOn: "Профиль"
+- scrollUntilVisible:
+    element: "Настройки профиля"
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- tapOn: "Настройки профиля"
+- assertVisible: "Русский"
+- tapOn: "Тоҷикӣ"
+- assertVisible: "Танзимоти профил"
+- takeScreenshot: ios-settings-tg
+- stopApp
+- launchApp
+- assertVisible: "Забон"
+- takeScreenshot: ios-home-tg-restored
+- tapOn: "Забон"
+- tapOn: "Русский"
+- assertVisible: "Все продукты"

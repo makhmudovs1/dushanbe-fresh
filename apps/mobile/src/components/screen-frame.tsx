@@ -51,7 +51,7 @@ export function ScreenFrame({
             }}
           />
           <Text style={[styles.heading, { flex: 1, textAlign: "center" }]}>
-            {title}
+            {t(title)}
           </Text>
           <View style={{ width: 44 }} />
         </View>

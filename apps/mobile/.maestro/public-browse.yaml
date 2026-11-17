@@ -1,0 +1,43 @@
+# Public reads and local language only. NEVER sends SMS, geocoder grants or orders.
+appId: tj.dushanbefresh.app.preview
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: '(Добавить в корзину|Увеличить количество): ${PRODUCT_NAME}'
+    timeout: 60000
+- takeScreenshot: ios-home-loaded
+- tapOn: "Каталог"
+- extendedWaitUntil:
+    visible: "Овощи"
+    timeout: 30000
+- takeScreenshot: ios-categories
+- tapOn: "Овощи"
+- assertVisible: "Поиск товаров"
+- takeScreenshot: ios-catalog
+- tapOn: "Поиск товаров"
+- inputText: "Морковь"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Морковь"
+    timeout: 30000
+- takeScreenshot: ios-search
+- tapOn:
+    text: "Морковь"
+    below: "Результаты поиска"
+    index: 0
+- assertVisible: "Закрыть товар"
+- takeScreenshot: ios-product
+- tapOn: "Закрыть товар"
+- assertVisible: "Морковь"
+- tapOn: "Избранное"
+- assertVisible: "Это ваша личная полка"
+- takeScreenshot: ios-favorites-guest
+- tapOn: "Указать адрес доставки"
+- assertVisible: "Куда доставить?"
+- assertVisible: "Поиск адреса в Душанбе"
+- takeScreenshot: ios-map
+- tapOn: "Закрыть"
+- tapOn: "Профиль"
+- assertVisible: "Войдите в аккаунт"
+- takeScreenshot: ios-profile-guest

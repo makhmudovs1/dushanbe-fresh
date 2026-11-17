@@ -5,6 +5,7 @@ import { Pressable, Text } from "react-native";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { potato } from "../domain/fixtures.test-support";
 import { reduceCart as cartReducer } from "../domain/cart";
+import { translate } from "../i18n";
 const h = vi.hoisted(() => ({
   quantity: undefined as string | undefined,
   hydrated: true,
@@ -15,6 +16,7 @@ const h = vi.hoisted(() => ({
   navigate: vi.fn(),
   mutate: vi.fn(),
   active: false,
+  locale: "ru" as "ru" | "tg",
 }));
 vi.mock("react-native", () => ({
   View: "View",
@@ -27,6 +29,11 @@ vi.mock("react-native", () => ({
   Alert: { alert: vi.fn() },
 }));
 vi.mock("expo-image", () => ({ Image: "Image" }));
+vi.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+vi.mock("./store-header", () => ({ StoreHeader: () => null }));
+vi.mock("./mobile-navigation", () => ({ MobileNavigation: () => null }));
 vi.mock("expo-router", () => ({
   router: { push: h.push, navigate: h.navigate },
 }));
@@ -43,7 +50,10 @@ vi.mock("../api/config", () => ({
   assetBaseUrl: "https://dushanbefresh.tj",
 }));
 vi.mock("../state/app-state", () => ({
-  useApp: () => ({ t: (x: string) => x, locale: "ru" }),
+  useApp: () => ({
+    t: (x: string) => translate(h.locale, x),
+    locale: h.locale,
+  }),
   useCart: () => ({
     hydrated: h.hydrated,
     items: h.quantity
@@ -66,6 +76,7 @@ import {
   ProductPrice,
   Quantity,
 } from "./product-card";
+import { ScreenFrame } from "./screen-frame";
 let rendered: ReactTestRenderer | undefined;
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -87,6 +98,26 @@ beforeEach(() => {
   h.account = false;
   h.legacy = false;
   h.active = false;
+  h.locale = "ru";
+});
+it("updates shared screen titles when the user switches RU/TJ", () => {
+  const element = () =>
+    createElement(ScreenFrame, {
+      title: "Настройки профиля",
+      active: "profile",
+      children: null,
+    });
+  const root = mount(element());
+  const titles = () =>
+    root.findAllByType(Text).map((node) => node.props.children);
+  expect(titles()).toContain("Настройки профиля");
+  h.locale = "tg";
+  act(() => rendered!.update(element()));
+  expect(titles()).toContain("Танзимоти профил");
+  expect(titles()).not.toContain("Настройки профиля");
+  h.locale = "ru";
+  act(() => rendered!.update(element()));
+  expect(titles()).toContain("Настройки профиля");
 });
 describe("WEB purchase controls in native components", () => {
   it("renders a circle plus over the card, and the price before the name", () => {
