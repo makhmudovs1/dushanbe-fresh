@@ -1,0 +1,28 @@
+# EAS replaces all .gitignore files with this root file. Keep all exclusions explicit.
+**/node_modules/
+**/dist/
+**/.next/
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/.expo/
+**/*.log
+**/*.tsbuildinfo
+**/.DS_Store
+**/.env
+**/.env.*
+**/credentials.json
+**/*.jks
+**/*.keystore
+**/*.p8
+**/*.p12
+**/*.mobileprovision
+**/.aws/
+**/.codex/
+**/.agents/
+**/var/product-images/
+apps/web/test-results.zip
+# Continuous Native Generation: never upload a stale local native project.
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/expo-env.d.ts

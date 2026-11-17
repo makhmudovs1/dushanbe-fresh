@@ -1,0 +1,30 @@
+# Read-only production API. Adds only to the device's guest basket; NEVER sends SMS/orders.
+appId: tj.dushanbefresh.app.preview
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Все продукты"
+    timeout: 30000
+- takeScreenshot: ios-home
+- scrollUntilVisible:
+    element: "Добавить в корзину: ${PRODUCT_NAME}"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Добавить в корзину: ${PRODUCT_NAME}"
+- tapOn: "Корзина"
+- extendedWaitUntil:
+    visible: "К оплате"
+    timeout: 30000
+- assertVisible: ${PRODUCT_NAME}
+- takeScreenshot: ios-cart
+- stopApp
+- launchApp
+- tapOn: "Корзина"
+- assertVisible: ${PRODUCT_NAME}
+- takeScreenshot: ios-cart-restored
+- tapOn: "Профиль"
+- tapOn: "Войти"
+- assertVisible: "Введите номер телефона"
+- assertVisible: '\+992'
+- takeScreenshot: ios-login
+# Do not press Continue: the real Payom integration is enabled in production.

@@ -1,0 +1,71 @@
+{
+  "cli": {
+    "version": "26.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "distribution": "internal",
+      "environment": "development",
+      "node": "22.23.3",
+      "pnpm": "9.12.3",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_ENABLE_ORDER_SUBMISSION": "false",
+        "MOBILE_APPLICATION_ID": "tj.dushanbefresh.app.dev"
+      },
+      "developmentClient": true
+    },
+    "integration": {
+      "distribution": "internal",
+      "environment": "development",
+      "node": "22.23.3",
+      "pnpm": "9.12.3",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "integration",
+        "EXPO_PUBLIC_ENABLE_ORDER_SUBMISSION": "false",
+        "MOBILE_APPLICATION_ID": "tj.dushanbefresh.app.integration"
+      },
+      "developmentClient": true
+    },
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "node": "22.23.3",
+      "pnpm": "9.12.3",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_ENABLE_ORDER_SUBMISSION": "false",
+        "EXPO_PUBLIC_API_URL": "https://dushanbefresh.tj/api/v1",
+        "EXPO_PUBLIC_ASSET_URL": "https://dushanbefresh.tj",
+        "MOBILE_APPLICATION_ID": "tj.dushanbefresh.app.preview"
+      },
+      "android": {
+        "buildType": "apk",
+        "autoIncrement": true
+      }
+    },
+    "production": {
+      "environment": "production",
+      "node": "22.23.3",
+      "pnpm": "9.12.3",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_ENABLE_ORDER_SUBMISSION": "false",
+        "EXPO_PUBLIC_API_URL": "https://dushanbefresh.tj/api/v1",
+        "EXPO_PUBLIC_ASSET_URL": "https://dushanbefresh.tj",
+        "MOBILE_APPLICATION_ID": "tj.dushanbefresh.app"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "autoIncrement": true
+    },
+    "simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
+    }
+  }
+}
