@@ -1,9 +1,20 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { AccountDeletionCapability, AccountDeletionReceipt } from "@dushanbe-fresh/shared";
+import type { AccountDeletionCapability, AccountDeletionReceipt, AccountDeletionRequest } from "@dushanbe-fresh/shared";
 import { useCustomer } from "@/customer/customer-context";
 import { useI18n } from "@/i18n/provider";
 import { CustomerError, customerRequest } from "@/lib/customer";
+
+async function loadCapability(): Promise<AccountDeletionCapability> {
+  try {
+    const value = await customerRequest<AccountDeletionCapability>("customer/account-deletion/status");
+    if (!value || typeof value.available !== "boolean" || value.mode !== "request" || (value.available && (!value.policyVersion || !value.retentionNotice?.ru || !value.retentionNotice?.tg))) throw new Error("Invalid capability");
+    return value;
+  } catch (error) {
+    if (error instanceof CustomerError && error.status === 404) return { available: false, mode: "request", policyVersion: null, retentionNotice: null };
+    throw error;
+  }
+}
 
 // External deletion-initiation resource required by Google Play. No erasure claim.
 export function AccountDeletion() {
@@ -15,44 +26,65 @@ export function AccountDeletion() {
   const [accepted, setAccepted] = useState(false);
   const [receipt, setReceipt] = useState<AccountDeletionReceipt | null>(null);
   const [error, setError] = useState(false);
+  const [policyChanged, setPolicyChanged] = useState(false);
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   const requestId = useRef("");
+  const currentOwner = useRef(customer.user?.id ?? null);
+  const receiptOwner = useRef<string | null>(null);
+  currentOwner.current = customer.user?.id ?? null;
+  const visibleReceipt = !customer.user || customer.user.id === receiptOwner.current ? receipt : null;
   useEffect(() => {
     let current = true;
-    void customerRequest<AccountDeletionCapability>("customer/account-deletion/status").then(value => {
-      if (!value || typeof value.available !== "boolean" || value.mode !== "request") throw new Error("Invalid capability");
+    void loadCapability().then(value => {
       if (current) setCapability(value);
     }).catch(error => { if (current) { if (error instanceof CustomerError && error.status === 404) setCapability({ available: false, mode: "request", policyVersion: null, retentionNotice: null }); else setError(true); } }).finally(() => { if (current) setPending(false); });
     return () => { current = false; };
   }, []);
-  useEffect(() => { setAccepted(false); }, [customer.user?.id]);
+  useEffect(() => {
+    setAccepted(false); requestId.current = "";
+    if (customer.user?.id && customer.user.id !== receiptOwner.current) setReceipt(null);
+  }, [customer.user?.id]);
   async function send() {
-    if (lock.current || !accepted || !customer.user || !capability?.available) return;
-    lock.current = true; setBusy(true); setError(false);
+    const owner = currentOwner.current, policyVersion = capability?.policyVersion;
+    if (lock.current || !accepted || !owner || !capability?.available || !policyVersion) return;
+    lock.current = true; setBusy(true); setError(false); setPolicyChanged(false);
     try {
       requestId.current ||= crypto.randomUUID();
-      const value = await customerRequest<AccountDeletionReceipt>("customer/account-deletion", "POST", { requestId: requestId.current, confirmation: "DELETE_ACCOUNT" });
+      const value = await customerRequest<AccountDeletionReceipt>("customer/account-deletion", "POST", { requestId: requestId.current, confirmation: "DELETE_ACCOUNT", policyVersion, expectedUserId: owner } satisfies AccountDeletionRequest);
+      if (currentOwner.current !== owner) return;
       if (value.status !== "requested" || !Number.isFinite(Date.parse(value.requestedAt))) throw new Error("Invalid receipt");
-      setReceipt(value);
-      try { await customer.logout(); } finally { void customer.refresh(); }
-    } catch { setError(true); }
+      receiptOwner.current = owner; setReceipt(value);
+      // Server already revoked this owner's sessions. A late browser logout could
+      // instead clear a different account's cookie after a concurrent tab login.
+      void customer.refresh();
+    } catch (error) {
+      if (currentOwner.current !== owner) return;
+      setError(true);
+      if (error instanceof CustomerError && error.status === 409) {
+        setAccepted(false); setPolicyChanged(true);
+        try { setCapability(await loadCapability()); } catch { /* Existing retry message remains visible. */ }
+      } else if (error instanceof CustomerError && error.status === 412) {
+        setAccepted(false); void customer.refresh();
+      }
+    }
     finally { lock.current = false; setBusy(false); }
   }
   return <section className="customer-form" aria-busy={pending || busy}>
     <h1>{text("Удаление аккаунта Dushanbe Fresh", "Нест кардани ҳисоби Dushanbe Fresh")}</h1>
-    {pending ? <p role="status">{text("Загрузка", "Боршавӣ")}</p> : receipt ? <>
+    {pending ? <p role="status">{text("Загрузка", "Боршавӣ")}</p> : visibleReceipt ? <>
       <h2>{text("Запрос на удаление принят", "Дархости несткунӣ қабул шуд")}</h2>
       <p>{text("Данные ещё не удалены. Запрос будет обработан по указанным правилам хранения.", "Маълумот ҳанӯз нест нашудааст. Дархост тибқи қоидаҳои нишон додашудаи нигоҳдорӣ коркард мешавад.")}</p>
-      <p>{receipt.requestId}</p>
+      <p>{visibleReceipt.requestId}</p>
     </> : !capability?.available ? <p>{text("Удаление аккаунта временно недоступно. Попробуйте позже.", "Нест кардани ҳисоб муваққатан дастнорас аст. Баъдтар кӯшиш кунед.")}</p> : <>
       <p>{text("Отправьте запрос на удаление аккаунта и связанных персональных данных.", "Барои нест кардани ҳисоб ва маълумоти шахсии вобаста дархост фиристед.")}</p>
       <p style={{ whiteSpace: "pre-wrap" }}>{capability.retentionNotice?.[locale]}</p>
       {!customer.user ? <button type="button" className="primary-action" disabled={customer.loading} onClick={customer.login}>{text("Войти по номеру телефона", "Бо рақами телефон ворид шудан")}</button> : <>
+        <p>{customer.user.phone}</p>
         <label><input type="checkbox" checked={accepted} disabled={busy} onChange={event => setAccepted(event.target.checked)} /> {text("Я подтверждаю запрос. Все мои устройства выйдут из аккаунта.", "Дархостро тасдиқ мекунам. Ҳамаи дастгоҳҳоям аз ҳисоб мебароянд.")}</label>
         <button type="button" className="primary-action" disabled={!accepted || busy} onClick={() => void send()}>{text("Запросить удаление аккаунта", "Дархости нест кардани ҳисоб")}</button>
       </>}
     </>}
-    {error ? <p className="form-error" role="alert">{text("Не удалось завершить запрос. Проверьте соединение и войдите снова.", "Анҷом додани дархост нашуд. Пайвастро санҷед ва аз нав ворид шавед.")}</p> : null}
+    {error ? <p className="form-error" role="alert">{policyChanged ? text("Правила хранения изменились. Прочитайте их и подтвердите запрос заново.", "Қоидаҳои нигоҳдорӣ тағйир ёфтанд. Онҳоро хонед ва дархостро аз нав тасдиқ кунед.") : text("Не удалось завершить запрос. Проверьте соединение и войдите снова.", "Анҷом додани дархост нашуд. Пайвастро санҷед ва аз нав ворид шавед.")}</p> : null}
   </section>;
 }

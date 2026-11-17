@@ -21,13 +21,19 @@ const config: ExpoConfig = {
   orientation: "default",
   userInterfaceStyle: "light",
   updates: { enabled: false },
+  locales: { ru: "./locales/ru.json", tg: "./locales/tg.json" },
   icon: "./assets/icon.png",
   ios: {
     bundleIdentifier: appId,
     buildNumber: "3",
     associatedDomains: ["applinks:dushanbefresh.tj"],
     supportsTablet: true,
-    infoPlist: { ITSAppUsesNonExemptEncryption: false },
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      CFBundleAllowMixedLocalizations: true,
+      CFBundleDevelopmentRegion: "ru",
+      CFBundleLocalizations: ["ru", "tg"],
+    },
   },
   android: {
     package: appId,

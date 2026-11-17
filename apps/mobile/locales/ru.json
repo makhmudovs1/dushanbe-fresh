@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Dushanbe Fresh",
+    "NSLocationWhenInUseUsageDescription": "Разрешите Dushanbe Fresh определить ваше местоположение для выбора адреса доставки."
+  }
+}

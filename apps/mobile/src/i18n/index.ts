@@ -2,6 +2,7 @@ import { tajik } from "./web-messages";
 export type Locale = "ru" | "tg";
 // Existing customer translations, mirrored by scripts/sync-brand.mjs; additions are mobile only.
 export const mobileTajik: Record<string, string> = {
+  "Правила хранения изменились. Прочитайте их и подтвердите запрос заново.": "Қоидаҳои нигоҳдорӣ тағйир ёфтанд. Онҳоро хонед ва дархостро аз нав тасдиқ кунед.",
   "Не удалось восстановить сессию. Повторите попытку.": "Барқарор кардани сессия нашуд. Аз нав кӯшиш кунед.",
   "Таджикистан": "Тоҷикистон",
   "Аккаунт": "Ҳисоб",

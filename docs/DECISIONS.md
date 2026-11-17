@@ -1282,3 +1282,27 @@
 - Bulk preview, explicit confirmation and undo use the backend pricing batch API.
   Manual prices require a separate opt-in checkbox; retries reuse request IDs.
   The last operation is loaded from the API after reload, not local browser state.
+
+
+## 2026-11-17: Current native integration and release gates
+
+The owner's native assignment explicitly expands the historical WEB-first MVP;
+retain the old exclusions as historical context. Preserve feature/mobile-app and
+restore its app into feature/mobile-production-sync-20261117 based on current
+WEB/API main 521b61e, avoiding replacement of newer shared Payom/native services.
+Production currently requires verified customer identity for creating an order;
+capability drives native UX. Keep the preview/production order gate closed until
+owner-approved release acceptance, with genuine isolated test runtime proof for
+writes. Do not fake browser Origin or embed Geoapify secrets.
+
+Use the current stable SDK 58 patches (Expo 58.0.26, RN 0.88.1) and align its
+library versions. Preserve enabled R8 and constructor keep rules. Targeted
+transitive security patches are locked and verified across WEB/API/mobile; no
+advisory suppression. See MOBILE_RELEASE_2026.md for observed tests and binaries.
+
+Account deletion can only initiate an owned persisted request with all-device
+session revocation at this stage. Default-off requires approved RU/TJ notices;
+no customer/order/finance erasure before approved retention and execution. The
+request-only flow is explicitly not store-compliant completed erasure. A minimal
+new WEB /account/delete resource is objectively needed for Google's external
+request requirement. Legal material is a private draft requiring owner approval.

@@ -310,7 +310,8 @@ function Checkout() {
     !pending &&
     editable &&
     !!previewSlot &&
-    auth.isSuccess;
+    auth.isSuccess &&
+    (!auth.data.requiredForCheckout || !!session.user);
   useEffect(() => {
     if (
       auth.data?.requiredForCheckout &&
@@ -320,13 +321,24 @@ function Checkout() {
       !prompted.current
     ) {
       prompted.current = true;
-      router.push("/login");
+      Alert.alert(
+        t("Войдите, чтобы оформить заказ"),
+        t("Корзина и выбранный адрес сохранятся после входа"),
+        [
+          { text: t("Отмена"), style: "cancel" },
+          {
+            text: t("Войти по номеру телефона"),
+            onPress: () => router.push("/login"),
+          },
+        ],
+      );
     }
   }, [
     auth.data?.requiredForCheckout,
     session.phase,
     cart.hydrated,
     cart.items.length,
+    t,
   ]);
   useEffect(() => {
     if (!mayReview) return;
@@ -341,6 +353,49 @@ function Checkout() {
         action={t("Перейти в каталог")}
         onPress={() => router.replace("/catalog")}
       />
+    );
+  if (session.phase === "locked")
+    return (
+      <Notice
+        title={t("Не удалось восстановить сессию. Повторите попытку.")}
+        action={t("Повторить")}
+        onPress={() => {
+          void sessionManager.restore();
+        }}
+      />
+    );
+  if (auth.isPending || session.phase === "restoring") return <Loading />;
+  if (auth.isError)
+    return (
+      <ErrorState
+        error={auth.error}
+        retry={() => {
+          void auth.refetch();
+        }}
+      />
+    );
+  if (auth.data.requiredForCheckout && !session.user)
+    return (
+      <View style={{ padding: 16, gap: 18 }}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={{ minHeight: 44, justifyContent: "center" }}
+        >
+          <Text style={styles.muted}>{t("Вернуться в корзину")}</Text>
+        </Pressable>
+        <Text style={{ fontSize: 32, lineHeight: 38, fontWeight: "700" }}>
+          {t("Оформление заказа")}
+        </Text>
+        <Text style={styles.heading}>{t("Войдите, чтобы оформить заказ")}</Text>
+        <Text style={styles.muted}>
+          {t("Корзина и выбранный адрес сохранятся после входа")}
+        </Text>
+        <Button
+          title={t("Войти по номеру телефона")}
+          onPress={() => router.push("/login")}
+        />
+      </View>
     );
   return (
     <View style={styles.page}>
@@ -590,20 +645,6 @@ function Checkout() {
             onPress={() => setPolicy(value)}
           />
         ))}
-        {auth.isError ? (
-          <ErrorState
-            error={auth.error}
-            retry={() => {
-              void auth.refetch();
-            }}
-          />
-        ) : null}
-        {auth.data?.requiredForCheckout && !session.user ? (
-          <Button
-            title={t("Войдите, чтобы оформить заказ")}
-            onPress={() => router.push("/login")}
-          />
-        ) : null}
         <Button
           title={t("Проверить заказ")}
           busy={validator.isPending}

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Inject, Injectable, PreconditionFailedException, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { AccountDeletionCapability, AccountDeletionReceipt, CustomerProfile } from "@dushanbe-fresh/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -25,7 +25,10 @@ export class AccountDeletionService {
     if (!capability.available) throw new ServiceUnavailableException("Удаление аккаунта временно недоступно.");
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new BadRequestException();
     const body = value as Record<string, unknown>;
-    if (Object.keys(body).some(k => !["requestId", "confirmation"].includes(k)) || typeof body.requestId !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(body.requestId) || body.confirmation !== "DELETE_ACCOUNT") throw new BadRequestException("Подтвердите удаление аккаунта.");
+    if (Object.keys(body).some(k => !["requestId", "confirmation", "policyVersion", "expectedUserId"].includes(k)) || typeof body.requestId !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(body.requestId) || body.confirmation !== "DELETE_ACCOUNT" || typeof body.policyVersion !== "string" || !/^[a-z0-9][a-z0-9._-]{0,63}$/i.test(body.policyVersion) || typeof body.expectedUserId !== "string" || !body.expectedUserId || body.expectedUserId.length > 100) throw new BadRequestException("Подтвердите удаление аккаунта.");
+    // Compare intended identity; never use a client-supplied ID as the mutation target.
+    if (body.expectedUserId !== user.id) throw new PreconditionFailedException("Аккаунт изменился. Проверьте, в какой аккаунт вы вошли.");
+    if (body.policyVersion !== capability.policyVersion) throw new ConflictException("Правила хранения изменились. Прочитайте их и подтвердите запрос заново.");
     await this.quota.consume("account-deletion", user.id, 3, 3600);
     try {
       return await this.db.$transaction(async tx => {

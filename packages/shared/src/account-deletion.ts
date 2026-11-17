@@ -5,3 +5,4 @@ export type AccountDeletionCapability = {
   retentionNotice: { ru: string; tg: string } | null;
 };
 export type AccountDeletionReceipt = { requestId: string; requestedAt: string; status: "requested" };
+export type AccountDeletionRequest = { requestId: string; confirmation: "DELETE_ACCOUNT"; policyVersion: string; expectedUserId: string };

@@ -54,6 +54,23 @@ describe("cloud artifact contracts", () => {
     expect(nativeConfig.extra.eas.projectId).toBe(
       "089fb7ac-507e-4d1b-943b-8a9228987813",
     );
+    expect(nativeConfig.ios.infoPlist.CFBundleLocalizations).toEqual([
+      "ru",
+      "tg",
+    ]);
+    for (const locale of ["ru", "tg"]) {
+      const strings = JSON.parse(
+        readFileSync(
+          new URL(`../../locales/${locale}.json`, import.meta.url),
+          "utf8",
+        ),
+      ).ios;
+      expect(strings.CFBundleDisplayName).toBe("Dushanbe Fresh");
+      expect(
+        strings.NSLocationWhenInUseUsageDescription.length,
+      ).toBeGreaterThan(30);
+      expect(strings.NSLocationAlwaysUsageDescription).toBeUndefined();
+    }
   });
   it("ships a standalone preview APK and a standalone iOS simulator artifact", () => {
     expect(eas.build.preview.android.buildType).toBe("apk");
