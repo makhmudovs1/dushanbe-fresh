@@ -197,6 +197,7 @@ export function StoreHeader({
         onRequestClose={() => setLanguage(false)}
       >
         <Pressable
+          accessible={false}
           onPress={() => setLanguage(false)}
           style={{
             flex: 1,
@@ -206,6 +207,7 @@ export function StoreHeader({
           }}
         >
           <Pressable
+            accessible={false}
             accessibilityViewIsModal
             onPress={() => {}}
             style={{
