@@ -21,7 +21,7 @@ def compare(web, native, threshold=8):
         raise ValueError(f"Content viewports differ: WEB {web.size}, native {native.size}. "
                          "Recapture at matching logical content height; do not stretch or silently crop.")
     difference = ImageChops.difference(web, native)
-    pixels = list(difference.getdata())
+    pixels = list(difference.get_flattened_data())
     changed = sum(max(pixel) > threshold for pixel in pixels)
     mae = sum(sum(pixel) for pixel in pixels) / (len(pixels) * 3)
     return difference, {"size": list(web.size), "changedPixels": changed,

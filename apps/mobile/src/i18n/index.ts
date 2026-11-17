@@ -2,6 +2,7 @@ import { tajik } from "./web-messages";
 export type Locale = "ru" | "tg";
 // Existing customer translations, mirrored by scripts/sync-brand.mjs; additions are mobile only.
 export const mobileTajik: Record<string, string> = {
+  "Не удалось восстановить сессию. Повторите попытку.": "Барқарор кардани сессия нашуд. Аз нав кӯшиш кунед.",
   "Таджикистан": "Тоҷикистон",
   "Аккаунт": "Ҳисоб",
   "Удалить аккаунт": "Нест кардани ҳисоб",

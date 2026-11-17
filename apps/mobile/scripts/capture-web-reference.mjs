@@ -12,6 +12,9 @@ const output = resolve(
   process.argv[2] ?? "/private/tmp/df-mobile-parity-reference",
 );
 const base = new URL(process.argv[3] ?? "https://dushanbefresh.tj");
+const requestedWidth = process.argv[4] ? Number(process.argv[4]) : null;
+if (requestedWidth !== null && ![375, 390, 430].includes(requestedWidth))
+  throw new Error("Reference width must be 375, 390 or 430");
 if (
   base.origin !== "https://dushanbefresh.tj" &&
   !["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)
@@ -141,7 +144,7 @@ try {
     [375, 812],
     [390, 844],
     [430, 932],
-  ]) {
+  ].filter(([width]) => requestedWidth === null || width === requestedWidth)) {
     const context = await browser.newContext({
       viewport: { width, height },
       deviceScaleFactor: 1,

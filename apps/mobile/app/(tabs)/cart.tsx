@@ -66,7 +66,7 @@ export default function Cart() {
       <View style={[styles.page, { paddingTop: insets.top }]}>
         {cart.syncError === "session" ? (
           <Notice
-            title={t("Сессия истекла. Войдите снова.")}
+            title={t("Не удалось восстановить сессию. Повторите попытку.")}
             action={t("Повторить")}
             onPress={cart.retrySync}
           />

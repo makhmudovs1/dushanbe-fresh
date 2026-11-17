@@ -1,16 +1,21 @@
 # Read-only production API. Adds only to the device's guest basket; NEVER sends SMS/orders.
 appId: tj.dushanbefresh.app.preview
 ---
+- stopApp
 - launchApp
 - extendedWaitUntil:
     visible: "Все продукты"
     timeout: 30000
 - takeScreenshot: ios-home
 - scrollUntilVisible:
-    element: "Добавить в корзину: ${PRODUCT_NAME}"
+    element: "${PRODUCT_NAME}"
     direction: DOWN
     timeout: 20000
-- tapOn: "Добавить в корзину: ${PRODUCT_NAME}"
+- runFlow:
+    when:
+      visible: "Добавить в корзину: ${PRODUCT_NAME}"
+    commands:
+      - tapOn: "Добавить в корзину: ${PRODUCT_NAME}"
 - tapOn: "Корзина"
 - extendedWaitUntil:
     visible: "К оплате"
