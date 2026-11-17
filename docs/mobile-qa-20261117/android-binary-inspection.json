@@ -1,0 +1,253 @@
+{
+  "apkSha256": "d1fafaead03a989f24c78494156faae9950309cbbffdb2b20858b608c35c0f43",
+  "embeddedBundleBytes": 3857628,
+  "bundleHeaderHex": "c61fbc03c103191f",
+  "allELF16KB": true,
+  "libraries": [
+    {
+      "library": "lib/arm64-v8a/libanimation-decoder-gif.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libappmodules.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libavif_android.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libc++_shared.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libexpo-modules-core.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libexpo-modules-jsi.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libexpo-modules-v2.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libexpo-modules-worklets.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libfbjni.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libgesturehandler.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libgifimage.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libhermestooling.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libhermesvm.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libimagepipeline.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libjsi.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libnative-filters.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libnative-imagetranscoder.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreact_codegen_rngesturehandler_codegen.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreact_codegen_rnscreens.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreact_codegen_rnsvg.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreact_codegen_safeareacontext.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreactnative.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libreanimated.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/librnscreens.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libstatic-webp.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libworklets.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    },
+    {
+      "library": "lib/arm64-v8a/libzstd-kmp.so",
+      "loadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "supports16KB": true
+    }
+  ],
+  "deviceRuntimeTested": false
+}

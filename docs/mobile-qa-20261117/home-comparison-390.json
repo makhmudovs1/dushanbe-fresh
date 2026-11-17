@@ -1,0 +1,36 @@
+{
+  "web": "/private/tmp/df-mobile-sync-web-reference-430/web-home-390-viewport.png",
+  "native": "/private/tmp/df-mobile-sync-artifacts/ios-home-390.png",
+  "webInsets": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "nativeInsets": [
+    141,
+    0,
+    102,
+    0
+  ],
+  "region": [
+    0,
+    0,
+    390,
+    700
+  ],
+  "metrics": {
+    "size": [
+      390,
+      700
+    ],
+    "changedPixels": 41683,
+    "totalPixels": 273000,
+    "changedRatio": 0.15268498168498168,
+    "meanAbsoluteChannelError": 9.655075702075703,
+    "channelTolerance": 8
+  },
+  "passed": false,
+  "maxChangedRatio": 0.01,
+  "note": "Pixel metric needs human review; no masks, no registration shifts, no height stretching."
+}

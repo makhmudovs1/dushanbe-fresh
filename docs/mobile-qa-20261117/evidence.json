@@ -1,0 +1,66 @@
+{
+  "reviewDates": [
+    "2026-11-17",
+    "2026-11-18"
+  ],
+  "branch": "feature/mobile-production-sync-20261117",
+  "baseMain": "521b61e115cbed0061c70a569b9e7b7570febe43",
+  "testedCodeCommit": "b294d883f18975a69a1d2c469d5a32b7598c5a51",
+  "tests": {
+    "shared": 23,
+    "api": 619,
+    "web": 444,
+    "mobileUnit": 186,
+    "mobileActualHTTP": 9,
+    "totalPassed": 1281,
+    "failed": 0,
+    "skipped": 0
+  },
+  "lint": true,
+  "typecheck": true,
+  "rootProductionBuild": true,
+  "androidHermesExport": true,
+  "iosHermesExport": true,
+  "expoDoctorPassed": 20,
+  "expoDoctorChecks": 20,
+  "workspaceDependencyAdvisories": 0,
+  "androidCheckpoint": {
+    "sourceCommit": "65a1e552f65b08cff828d9fb3e98ead82ff5f7a3",
+    "version": "0.3.0",
+    "versionCode": 3,
+    "package": "tj.dushanbefresh.app.preview",
+    "architecture": "arm64-v8a",
+    "signing": "local standard debug/test key; not a store upload key",
+    "standalone": true,
+    "apkBuilt": true,
+    "aabBuilt": true,
+    "runtimeTested": false,
+    "runtimeBlocker": "Emulator userdata needs7372.80MB; available2502.86MB",
+    "apkSHA256": "d1fafaead03a989f24c78494156faae9950309cbbffdb2b20858b608c35c0f43",
+    "aabSHA256": "39c1796e39ebc46c2890f0a7179d1e87e7e125eea791b576b6fbd6d0ab06c8d1"
+  },
+  "ios": {
+    "simulatorReleaseBuilt": true,
+    "publicCatalogLaunchProved": true,
+    "firstUnsignedPrivateSmokePassed": false,
+    "signedSimulatorRecheck": "pending",
+    "deviceIPABuilt": false
+  },
+  "physicalDeviceTests": false,
+  "productionCheckoutEnabled": false,
+  "newEASJobs": 0,
+  "pushOrMerge": false,
+  "deployed": false,
+  "productionSMS": 0,
+  "productionOrders": 0,
+  "androidPublication": "NO-GO",
+  "iosPublication": "NO-GO",
+  "limitations": [
+    "API/DB integration is not native UI E2E",
+    "Source parity hashes are not visual acceptance",
+    "Node synthetic DTO benchmark is not native FPS/startup/memory",
+    "Account deletion requests do not erase personal records",
+    "Deployed TARENA SHA/migrations/resources unverified",
+    "No private production customer was accessed"
+  ]
+}

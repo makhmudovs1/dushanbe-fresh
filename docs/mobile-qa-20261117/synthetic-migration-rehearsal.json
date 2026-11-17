@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-11-17T16:08:13.196Z",
+  "syntheticOnly": true,
+  "sourcePort": "55447",
+  "restoredBackup": true,
+  "migrationsApplied": [
+    "20261117140000_mobile_geocoder",
+    "20261117143000_account_deletion_requests"
+  ],
+  "existingDataUnchanged": true,
+  "before": {
+    "users": {
+      "count": 18,
+      "sha256": "fbe7b8c8d1983d2df74d3b369811efc42fbea0fb55f5c2e5f2d7e39f06232047"
+    },
+    "products": {
+      "count": 9,
+      "sha256": "2442e8e5bdf5d997879569c40673451002ced1fd8e44af13e4bbc1321038fcc4"
+    },
+    "customer_carts": {
+      "count": 6,
+      "sha256": "69801a1f3b2d08c0e6f0d96c38fcddcd602e3252ce44c6c34edfed503fd74e35"
+    },
+    "orders": {
+      "count": 5,
+      "sha256": "c41795e50a3f0c85f53216b5ae9c44735ad40077361cc0af5a4815e587f3d562"
+    }
+  },
+  "after": {
+    "users": {
+      "count": 18,
+      "sha256": "fbe7b8c8d1983d2df74d3b369811efc42fbea0fb55f5c2e5f2d7e39f06232047"
+    },
+    "products": {
+      "count": 9,
+      "sha256": "2442e8e5bdf5d997879569c40673451002ced1fd8e44af13e4bbc1321038fcc4"
+    },
+    "customer_carts": {
+      "count": 6,
+      "sha256": "69801a1f3b2d08c0e6f0d96c38fcddcd602e3252ce44c6c34edfed503fd74e35"
+    },
+    "orders": {
+      "count": 5,
+      "sha256": "c41795e50a3f0c85f53216b5ae9c44735ad40077361cc0af5a4815e587f3d562"
+    }
+  },
+  "productionCopyTested": false,
+  "limitation": "Synthetic owned data only. Current TARENA image/schema and real-volume restore remain unverified."
+}

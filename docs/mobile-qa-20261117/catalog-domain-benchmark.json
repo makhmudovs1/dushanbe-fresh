@@ -1,0 +1,25 @@
+{
+  "measuredAt": "2026-11-17T19:18:13.032Z",
+  "engine": "Node v22.23.3",
+  "syntheticExpansionOfPublicDtos": true,
+  "productionWrites": 0,
+  "samples": [
+    {
+      "count": 500,
+      "iterations": 30,
+      "p50ms": 0.084208000000217,
+      "p95ms": 0.5288330000003043,
+      "checksum": 178600
+    },
+    {
+      "count": 1000,
+      "iterations": 30,
+      "p50ms": 0.1734999999998763,
+      "p95ms": 0.5839999999998327,
+      "checksum": 357120
+    }
+  ],
+  "nativeFPSMeasured": false,
+  "nativeMemoryLeaksMeasured": false,
+  "limitation": "Measures public DTO parsing/localized names only; native 500+ item scrolling, image memory and cold startup require device profiling."
+}
