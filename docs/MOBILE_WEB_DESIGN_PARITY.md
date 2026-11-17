@@ -9,8 +9,11 @@ address/map, checkout and login invitation. No production SMS/orders were sent.
 
 Updated native +992/OTP/name UX, product facts/characteristics, cart quantities /
 server pricing/minimum/progress, fees/total and preserved checkout draft follow
-the current components. Real iOS 390 px public home was captured after native
-Release launch and actual production products/photos loaded. Full private native
+the current components. Actual signed iOS sourcec141ce3 completed9/9 public/guest/RU-TJ Maestro flows
+on375/390/430, yielding42 flow screenshots plus a settled real Apple Maps capture.
+WEB/native375 and430 overlays/metrics are recorded (13.1184%/7.6434% changed),
+strict1% acceptance failed; no masks or registration shifts. Real products/photos
+loaded, but native1:1/private checkout/physical acceptance remains open. Full private native
 flows and the required platform/size comparison set are **not** accepted just by
 source hashes or successful compilation. Final actual results/limitations are in
 MOBILE_RELEASE_2026.md. Dynamic carousel frames require a settled same slide;

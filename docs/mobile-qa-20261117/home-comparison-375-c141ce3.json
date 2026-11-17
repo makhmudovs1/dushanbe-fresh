@@ -1,0 +1,36 @@
+{
+  "web": "/private/tmp/df-mobile-sync-web-reference-430/web-home-375-viewport.png",
+  "native": "/private/tmp/dushanbe-fresh-mobile/docs/mobile-qa-20261117/ios-home-375-c141ce3.png",
+  "webInsets": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "nativeInsets": [
+    150,
+    0,
+    102,
+    0
+  ],
+  "region": [
+    0,
+    0,
+    375,
+    650
+  ],
+  "metrics": {
+    "size": [
+      375,
+      650
+    ],
+    "changedPixels": 31976,
+    "totalPixels": 243750,
+    "changedRatio": 0.13118358974358973,
+    "meanAbsoluteChannelError": 6.759532307692307,
+    "channelTolerance": 8
+  },
+  "passed": false,
+  "maxChangedRatio": 0.01,
+  "note": "Pixel metric needs human review; no masks, no registration shifts, no height stretching."
+}

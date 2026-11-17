@@ -1,10 +1,10 @@
 # Current verification — 17–18.11.2026
 
 Evidence and native limitations: MOBILE_RELEASE_2026.md. Regression run:
-shared 23, API 619, WEB 444, MOBILE 195; 1281 passed, zero skipped. Local
+shared 23, API 619, WEB 444, MOBILE 196; 1282 passed, zero skipped. Local
 PostgreSQL 14 with synthetic records only; source/target production data never
-copied. The DBs and runtime were stopped after the run. Final logs: /private/tmp/df-mobile-sync-release-regression-v2.log,
-release-build-v2.log, release-types-v3.log and release-lint-v3.log (same prefix).
+copied. The DBs and runtime were stopped after the run. Final logs: /private/tmp/df-mobile-sync-release-regression-v4.log,
+release-build-v4.log, release-types-v5.log and release-lint-v5.log (same prefix).
 
 Reproduce ordinary checks from root with Node 22.23.3 and pnpm 9.12.3:
 
@@ -51,7 +51,12 @@ with current price. No operations status shortcut is used in the final lifecycle
 scenario. Existing API suites separately test substitutions, delivery problems /
 financial corrections and ownership/rate/Origin/session security.
 
-Native read-only UI automation: apps/mobile/.maestro/public-smoke.yaml. Install a
+Native actual c141ce3 result:9/9 Maestro flows on375/390/430. Automation:
+apps/mobile/.maestro/{public-smoke,public-browse,locale-smoke}.yaml.
+Public-smoke PRODUCT_NAME must be an available product in the first visible row;
+the observed current value was «Виноград Мун Дропс», never a fixture name assumed
+from unit tests. locale-smoke centers the settings control above the tab bar.
+Capture selector below search heading avoids tapping the search field itself. Install a
 standalone QA binary in an owned Simulator/emulator; use Maestro local CLI, no
 cloud. Set MAESTRO_CLI_NO_ANALYTICS=1. Screenshots use a relative path and the
 --test-output-dir argument (Maestro 2.12.1 rejects absolute takeScreenshot paths).

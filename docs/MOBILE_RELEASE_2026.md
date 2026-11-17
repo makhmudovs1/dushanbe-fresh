@@ -12,7 +12,8 @@ EAS jobs, push/merge, deployment, production SMS, заказов или мигр
 сохранена. Интеграция выполнена на отдельной ветке
 `feature/mobile-production-sync-20261117` в `/private/tmp/dushanbe-fresh-mobile`,
 начиная с нового main; старый API не скопирован поверх новой авторизации.
-Исходный WEB worktree не редактировался. Историческое исключение native из MVP
+Исходный WEB worktree не редактировался. Финальный fetch18 ноября снова
+подтвердил origin/main521b61e; основной worktree clean. Историческое исключение native из MVP
 сохранено; явное мобильное задание расширяет scope (docs/DECISIONS.md).
 
 Production HTTPS GET-аудит: health/catalog/categories/slots/zone — 200;
@@ -55,9 +56,9 @@ receipt от 2 ноября не считается текущей версие�
 
 ## Воспроизводимые проверки
 
-Исходники кода: `b294d88` (последний code commit этого этапа).
-Полный свежий regression: **1281 passed, 0 failed, 0 skipped**:
-shared 23, API 619, WEB 444, MOBILE 195 (186 unit + 9 actual HTTP).
+Исходники проверенного кода: `c141ce3a1b9105c010a114932a8466618ac571df`.
+Полный свежий regression: **1282 passed, 0 failed, 0 skipped**:
+shared 23, API 619, WEB 444, MOBILE 196 (187 unit + 9 actual HTTP).
 PostgreSQL 14 — только отдельные synthetic loopback DB/role/port; реальных
 покупателей и production snapshots нет. Payom adapter/template/201 parsing
 исполняется против защищённого mock gateway, без настоящей SMS.
@@ -76,8 +77,8 @@ Hermes export. Expo install --check; Expo Doctor 20/20; pnpm audit — 0 advisor
 на актуальном production snapshot/объёме.
 [Testing](MOBILE_TESTING.md), [migration evidence](mobile-qa-20261117/synthetic-migration-rehearsal.json).
 
-Логи в `/private/tmp/df-mobile-sync-release-{regression,build}-v2.log`,
-`...release-{lint,types}-v3.log`. Воспроизводимые команды — apps/mobile/README.md.
+Логи в `/private/tmp/df-mobile-sync-release-{regression,build}-v4.log`,
+`...release-{lint,types}-v5.log`. Воспроизводимые команды — apps/mobile/README.md.
 Обычный pnpm test без отдельной TEST_DATABASE_URL явно пропускает DB suites;
 указанный полный результат получен с настроенными synthetic DB и HTTP fixture.
 
@@ -94,7 +95,7 @@ Remote EAS numbering может отличаться от локального: 
 Локальные `assembleRelease` и `bundleRelease` успешны, standalone embedded Hermes,
 **только arm64-v8a, стандартная local debug/test signing**, не production upload key.
 Exact source: `65a1e552f65b08cff828d9fb3e98ead82ff5f7a3`.
-Эти бинарники не содержат более поздние изменения `b294d88`; не представлять их
+Эти бинарники не содержат более поздние изменения вплоть до `c141ce3`; не представлять их
 как последний окончательный release. APK нельзя устанавливать поверх старой
 EAS-подписи без проверки; не удаляйте пользовательские данные для обхода подписи.
 
@@ -130,8 +131,33 @@ Xcode27.1/iOS SDK27.1, arm64 Simulator Release с embedded Hermes успешно
 
 Первый Maestro guest-cart smoke не прошёл: SecureStore/session locked в unsigned
 Simulator app. Код теперь показывает retry. Попытка отдельной ручной ad-hoc
-подписи не дала запуска и не считается исправлением. Штатная Xcode Simulator
-сборка с локальной подписью проверяется отдельно; результат будет записан ниже.
+подписи не дала запуска и не считается исправлением. Штатная Xcode Simulator Release-сборка с локальной подписью **успешна**.
+Exact native code `c141ce3a1b9105c010a114932a8466618ac571df`, iOS SDK27.1,
+min16.4, locales ru/tg, embedded Hermes4,704,356 bytes. Xcode автоматически
+сформировал свой Simulator application-identifier; постоянный Apple Team/ключи
+не задавались. Actual launch и Maestro public-smoke390 прошли: живой товар,
+корзина с серверным итогом, stop/launch с сохранённым товаром, phone-login +992
+без отправки SMS. SecureStore guest restore больше не locked; реальная OTP session
+запись/rotation/logout в Keychain этим гостевым тестом **не проверены**.
+
+Рабочий архив: `/private/tmp/df-mobile-sync-artifacts/dushanbe-fresh-0.3.0-3-c141ce3-ios-simulator.zip`,
+SHA-256 `ebc1b58af169bb89e579fa2ea5b3dc5e11a53200acac3d6d010a204cdf7eb434`.
+Внутри `DushanbeFresh-c141ce3-simulator.app`; предыдущую failed manual-signing копию
+не использовать. [Binary metadata](mobile-qa-20261117/ios-xcode-simulator-inspection.json).
+В ходе настоящего UI QA исправлены неприменённый перевод общего заголовка и
+объединённые accessibility controls языкового modal. На c141ce3 **9/9 native flows прошли**: locale-smoke/public-browse/public-smoke
+на iPhone 13 mini / 375×812, iPhone 14 / 390×844 и iPhone 14 Pro Max / 430×932 / iOS27.0.
+42 автоматических PNG + дополнительный реальный снимок карты.
+Архив: `/private/tmp/df-mobile-sync-artifacts/dushanbe-fresh-c141ce3-native-screenshots.zip`. Сценарии проверяют
+категории/search/product/back/guest favorites/profile/map opening, cart quote,
+restart persistence и RU/TJ selection/restart. Это не authenticated purchase UI E2E.
+[Native results](mobile-qa-20261117/native-ui-results.json).
+
+Apple Maps после дополнительного ожидания≥10с загрузила настоящие тайлы Душанбе;
+первоначальная сетка была loading. GPS, provider search/reverse и сохранённые
+серверные адреса этим тестом не приняты: native Geoapify capability404.
+[Реальные тайлы](mobile-qa-20261117/ios-map-loaded-430-c141ce3.png).
+Подходящих локальных code-signing identities: **0**, проверено read-only.
 Signed device IPA, provisioning, TestFlight и physical device acceptance отсутствуют.
 
 ### Визуальное соответствие и производительность
@@ -145,8 +171,16 @@ Private history/tracking/account screenshots без реального вход�
 Native public home390 действительно близок к WEB, но **1:1 не принят**:
 pixel diff 15.2685%, MAE9.655 на документированном crop390×700, без masks/shifts.
 В кадрах различаются фаза carousel и native typography/controls; нужна повторная
-проверка на одном settled slide. Остальные native размеры/экраны ещё не приняты.
-[Comparison](mobile-qa-20261117/home-comparison-390.json).
+проверка на одном settled slide. Новые реальные screenshots на375/390/430 также сравнены с WEB. C141ce3:
+375px —13.1184% / MAE6.7595 (crop375×650),430px —7.6434% / MAE3.1114
+(crop430×750). Только system-bar crops и одинаковый logical ROI; без масок/
+смещений/растяжения. Overlays подтверждают близкую геометрию, но различия текста,
+иконок, декодирования/кадрирования изображений остаются. Оба strict1% checks
+вернули failed: полного1:1 acceptance нет, несмотря на пройденные functional flows.
+Private screens, Android sizes и physical devices ещё не приняты.
+[Comparison375](mobile-qa-20261117/home-comparison-375-c141ce3.json),
+[comparison430](mobile-qa-20261117/home-comparison-430-c141ce3.json),
+[earlier390](mobile-qa-20261117/home-comparison-390.json).
 Source hashes/design tests не заменяют настоящие native screenshots.
 
 APK/AAB sizes измерены выше. Synthetic DTO benchmark500/1000 прошёл, но измеряет
@@ -163,18 +197,18 @@ Push backend/infrastructure не готовы; для первого релиз�
 | 2 | Что перенесено | Текущие assets/RU-TJ, phone/OTP/name UX, server cart totals/minimum, product facts, адресные snapshots и общий API |
 | 3 | Новые API | Native geocoder; default-off deletion REQUEST и внешний WEB request page; общая identity/cart уже были в main |
 | 4 | TARENA готов | Частично: public/read-only native contracts доступны; новый geocoder/deletion404, deployed SHA/migrations/resources неизвестны |
-| 5 | UX совпадает | Source parity и реальный home390 сравнивались; полного native1:1 acceptance нет |
+| 5 | UX совпадает | Реальные375/390/430 screenshots и9 UI flows; close geometry, строгий pixel1:1 не пройден |
 | 6 | Вход/корзина между устройствами | Реальные loopback HTTP/DB tests WEB cookie + native sessions прошли; Keychain и несколько физических устройств ещё нет |
 | 7 | Сборщик/курьер | Полный synthetic HTTP lifecycle прошёл через actual role routes; не production/UI acceptance |
-| 8 | Android APK | Собран локально, standalone ARM64 checkpoint65a1e55; latestb294d88 ещё не собран в APK |
+| 8 | Android APK | Собран локально, standalone ARM64 checkpoint65a1e55; latestc141ce3 ещё не собран в APK |
 | 9 | Play AAB | bundleRelease собран; QA preview identity/test key, не store-ready production AAB |
-| 10 | iOS IPA | Нет; есть Simulator compile/public startup, device signing не выполнен |
+| 10 | iOS IPA | Нет; signed standalone Simulator app +9/9 public/guest/RU-TJ flows на3 размерах; device identities0 |
 | 11 | Физические устройства | Не запускались ни Android, ни iPhone |
 | 12 | Security | Исправлены dependency advisories, locked-state UX, owner/policy consent race; R8 constructors/Origin/session separation сохранены |
 | 13 | Apple/Google выполнено | API36, актуальный Xcode/SDK,16KB binary checks, RU/TJ permissions, project/build profiles; без утверждения всей store compliance |
 | 14 | Не выполнено | Реальное удаление/retention, approved legal URLs, Maps key, signing/store access, native/runtime/visual/performance/reviewer checks |
 | 15 | Нужен владелец | Диск/ARM64 Android, read-only TARENA access, ID ownership, store account type/date, legal/support/retention inputs, restricted Maps key и позже отдельные разрешения |
-| 16 | Коммиты | a7f12d4 API; a758874 native integration;65a1e55 recovery/QA; b294d88 owner/policy/locales/checkout gate; последующий docs commit см. git log |
+| 16 | Коммиты | a7f12d4 API; a758874 native integration;65a1e55 recovery/QA; b294d88 owner/policy/locales/checkout gate;20dc47b evidence;fbe12b0 RU/TJ titles;c141ce3 language modal a11y; final docs commit см. git log |
 | 17 | Миграции/deploy | Две additive migrations; local rehearsal passed; deployment/production backup review только с отдельным разрешением |
 | 18 | Закрытое тестирование | Локальный public smoke возможен на подходящем QA device; store testing track пока NO-GO, production purchases закрыты |
 | 19 | Публикация | Android NO-GO; iOS NO-GO до перечисленных P0 gates |
@@ -182,8 +216,9 @@ Push backend/infrastructure не готовы; для первого релиз�
 ## Приоритеты следующего допуска
 
 1. Довести реальные signed native runtime проверки: Android cold start/WorkManager,
-   SecureStore/restart/logout, iOS Keychain и физические устройства. Снять настоящий
-   полный screen set375/390/430, клавиатуру/Back/gestures/RU-TJ/accessibility.
+   SecureStore/restart/logout, iOS Keychain и физические устройства. Расширить уже снятый
+   public screen set375/390/430 до private checkout/account flows, Android,
+   physical devices, больших шрифтов и VoiceOver/TalkBack.
 2. Подтвердить текущие TARENA image/migrations/resources; согласовать staging/
    backup/restore и отдельный deployment, затем provider/Maps smoke с бюджетом.
 3. Реализовать и утвердить фактический deletion lifecycle, seller/support/retention/

@@ -1,0 +1,448 @@
+{
+  "codeCommit": "c141ce3a1b9105c010a114932a8466618ac571df",
+  "version": "0.3.0",
+  "buildNumber": "3",
+  "platform": "iOS Simulator",
+  "runtime": "iOS27.0",
+  "physicalDevicesTested": false,
+  "productionSMS": 0,
+  "productionOrders": 0,
+  "scope": "Public browsing, guest basket persistence and RU/TJ only; no authenticated purchase/provider acceptance",
+  "devices": [
+    {
+      "model": "iPhone13mini",
+      "logicalSize": [
+        375,
+        812
+      ],
+      "flows": [
+        {
+          "name": "locale-smoke",
+          "result": "passed",
+          "commands": 19,
+          "screenshots": [
+            {
+              "file": "375/locale-smoke/ios-home-tg-restored.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "97df22ec8081ab07ee5910c7fb2ff6e3c9cd5b9104805c27e9bcfacb1788d6f8"
+            },
+            {
+              "file": "375/locale-smoke/ios-settings-tg.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "cdbc87bdfa4306f1ccfe414dac6d7eb6b2970b2438cb90f3aacc913c99ebcc08"
+            }
+          ]
+        },
+        {
+          "name": "public-browse",
+          "result": "passed",
+          "commands": 33,
+          "screenshots": [
+            {
+              "file": "375/public-browse/ios-catalog.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "4264955fcc511c8cac8f9977c5bbc18158c5da995a4f14b3af13a157edde7522"
+            },
+            {
+              "file": "375/public-browse/ios-categories.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "6ee21d93f338c884b2bd79cc090e66dd773820c011dee3b2324add54dec545a4"
+            },
+            {
+              "file": "375/public-browse/ios-favorites-guest.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "32e7fca25397be2c9fea418911ebf68f579eb490903674a5145a1da4d75dc56a"
+            },
+            {
+              "file": "375/public-browse/ios-home-loaded.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "74cfd75f5d0180e7c025697e51cd6be0b2f3153086292696fdb812a5e9325fda"
+            },
+            {
+              "file": "375/public-browse/ios-map.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "0beb14b925bd714a920d1be8ad17b7b6c2ae0f3179c2aac597afa72a544f0495"
+            },
+            {
+              "file": "375/public-browse/ios-product.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "a6bc49272fe8bb41251f047705d0f920c7f94412f610230db035b2a649179f34"
+            },
+            {
+              "file": "375/public-browse/ios-profile-guest.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "555e2d4acd7a61114d8fded9b07da679270279b51cd337d0e222b4d9755f9103"
+            },
+            {
+              "file": "375/public-browse/ios-search.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "96ab2681585433bb1469897fdb6619d439d0caa11b13207939acfa0333aaf15c"
+            }
+          ]
+        },
+        {
+          "name": "public-smoke",
+          "result": "passed",
+          "commands": 24,
+          "screenshots": [
+            {
+              "file": "375/public-smoke/ios-cart-restored.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "a5ee22f3273a98b6ff422edcb59ee5c8ca4333cc5a42c63f4efd8582500f2d61"
+            },
+            {
+              "file": "375/public-smoke/ios-cart.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "a5ee22f3273a98b6ff422edcb59ee5c8ca4333cc5a42c63f4efd8582500f2d61"
+            },
+            {
+              "file": "375/public-smoke/ios-home.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "32f71b4c2fdf9bd0924068dae944f16b203a736f6e7fbb624da76eb1cf5f7300"
+            },
+            {
+              "file": "375/public-smoke/ios-login.png",
+              "physicalPixels": [
+                1124,
+                2436
+              ],
+              "sha256": "7bcd16708c1ccc778e820bc7e2dc9a52c7b47a74b24b6a098ca9241797fe73af"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "iPhone14",
+      "logicalSize": [
+        390,
+        844
+      ],
+      "flows": [
+        {
+          "name": "locale-smoke",
+          "result": "passed",
+          "commands": 21,
+          "screenshots": [
+            {
+              "file": "390/locale-smoke/ios-home-tg-restored.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "1cdd3c003559da6cb3aa98a964b82504371c2b086ae549bf6865afa5b53e046b"
+            },
+            {
+              "file": "390/locale-smoke/ios-settings-tg.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "b7e429320f122b257826fd8e4ae58b797435fb3a82e25ed6fd3462669a9bf420"
+            }
+          ]
+        },
+        {
+          "name": "public-browse",
+          "result": "passed",
+          "commands": 33,
+          "screenshots": [
+            {
+              "file": "390/public-browse/ios-catalog.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "4633a8edc67c12dc286540ecc6d28c0e192a4dc58a082b997be61c3f17216f16"
+            },
+            {
+              "file": "390/public-browse/ios-categories.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "d5f64bb8243719f6a8dea7cf090a7c0386028384115f18d2e53307c1ed3c1ee1"
+            },
+            {
+              "file": "390/public-browse/ios-favorites-guest.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "5bbd4bcecceb8267acc3eafceb3f77a215110ef4745ca8761fa6915936c474f5"
+            },
+            {
+              "file": "390/public-browse/ios-home-loaded.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "68947a962bc831b8719f5972e300b4907d0dfa0b03765bea7043fcffd573ed69"
+            },
+            {
+              "file": "390/public-browse/ios-map.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "70b342cfaa894e783435bc6cabd8846c2181fa75907642c74e5568e68067e4e1"
+            },
+            {
+              "file": "390/public-browse/ios-product.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "572402dc3eaa090f90cb35ddb7f8772b4d6926e9a4120bb12c3959675b95e087"
+            },
+            {
+              "file": "390/public-browse/ios-profile-guest.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "77c6301b3ffdcf46ed02bc343fc61b7fd45efee944d5646a0e87670fe16e2462"
+            },
+            {
+              "file": "390/public-browse/ios-search.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "d6105e73fd63d5d5645a51f9828fc04e7f291ec81a34e2d6d74a7ab8899691d7"
+            }
+          ]
+        },
+        {
+          "name": "public-smoke",
+          "result": "passed",
+          "commands": 23,
+          "screenshots": [
+            {
+              "file": "390/public-smoke/ios-cart-restored.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "c7aa931e636b0124f1c8d11a514a0c637d5f5bc37079f95c2709822573ca8ac0"
+            },
+            {
+              "file": "390/public-smoke/ios-cart.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "c7aa931e636b0124f1c8d11a514a0c637d5f5bc37079f95c2709822573ca8ac0"
+            },
+            {
+              "file": "390/public-smoke/ios-home.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "24ed5366b88d9569977749b5642822fe1ae9fa0a57b5af5d04f8d50efa75487b"
+            },
+            {
+              "file": "390/public-smoke/ios-login.png",
+              "physicalPixels": [
+                1170,
+                2532
+              ],
+              "sha256": "c295a0462c591317f5062aabf806c0dbd4d48669c382fbc1fb1864bb9204edea"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "iPhone14ProMax",
+      "logicalSize": [
+        430,
+        932
+      ],
+      "flows": [
+        {
+          "name": "locale-smoke",
+          "result": "passed",
+          "commands": 19,
+          "screenshots": [
+            {
+              "file": "430/locale-smoke/ios-home-tg-restored.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "a3b4d78060544105193ad7e42b970fb63050416f05552f3e454953fa99704b88"
+            },
+            {
+              "file": "430/locale-smoke/ios-settings-tg.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "94a6a217173a9a52b2553c0b4ad6cebb71458a759767d4379476ed34591bf1aa"
+            }
+          ]
+        },
+        {
+          "name": "public-browse",
+          "result": "passed",
+          "commands": 33,
+          "screenshots": [
+            {
+              "file": "430/public-browse/ios-catalog.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "943ab9be33d7312d11c275a88c216ada8af253b7ec4f6b8aa8010e636c8e0138"
+            },
+            {
+              "file": "430/public-browse/ios-categories.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "89cf55e8f5fdc0f05325fecbe34aadc6b447ea5a82afb36c6788f3ec02c07a8f"
+            },
+            {
+              "file": "430/public-browse/ios-favorites-guest.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "16b959a4aa30354a71701d3a50865a415856c8ad90c83235a1f485c57b237c43"
+            },
+            {
+              "file": "430/public-browse/ios-home-loaded.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "b5d752df079d3b437d37daf180b47d1c6f26f48345e1d2d86dd8fe64d61f8ad1"
+            },
+            {
+              "file": "430/public-browse/ios-map.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "42ec473c01195f59cf8dbf8e35fd062547de16934831fd898fb8fe49f67ef751"
+            },
+            {
+              "file": "430/public-browse/ios-product.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "1c4de6d04e2f198eede63185a61d7be66ed6b81599cd78578932a828fa5748fe"
+            },
+            {
+              "file": "430/public-browse/ios-profile-guest.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "f03e30a059714b49e5c9bb7a03aebdb3ea458821af31433dce058739313252dd"
+            },
+            {
+              "file": "430/public-browse/ios-search.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "ab4ce88870b7d9b8aff3621f216f54ef7045c9842ee12a0834b2a9e30ea55ff7"
+            }
+          ]
+        },
+        {
+          "name": "public-smoke",
+          "result": "passed",
+          "commands": 24,
+          "screenshots": [
+            {
+              "file": "430/public-smoke/ios-cart-restored.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "a3554c37d0e8eb10d7b9dcfd2ca61253a63f0d7079e328d1b6ebe1623b28e058"
+            },
+            {
+              "file": "430/public-smoke/ios-cart.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "a3554c37d0e8eb10d7b9dcfd2ca61253a63f0d7079e328d1b6ebe1623b28e058"
+            },
+            {
+              "file": "430/public-smoke/ios-home.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "21e2519511a89d15287e689ff1cea6406f4025e2ef5bb1366afa53ff8001a44b"
+            },
+            {
+              "file": "430/public-smoke/ios-login.png",
+              "physicalPixels": [
+                1290,
+                2796
+              ],
+              "sha256": "cd367f53314b9be51b75409a60f894c1d4c5cd35eec95a5ddd2ae30e0a5cd3d9"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "flowsPassed": 9,
+  "screenshots": 42,
+  "supplementalScreenshots": [
+    {
+      "file": "430/map-after-extra-wait.png",
+      "observation": "Actual Apple Maps tiles of Dushanbe rendered after at least10 seconds of additional waiting; no GPS/geocoding/customer address writes."
+    }
+  ],
+  "totalScreenshotsIncludingSupplemental": 43
+}

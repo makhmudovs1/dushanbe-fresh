@@ -14,7 +14,7 @@
   scan contains no known server-secret markers; it is not a universal secret proof.
 - Production Payom/required login are enabled. No real SMS/order/security-key
   changes performed. Future signed native storage/Maps/provider/proxy/log review
-  and real deletion lifecycle remain release gates. Full regression1281/zero skipped.
+  and real deletion lifecycle remain release gates. Full regression1282/zero skipped.
 
 Actual current evidence: [release review](MOBILE_RELEASE_2026.md).
 The rest is historical October evidence; its disabled-production-auth statements

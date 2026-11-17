@@ -2,7 +2,7 @@
 
 Текущий этап: [production sync 17.11.2026](../../docs/MOBILE_RELEASE_2026.md).
 Ветка `feature/mobile-production-sync-20261117`, база WEB/API `521b61e`.
-Исходная `feature/mobile-app` и её история сохранены. Production не менялся.
+Исходная `feature/mobile-app` и её история сохранены. Deployment production не выполнялся.
 
 Expo SDK 58.0.26 / React Native 0.88.1 New Architecture / React 19.3 /
 TypeScript strict / Expo Router. Нативные экраны, без WebView. Общее API
@@ -48,7 +48,8 @@ Release содержит Hermes bundle, development client — отдельны�
 Секреты сессий — SecureStore, ротация и отзыв — общий NestJS API; AsyncStorage
 содержит гостевую корзину/язык/временный адрес, а не долгоживущие токены.
 Android Maps key — публичный SDK credential с package+certificate/API
-restrictions; пока корректный key не предоставлен, Android map gate открыт.
+restrictions. Без корректного key карта Android недоступна; ручной ввод адреса
+сохранён, полноценная проверка карты остаётся release blocker.
 Geoapify key остаётся только на сервере.
 
 ## Что обновлено
@@ -117,3 +118,26 @@ corepack pnpm dlx eas-cli@26.0.0 build --platform ios --profile production
 юридические тексты, реальное удаление данных и native acceptance — release gates.
 Актуальные результаты и ограничения находятся в MOBILE_RELEASE_2026.md;
 октябрьские APK и отчёты не доказывают готовность текущей версии.
+
+## Проверенный локальный результат 17–18.11.2026
+
+Code commit `c141ce3`, version0.3.0/build3. Signed standalone iOS Simulator:
+`/private/tmp/df-mobile-sync-artifacts/dushanbe-fresh-0.3.0-3-c141ce3-ios-simulator.zip`.
+9/9 actual Maestro flows на375/390/430; public catalog/search/product/map opening,
+guest cart quote/restart и RU/TJ. Private OTP session/checkout UI и physical phones
+ещё не проверены. Device IPA не собрана: локальных signing identities0.
+
+В собственном iPhone14 Simulator приложение уже установлено. Открыть вручную:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl boot BD50BE76-17A3-4FD8-B5A1-9FD87862AF1F
+open -a Simulator
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl launch BD50BE76-17A3-4FD8-B5A1-9FD87862AF1F tj.dushanbefresh.app.preview
+```
+
+Android APK/AAB — checkpoint65a1e55, ARM64/test key, runtime не проверен.
+43 actual native PNGs: `.../dushanbe-fresh-c141ce3-native-screenshots.zip`.
+Это QA screenshots, не утверждённый store listing. Все эти файлы в temporary
+storage: скопируйте нужные бинарники перед очисткой /private/tmp. Исходники и
+выбранные публичные evidence сохранены локальными Git commits. После очистки
+CNG caches для новой native compile повторите prebuild/pod install/SDK setup.

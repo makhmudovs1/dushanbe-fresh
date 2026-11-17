@@ -1,0 +1,18 @@
+{
+  "dushanbe-fresh-0.3.0-3-arm64-qa.apk": {
+    "bytes": 36312987,
+    "sha256": "d1fafaead03a989f24c78494156faae9950309cbbffdb2b20858b608c35c0f43"
+  },
+  "dushanbe-fresh-0.3.0-3-arm64-qa.aab": {
+    "bytes": 27651804,
+    "sha256": "39c1796e39ebc46c2890f0a7179d1e87e7e125eea791b576b6fbd6d0ab06c8d1"
+  },
+  "dushanbe-fresh-0.3.0-3-c141ce3-ios-simulator.zip": {
+    "bytes": 15168103,
+    "sha256": "ebc1b58af169bb89e579fa2ea5b3dc5e11a53200acac3d6d010a204cdf7eb434"
+  },
+  "dushanbe-fresh-c141ce3-native-screenshots.zip": {
+    "bytes": 26237610,
+    "sha256": "70e9bdc636c307473d9df639b9f12dd4870a7b5f0f6e29150211c89711fd0fcb"
+  }
+}

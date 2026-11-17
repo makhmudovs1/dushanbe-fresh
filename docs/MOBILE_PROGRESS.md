@@ -4,22 +4,24 @@ Integration on feature/mobile-production-sync-20261117, based on current main
 521b61e. Historical source feature/mobile-app@1e96057 is preserved. Local commits:
 a7f12d4 (native geocoder/deletion request/shared tests), a758874 (native workspace,
 current storefront/account/checkout UX, Expo security patch alignment),
-65a1e55 (recovery/QA assets), b294d88 (owner/policy consent, iOS RU/TJ, checkout login gate).
+65a1e55 (recovery/QA assets), b294d88 (owner/policy consent, iOS RU/TJ, checkout login gate),
+fbe12b0 (translated screen titles + native flows), c141ce3 (language modal a11y).
 
 Current Payom/required login policy, common account/cart/prices, product facts,
 structured names, authoritative cart quote and address snapshot preservation are
 implemented. Default-off deletion REQUEST does not complete erasure. Main already
 contains mobile identity/session endpoints; it is not necessary to replace them.
 
-Actual regression: shared 23 + API 619 + WEB 444 + MOBILE 195 = 1281 passed with
+Actual regression: shared 23 + API 619 + WEB 444 + MOBILE 196 = 1282 passed with
 real isolated PostgreSQL/HTTP, including loopback Payom adapter and WEB/native /
 admin/picker/courier lifecycle. No skips in that run. Full root lint/typecheck/
 build passed, Android+iOS Hermes exports, Expo Doctor 20/20, npm audit zero
 advisories. Synthetic backup/restore preserves existing record hashes.
 
 Android APK/AAB compiled (ARM64/local test signing, exact source65a1e55);
-actual DEX WorkManager/Room constructors retained under full R8. iOS public
-startup/catalog proved on owned iPhone14 Simulator. Full native acceptance is open; see MOBILE_RELEASE_2026.md for the final
+actual DEX WorkManager/Room constructors retained under full R8. iOS signed Simulator sourcec141ce3:9/9 actual public/guest/RU-TJ flows pass on
+375/390/430;43 real PNGs saved. Apple Maps tiles render after waiting, but native
+geocoding404, private purchase/credentials/device acceptance remain open; see MOBILE_RELEASE_2026.md for the final
 result and artifacts. Compilation/public startup do not prove Keychain, complete
 checkout or physical-device readiness. No EAS job, push, merge, deployment or
 production SMS/order was performed in this task.

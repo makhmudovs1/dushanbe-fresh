@@ -2,21 +2,29 @@
 
 Actual Android ARM64 Release APK/AAB compiled from65a1e55 and binary-inspected:
 R8 full/release, three public Room/WorkManager constructors,16KB ELF/ZIP,
-embedded Hermes, target36. **No successful Android runtime boot**: owned API36
-emulator failed userdata free-space precondition (7.37GB required/2.50GB available).
-No physical device test; limited source/checkpoint scope must stay explicit.
+embedded Hermes,target36. No successful Android runtime boot: owned API36 AVD
+failed free-space precondition7.37GB required/2.50GB available. No physical test.
 
-Actual iOS arm64 Simulator Release compile/public launch at390×844 succeeded;
-real production images/catalog loaded. First unsigned Keychain/private smoke failed
-locked session and exposed an endless cart spinner, now replaced with retry in source.
-Local signed Simulator recheck is tracked in MOBILE_RELEASE_2026.md. No deviceIPA.
-Actual public screenshot is committed in docs/mobile-qa-20261117. This is not a
-full native screen, accessibility, memory/FPS or checkout acceptance.
+Actual signed iOS Simulator Release sourcec141ce3: **9/9 Maestro flows passed**
+on iPhone13mini375×812, iPhone14390×844 and iPhone14ProMax430×932, iOS27.0.
+Each ran public-browse,public-smoke,locale-smoke: catalog/categories/search/product/
+back/guest favorites/profile/map opening, server cart quote, stop/launch cart
+persistence, phone screen without SMS, RU/TJ titles/modal/restart persistence.
+The native run found/fixed missing shared-title translation and an inaccessible
+language modal. Earlier unsigned locked-session smoke was a signing/configuration
+failure; standard Xcode Simulator signing restored guest SecureStore reads.
+No authenticated OTP session write/rotation, real purchase UI, deviceIPA or physical
+phone acceptance. Local signing identities0. These are separate release gates.
 
-WEB reference375/390/430 completed39 guest states/78 PNGs. Real home390 comparison
-has15.2685% changed pixels, not a1:1 pass. Complete native sizes remain open.
-[Full current results](MOBILE_RELEASE_2026.md), [checklist](MOBILE_RELEASE_CHECKLIST.md).
-The historical matrix below remains a useful test inventory, not today's results.
+42 actual flow PNGs plus one settled-map capture. Apple Maps genuinely rendered
+Dushanbe after extra waiting; native provider search/reverse remains unavailable404.
+WEB/native375/430 strict pixel checks failed (13.1184%/7.6434% changed); complete
+1:1 acceptance is open. No image masking/fake screenshots. Native FPS/memory/
+large-text/screen-reader/full private UI acceptance remains open.
+
+[Results](mobile-qa-20261117/native-ui-results.json),
+[full review](MOBILE_RELEASE_2026.md),[checklist](MOBILE_RELEASE_CHECKLIST.md).
+The historical matrix below is a test inventory, not current acceptance.
 
 ---
 

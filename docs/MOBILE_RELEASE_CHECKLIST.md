@@ -10,7 +10,7 @@ Android **NO-GO** / iOS **NO-GO** для публикации. Это техни
   история сохранена, исходный WEB worktree не изменён.
 - [x] Expo58.0.26/RN0.88.1 New Architecture, совместимые peers, Doctor20/20.
 - [x] Root lint/typecheck/build; WEB/API production build и два Hermes export.
-- [x] 1281 tests passed, zero skips: shared23/API619/WEB444/MOBILE195, включая
+- [x] 1282 tests passed, zero skips: shared23/API619/WEB444/MOBILE196, включая
   настоящие isolated HTTP/PostgreSQL и admin→picker→courier lifecycle.
 - [x] pnpm audit: zero advisories в workspace dependency graph.
 - [x] Local Android standalone ARM64 APK + AAB compiled from65a1e55;
@@ -25,12 +25,13 @@ Android **NO-GO** / iOS **NO-GO** для публикации. Это техни
 
 ## P0 — до закрытого store testing track / покупательского допуска
 
-- [ ] Последние code patchesb294d88 собраны в Android APK/AAB; не подменять
+- [ ] Последние code patchesc141ce3 собраны в Android APK/AAB; не подменять
   checkpoint65a1e55 более новым исходником в отчётах.
 - [ ] Android cold start/WorkManager/Keystore на реальном runtime. Owned API36 AVD
   пока не загрузился: нужно7.37GB, было2.50GB; освободить ≥10GB либо дать ARM64 QA device.
-- [ ] Полный signed iOS Simulator smoke/Keychain/restart, затем signed device IPA
-  и физический iPhone. Unsigned public startup не закрывает private storage gate.
+- [x] Signed standalone iOS Simulator Release + 9/9 public/guest/RU-TJ flows at375/390/430.
+- [ ] Private OTP-session Keychain persistence/rotation/logout, signed device IPA
+  и физический iPhone; гостевой smoke не закрывает private storage gate.
 - [ ] Обе платформы: session restore/rotation/logout/account switch, guest cart
   restart/import/revision conflicts, addresses/maps/GPS/keyboard/Back/deep links,
   real native synthetic checkout + tracking. HTTP suite — только один уровень.
@@ -54,7 +55,7 @@ Android **NO-GO** / iOS **NO-GO** для публикации. Это техни
 ## P1 — до публикации
 
 - [ ] Real native screenshots375/390/430 и small/current Android, физические iPhone.
-  Current home390 pixel diff15.2685%, не принят как1:1; settled carousel frame нужен.
+  C141ce3 home375/430 pixel diff13.1184%/7.6434%, strict1% не пройден.
 - [ ] RU/TJ all screens, large text, VoiceOver/TalkBack, Reduce Motion, keyboard,
   safe areas, platform gestures, no tab overlap.
 - [ ] Measured cold start/catalog/image network/FPS/memory/leaks500+ list stress.

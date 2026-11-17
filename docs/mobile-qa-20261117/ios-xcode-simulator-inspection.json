@@ -1,0 +1,15 @@
+{
+  "CFBundleIdentifier": "tj.dushanbefresh.app.preview",
+  "CFBundleShortVersionString": "0.3.0",
+  "CFBundleVersion": "3",
+  "CFBundleLocalizations": [
+    "ru",
+    "tg"
+  ],
+  "CFBundleDevelopmentRegion": "ru",
+  "MinimumOSVersion": "16.4",
+  "mainBundleBytes": 4704356,
+  "mainBundleSHA256": "8c81d7dda33353e49559df8d34019184bfdb432063e9ae1a76f276ff35f2e534",
+  "codeCommit": "c141ce3a1b9105c010a114932a8466618ac571df",
+  "signedBy": "Xcode Sign to Run Locally, Simulator only"
+}
