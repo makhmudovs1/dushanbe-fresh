@@ -15,7 +15,7 @@ const config: ExpoConfig = {
   name: "Dushanbe Fresh",
   slug: "dushanbe-fresh",
   owner: "dushanbe-fresh",
-  version: "0.3.0",
+  version: "0.4.0",
   scheme: "dushanbefresh",
   platforms: ["ios", "android"],
   orientation: "default",
@@ -25,7 +25,7 @@ const config: ExpoConfig = {
   icon: "./assets/icon.png",
   ios: {
     bundleIdentifier: appId,
-    buildNumber: "3",
+    buildNumber: "4",
     associatedDomains: ["applinks:dushanbefresh.tj"],
     supportsTablet: true,
     infoPlist: {
@@ -38,7 +38,7 @@ const config: ExpoConfig = {
   android: {
     package: appId,
     // Local baseline; EAS remote version source increments the preview counter.
-    versionCode: 3,
+    versionCode: 4,
     allowBackup: false,
     blockedPermissions: [
       "android.permission.READ_EXTERNAL_STORAGE",

@@ -14,10 +14,10 @@ describe("cloud artifact contracts", () => {
     const pkg = JSON.parse(
       readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
     );
-    expect(nativeConfig.version).toBe("0.3.0");
+    expect(nativeConfig.version).toBe("0.4.0");
     expect(pkg.version).toBe(nativeConfig.version);
-    expect(nativeConfig.android.versionCode).toBe(3);
-    expect(nativeConfig.ios.buildNumber).toBe("3");
+    expect(nativeConfig.android.versionCode).toBe(4);
+    expect(nativeConfig.ios.buildNumber).toBe("4");
     expect(eas.cli.appVersionSource).toBe("remote");
     expect(eas.build.preview.android.autoIncrement).toBe(true);
   });
