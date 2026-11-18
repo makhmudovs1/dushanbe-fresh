@@ -87,3 +87,28 @@ Package: tj.dushanbefresh.app.preview. Certificate SHA-1 (public fingerprint):
 Use this pair only for the preview Maps restriction; it is not the production
 signing identity or the APK file hash. No Google key is configured, so map tiles
 remain unavailable in this artifact. Apple Maps/Android runtime were not launched.
+
+## Проверка 0.4.0 (5)
+
+Для локального preview `tj.dushanbefresh.app.preview` из `806abe3` отпечаток
+сертификата SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`.
+Сверьте его командой `apksigner verify --print-certs "$DF_APK"` и внесите ровно
+эту пару в отдельный **Maps SDK for Android** key. Для установки из Google Play
+используйте `tj.dushanbefresh.app` и SHA-1 из Play Console → App integrity → App
+signing key certificate. Предоставьте ограниченный ключ через локальное
+игнорируемое окружение или согласованное EAS окружение. `GOOGLE_MAPS_ANDROID_API_KEY`
+попадает в native manifest по правилам SDK. Apple Maps использует системный
+MapKit и не требует отдельного ключа или Google Cloud настройки на iOS.
+
+Для пробного живого геокодирования настройте **изолированный HTTPS backend**.
+Владелец добавляет `GEOAPIFY_API_KEY`, `MOBILE_GEOCODER_ENABLED=true`, ключ
+`MOBILE_QUOTA_SECRET` длиной от 32 символов и небольшой `MOBILE_GEOCODER_DAILY_LIMIT`
+в серверное окружение. `GEOAPIFY_API_KEY` выбирает встроенный адаптер. Сначала проверьте статус геокодера
+и зоны, затем через обычный клиент выполните один поиск «проспект Рудаки», один
+поиск «улица Бохтар» и один reverse по выбранной точке. Проверьте отсутствие
+адресов другого города, ожидаемое расположение на карте, неизменность сохранённых
+координат при reverse и запрет отправки за пределами активного полигона. Поиск
+повторяйте только при ошибке. Ключ Geoapify остаётся на сервере, его нельзя
+передавать в `EXPO_PUBLIC_*`, APK, IPA, скриншоты и логи.
+
+[Google Maps — Android key](https://developers.google.com/maps/documentation/android-sdk/get-api-key) · [Geoapify — geocoding API](https://www.geoapify.com/geocoding-api/)

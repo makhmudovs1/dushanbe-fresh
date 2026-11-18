@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "806abe322e5684bcd7d56a5894f6c36691f13644",
+  "artifacts": [
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-ios-layout-review.zip",
+      "bytes": 35652701,
+      "sha256": "29673f1b12054e4caef0c8904cd75727731d25182d9d7dd1b6f132decf0be7f2",
+      "role": "30 WEB/native pairs across three iOS widths"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-store-ios-6.7-and-13.zip",
+      "bytes": 15187032,
+      "sha256": "3bfb9054af7d653e5be20b332bdb24ef138690e9d4102edc56a738050d36c1a5",
+      "role": "eight original iOS draft store images"
+    }
+  ]
+}

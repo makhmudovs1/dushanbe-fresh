@@ -2,7 +2,8 @@
 import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 const origin = "https://dushanbefresh.tj";
-const paths = ["/health", "/products", "/categories", "/delivery-slots", "/delivery-zone", "/customer-auth/status", "/mobile/auth/status", "/mobile/geocoding/status", "/mobile/customer/account-deletion/status", "/customer/account-deletion/status", "/mobile/auth/me", "/mobile/customer/cart", "/mobile/customer/favorites", "/mobile/customer/addresses", "/mobile/customer/orders"];
+// Delivery-slot reads can materialize a schedule, so they are excluded from this audit.
+const paths = ["/health", "/products", "/categories", "/delivery-zone", "/customer-auth/status", "/mobile/auth/status", "/mobile/geocoding/status", "/mobile/customer/account-deletion/status", "/customer/account-deletion/status", "/mobile/auth/me", "/mobile/customer/cart", "/mobile/customer/favorites", "/mobile/customer/addresses", "/mobile/customer/orders"];
 const results = await Promise.all(paths.map(async (path) => {
   const started = performance.now();
   try {
