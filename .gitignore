@@ -13,3 +13,8 @@ apps/web/test-results.zip
 .DS_Store
 **/var/product-images/
 __pycache__/
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.aab

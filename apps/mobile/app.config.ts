@@ -1,5 +1,8 @@
 import type { ExpoConfig } from "expo/config";
 const variant = process.env.EXPO_PUBLIC_APP_ENV ?? "development";
+const androidVersion = process.env.MOBILE_ANDROID_VERSION_CODE ?? "5";
+if (!/^[1-9]\d*$/.test(androidVersion) || Number(androidVersion) > 2_100_000_000)
+  throw new Error("MOBILE_ANDROID_VERSION_CODE must be a valid Google Play versionCode");
 const projectId =
   process.env.EAS_PROJECT_ID ?? "089fb7ac-507e-4d1b-943b-8a9228987813";
 if (projectId !== "089fb7ac-507e-4d1b-943b-8a9228987813")
@@ -38,7 +41,7 @@ const config: ExpoConfig = {
   android: {
     package: appId,
     // Local baseline; EAS remote version source increments the preview counter.
-    versionCode: 5,
+    versionCode: Number(androidVersion),
     allowBackup: false,
     blockedPermissions: [
       "android.permission.READ_EXTERNAL_STORAGE",
@@ -119,6 +122,9 @@ const config: ExpoConfig = {
   ],
   extra: {
     androidMapsConfigured: !!process.env.GOOGLE_MAPS_ANDROID_API_KEY,
+    ...(process.env.MOBILE_PRIVACY_POLICY_PUBLISHED === "true"
+      ? { privacyPolicyUrl: "https://dushanbefresh.tj/privacy" }
+      : {}),
     eas: { projectId },
   },
 };

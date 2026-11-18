@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { AccountDeletionCapability, AccountDeletionReceipt, AccountDeletionRequest } from "@dushanbe-fresh/shared";
 import { useCustomer } from "@/customer/customer-context";
 import { useI18n } from "@/i18n/provider";
@@ -17,7 +18,7 @@ async function loadCapability(): Promise<AccountDeletionCapability> {
 }
 
 // External deletion-initiation resource required by Google Play. No erasure claim.
-export function AccountDeletion() {
+export function AccountDeletion({ privacyPolicyPublished, supportEmail }: { privacyPolicyPublished: boolean; supportEmail: string | null }) {
   const { locale } = useI18n();
   const customer = useCustomer();
   const text = (ru: string, tg: string) => locale === "tg" ? tg : ru;
@@ -72,12 +73,12 @@ export function AccountDeletion() {
   }
   return <section className="customer-form" aria-busy={pending || busy}>
     <h1>{text("Удаление аккаунта Dushanbe Fresh", "Нест кардани ҳисоби Dushanbe Fresh")}</h1>
+    <p>{text("Чтобы запросить удаление аккаунта и связанных данных, войдите по номеру телефона и подтвердите запрос на этой странице.", "Барои дархости нест кардани ҳисоб ва маълумоти вобаста, бо рақами телефон ворид шавед ва дархостро дар ҳамин саҳифа тасдиқ кунед.")}</p>
     {pending ? <p role="status">{text("Загрузка", "Боршавӣ")}</p> : visibleReceipt ? <>
       <h2>{text("Запрос на удаление принят", "Дархости несткунӣ қабул шуд")}</h2>
       <p>{text("Данные ещё не удалены. Запрос будет обработан по указанным правилам хранения.", "Маълумот ҳанӯз нест нашудааст. Дархост тибқи қоидаҳои нишон додашудаи нигоҳдорӣ коркард мешавад.")}</p>
       <p>{visibleReceipt.requestId}</p>
     </> : !capability?.available ? <p>{text("Удаление аккаунта временно недоступно. Попробуйте позже.", "Нест кардани ҳисоб муваққатан дастнорас аст. Баъдтар кӯшиш кунед.")}</p> : <>
-      <p>{text("Отправьте запрос на удаление аккаунта и связанных персональных данных.", "Барои нест кардани ҳисоб ва маълумоти шахсии вобаста дархост фиристед.")}</p>
       <p style={{ whiteSpace: "pre-wrap" }}>{capability.retentionNotice?.[locale]}</p>
       {!customer.user ? <button type="button" className="primary-action" disabled={customer.loading} onClick={customer.login}>{text("Войти по номеру телефона", "Бо рақами телефон ворид шудан")}</button> : <>
         <p>{customer.user.phone}</p>
@@ -86,5 +87,7 @@ export function AccountDeletion() {
       </>}
     </>}
     {error ? <p className="form-error" role="alert">{policyChanged ? text("Правила хранения изменились. Прочитайте их и подтвердите запрос заново.", "Қоидаҳои нигоҳдорӣ тағйир ёфтанд. Онҳоро хонед ва дархостро аз нав тасдиқ кунед.") : text("Не удалось завершить запрос. Проверьте соединение и войдите снова.", "Анҷом додани дархост нашуд. Пайвастро санҷед ва аз нав ворид шавед.")}</p> : null}
+    {supportEmail ? <p>{text("Если вы потеряли доступ к номеру, свяжитесь с поддержкой для проверки аккаунта.", "Агар ба рақаматон дастрасӣ надошта бошед, барои санҷиши ҳисоб ба дастгирӣ муроҷиат кунед.")} <a href={`mailto:${supportEmail}`}>{supportEmail}</a></p> : null}
+    {privacyPolicyPublished ? <Link href="/privacy">{text("Политика конфиденциальности", "Сиёсати махфият")}</Link> : null}
   </section>;
 }

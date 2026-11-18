@@ -1,5 +1,8 @@
 # Первый Android-тест Dushanbe Fresh в Google Play
 
+[Инструкция по созданию приложения, подписи и передаче другу](MOBILE_PLAY_HANDOFF.md)
+содержит актуальный порядок для новой записи Play Console.
+
 Решение для владельца. Кандидат `0.4.0 (5)`, `tj.dushanbefresh.app`, исходники `cae0dabcf8ce65c08fc5c4316caf227912e5852d`. Артефакт локальный и ожидает ключей и подписи. В профиле production отправка заказов отключена. Общее число повторно пройденных тестов — 1283 (23 shared, 620 API, 444 WEB, 196 MOBILE). [Манифест AAB](mobile-rc-20261118/first-play-aab.json) · [TARENA rollout](MOBILE_TARENA_FIRST_PLAY_ROLLOUT.md)
 
 ## 1. Собрать и подписать кандидат
