@@ -322,7 +322,7 @@ export function Quantity({
           flex: 1,
           textAlign: "center",
           flexShrink: 1,
-          fontSize: compact ? 12 : small ? 10 : 13,
+          fontSize: compact || small ? 10 : 13,
           color: colors.text,
           fontWeight: "500",
         }}

@@ -16,8 +16,8 @@ describe("cloud artifact contracts", () => {
     );
     expect(nativeConfig.version).toBe("0.4.0");
     expect(pkg.version).toBe(nativeConfig.version);
-    expect(nativeConfig.android.versionCode).toBe(4);
-    expect(nativeConfig.ios.buildNumber).toBe("4");
+    expect(nativeConfig.android.versionCode).toBe(5);
+    expect(nativeConfig.ios.buildNumber).toBe("5");
     expect(eas.cli.appVersionSource).toBe("remote");
     expect(eas.build.preview.android.autoIncrement).toBe(true);
   });

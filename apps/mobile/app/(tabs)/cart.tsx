@@ -21,7 +21,13 @@ import {
 import { decimal, lineCents } from "../../src/domain/decimal";
 import { localizedName } from "../../src/i18n";
 import { currency, decimalLabel, quantityUnit } from "../../src/design/format";
-import { Share2, Search, Trash2, ShoppingBag } from "../../src/design/icons";
+import {
+  ArrowLeft,
+  Share2,
+  Search,
+  Trash2,
+  ShoppingBag,
+} from "../../src/design/icons";
 import {
   Button,
   colors,
@@ -139,18 +145,32 @@ export default function Cart() {
         }}
         ListHeaderComponent={
           <View>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => router.push("/catalog")}
+              style={{
+                alignSelf: "flex-start",
+                minHeight: 44,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <ArrowLeft size={16} color={colors.muted} />
+              <Text style={{ fontSize: 14, color: colors.muted }}>
+                {t("Вернуться в каталог")}
+              </Text>
+            </Pressable>
             <View
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
                 minHeight: 56,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.line,
                 paddingBottom: 8,
               }}
             >
-              <Text style={[styles.heading, { flex: 1 }]}>{t("Корзина")}</Text>
+              <Text style={[styles.title, { flex: 1 }]}>{t("Корзина")}</Text>
               <View style={{ flexDirection: "row", gap: 2 }}>
                 <LucideButton
                   icon={Share2}
@@ -405,31 +425,13 @@ export default function Cart() {
         ListFooterComponent={
           <View>
             {cart.items.length ? (
-              <View style={{ paddingVertical: 12, gap: 12 }}>
+              <View style={{ paddingVertical: 12 }}>
                 <PricingSummary
                   quote={pricing.data}
                   pending={pricing.pending}
                   failed={pricing.failed}
                   weighted={weighted}
                 />
-                <Text
-                  style={{ fontSize: 11, lineHeight: 16, color: colors.muted }}
-                >
-                  {t("Позиций в корзине:")} {cart.items.length}
-                </Text>
-                {weighted ? (
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      lineHeight: 16,
-                      color: colors.muted,
-                    }}
-                  >
-                    {t(
-                      "Для продуктов на вес итоговая сумма может немного измениться после сборки.",
-                    )}
-                  </Text>
-                ) : null}
               </View>
             ) : null}
             {recommendations.length ? (

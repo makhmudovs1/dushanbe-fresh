@@ -25,7 +25,7 @@ const config: ExpoConfig = {
   icon: "./assets/icon.png",
   ios: {
     bundleIdentifier: appId,
-    buildNumber: "4",
+    buildNumber: "5",
     associatedDomains: ["applinks:dushanbefresh.tj"],
     supportsTablet: true,
     infoPlist: {
@@ -38,7 +38,7 @@ const config: ExpoConfig = {
   android: {
     package: appId,
     // Local baseline; EAS remote version source increments the preview counter.
-    versionCode: 4,
+    versionCode: 5,
     allowBackup: false,
     blockedPermissions: [
       "android.permission.READ_EXTERNAL_STORAGE",
