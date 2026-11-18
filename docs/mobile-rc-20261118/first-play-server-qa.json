@@ -1,0 +1,220 @@
+{
+  "sourceCommit": "cae0dabcf8ce65c08fc5c4316caf227912e5852d",
+  "rollback": {
+    "isolated": true,
+    "postgres": "14.18",
+    "results": [
+      {
+        "build": "cae0dab",
+        "webAndApiReady": true,
+        "products": 12,
+        "checkoutHtml": true,
+        "newDeletionRoute": true
+      },
+      {
+        "build": "521b61e",
+        "webAndApiReady": true,
+        "products": 12,
+        "checkoutHtml": true,
+        "newDeletionRoute": false
+      }
+    ],
+    "oldImageOnProductionTested": false,
+    "existingRowsUnchanged": {
+      "user": 24,
+      "product": 12,
+      "order": 10,
+      "customerCart": 8,
+      "orderItem": 12,
+      "cashTransaction": 2
+    }
+  },
+  "additiveMigrationRehearsal": {
+    "checkedAt": "2026-11-18T09:53:14.870Z",
+    "syntheticOnly": true,
+    "sourcePort": "55439",
+    "restoredBackup": true,
+    "migrationsApplied": [
+      "20261117140000_mobile_geocoder",
+      "20261117143000_account_deletion_requests"
+    ],
+    "existingDataUnchanged": true,
+    "before": {
+      "users": {
+        "count": 24,
+        "sha256": "50ec7b35fd9e1ff83d412284f0941427be8a86b781776c341927f0a557d1432f"
+      },
+      "products": {
+        "count": 12,
+        "sha256": "f6412f85db9a7f135623ab68410e0500c197cf726031177ec07062dc7ed21502"
+      },
+      "customer_carts": {
+        "count": 8,
+        "sha256": "521e813030fabde42dca5baedd4b3cbc18f885529624780c4a7f341f6a2660c8"
+      },
+      "orders": {
+        "count": 10,
+        "sha256": "23a980935d6472064b3b2f8e90acb387ff1d95d6b509e0492401f1d73e009167"
+      }
+    },
+    "after": {
+      "users": {
+        "count": 24,
+        "sha256": "50ec7b35fd9e1ff83d412284f0941427be8a86b781776c341927f0a557d1432f"
+      },
+      "products": {
+        "count": 12,
+        "sha256": "f6412f85db9a7f135623ab68410e0500c197cf726031177ec07062dc7ed21502"
+      },
+      "customer_carts": {
+        "count": 8,
+        "sha256": "521e813030fabde42dca5baedd4b3cbc18f885529624780c4a7f341f6a2660c8"
+      },
+      "orders": {
+        "count": 10,
+        "sha256": "23a980935d6472064b3b2f8e90acb387ff1d95d6b509e0492401f1d73e009167"
+      }
+    },
+    "productionCopyTested": false,
+    "limitation": "Synthetic owned data only. Current TARENA image/schema and real-volume restore remain unverified."
+  },
+  "deliverySlots": {
+    "isolated": true,
+    "requests": [
+      {
+        "path": "/health",
+        "status": 200,
+        "ms": 9
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 20
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 20
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 20
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 20
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 21
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 21
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 17
+      },
+      {
+        "path": "/delivery-slots",
+        "status": 200,
+        "ms": 17
+      }
+    ],
+    "recreatedOnce": true,
+    "inactiveAndCapacityPreserved": true
+  },
+  "geoapify": {
+    "isolated": true,
+    "provider": "Geoapify",
+    "calls": [
+      {
+        "operation": "autocomplete",
+        "status": 401,
+        "ms": 594
+      },
+      {
+        "operation": "autocomplete",
+        "status": 401,
+        "ms": 201
+      },
+      {
+        "operation": "reverse",
+        "status": 401,
+        "ms": 287
+      }
+    ],
+    "search": [
+      {
+        "query": "проспект Рудаки",
+        "status": 503,
+        "suggestions": []
+      },
+      {
+        "query": "улица Бохтар",
+        "status": 503,
+        "suggestions": []
+      }
+    ],
+    "reverse": {
+      "status": 503,
+      "point": {
+        "latitude": 38.5726,
+        "longitude": 68.7871
+      },
+      "suggestions": [],
+      "exactCoordinates": false
+    }
+  },
+  "androidR8ConstructorCheck": {
+    "Landroidx/work/ArrayCreatingInputMerger;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    },
+    "Landroidx/work/OverwritingInputMerger;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    },
+    "Landroidx/work/impl/WorkDatabase_Impl;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    }
+  },
+  "fullRegression": {
+    "shared": 23,
+    "api": 620,
+    "web": 444,
+    "mobile": 196,
+    "skipped": 0,
+    "lint": true,
+    "typecheck": true,
+    "build": true
+  }
+}

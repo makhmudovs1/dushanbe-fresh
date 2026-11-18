@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "cae0dabcf8ce65c08fc5c4316caf227912e5852d",
+  "artifact": "dushanbe-fresh-0.4.0-5-cae0dab-unsigned.aab",
+  "bytes": 43367988,
+  "sha256": "ac394d364b54418c2a0d370f2b6c3cb5b5e6f3d4d711f29db11d586843b75c9d",
+  "packageId": "tj.dushanbefresh.app",
+  "versionName": "0.4.0",
+  "versionCode": 5,
+  "targetSdk": 36,
+  "minSdk": 24,
+  "unsigned": true,
+  "bundletoolValidated": true,
+  "nativeLibraries": 54,
+  "minimumElfLoadAlignment": 16384,
+  "abis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "metroSourceCount": 1917,
+  "affectedModulesInAppBundle": [],
+  "bundledExpoCliModules": [
+    "build/metro-require/require.js"
+  ],
+  "productionCheckoutEnabled": false,
+  "androidMapsConfigured": false
+}

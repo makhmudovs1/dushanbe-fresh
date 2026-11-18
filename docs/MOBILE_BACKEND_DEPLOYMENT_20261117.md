@@ -1,5 +1,8 @@
 # Mobile backend deployment preparation — 17.11.2026
 
+Актуальный кандидат, результаты rollback и бюджет живой проверки Geoapify
+описаны в [плане TARENA для первого Android-теста](MOBILE_TARENA_FIRST_PLAY_ROLLOUT.md).
+
 Prepared, **not deployed**. Current TARENA image/migrations/resources could not be
 inspected: the existing checked-in SSH connection rejected its key. No access
 keys were changed. Public HTTPS observations are in mobile-production-20261117.json.
