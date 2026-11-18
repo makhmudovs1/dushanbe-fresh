@@ -1,0 +1,21 @@
+{
+  "dushanbe-fresh-0.4.0-5-806abe3-arm64-preview.apk": {
+    "libraries": 27,
+    "ABIs": [
+      "arm64-v8a"
+    ],
+    "allLoadSegmentsAtLeast16KB": true,
+    "hermesBytes": 3859192,
+    "jarSigningMetadata": false
+  },
+  "dushanbe-fresh-0.4.0-5-806abe3-production-unsigned.aab": {
+    "libraries": 54,
+    "ABIs": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "allLoadSegmentsAtLeast16KB": true,
+    "hermesBytes": 3859196,
+    "jarSigningMetadata": false
+  }
+}

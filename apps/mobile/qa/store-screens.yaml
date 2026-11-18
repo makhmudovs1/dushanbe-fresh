@@ -1,0 +1,52 @@
+# Run on an owned standalone preview. This flow only reads the public API and
+# adds a product to the device’s guest cart. Set PRODUCT_NAME to a real product
+# in the first catalog row before starting.
+appId: tj.dushanbefresh.app.preview
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Выбрать"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: 01-home
+- tapOn: "Каталог"
+- extendedWaitUntil:
+    visible: "Овощи"
+    timeout: 30000
+- takeScreenshot: 02-categories
+- tapOn: "Главная"
+- scrollUntilVisible:
+    element: ${PRODUCT_NAME}
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    text: ${PRODUCT_NAME}
+    index: 0
+- extendedWaitUntil:
+    visible: 'Закрыть товар|Нет соединения'
+    timeout: 30000
+- runFlow:
+    when:
+      visible: "Нет соединения"
+    commands:
+      - tapOn: "Повторить"
+- extendedWaitUntil:
+    visible: "Закрыть товар"
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: 03-product
+- tapOn: "Закрыть товар"
+- runFlow:
+    when:
+      visible: "Добавить в корзину: ${PRODUCT_NAME}"
+    commands:
+      - tapOn: "Добавить в корзину: ${PRODUCT_NAME}"
+- tapOn: "Корзина"
+- extendedWaitUntil:
+    visible: "К оплате"
+    timeout: 30000
+- takeScreenshot: 04-cart

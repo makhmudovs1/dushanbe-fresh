@@ -1,13 +1,15 @@
 # Dushanbe Fresh — native iOS / Android
 
-Текущий этап: [production sync 17.11.2026](../../docs/MOBILE_RELEASE_2026.md).
+Текущий кандидат 0.4.0 (5) и проверка на физических устройствах описаны в
+[отчёте RC от 18.11.2026](../../docs/MOBILE_RC_20261118.md). История синхронизации
+с production — в [отчёте от 17.11.2026](../../docs/MOBILE_RELEASE_2026.md).
 Ветка `feature/mobile-production-sync-20261117`, база WEB/API `521b61e`.
 Исходная `feature/mobile-app` и её история сохранены. Deployment production не выполнялся.
 
 Expo SDK 58.0.26 / React Native 0.88.1 New Architecture / React 19.3 /
 TypeScript strict / Expo Router. Нативные экраны, без WebView. Общее API
 `https://dushanbefresh.tj/api/v1`; цены и итог определяет backend.
-Версия приложения **0.3.0**, локальные Android versionCode / iOS buildNumber **3**.
+Версия приложения **0.4.0**, локальные Android versionCode / iOS buildNumber **5**.
 
 ## Запуск
 

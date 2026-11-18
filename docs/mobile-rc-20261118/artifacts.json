@@ -1,0 +1,49 @@
+{
+  "sourceCommit": "806abe322e5684bcd7d56a5894f6c36691f13644",
+  "branch": "feature/mobile-production-sync-20261117",
+  "version": "0.4.0",
+  "build": 5,
+  "artifacts": [
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-arm64-preview.apk",
+      "bytes": 36314627,
+      "sha256": "3dd3c8f28c9ef0c414315b6ba1977f7628b932d0cc46cfcdc4e4d78fcd488a5c",
+      "role": "signed Android preview APK ARM64"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-production-unsigned.aab",
+      "bytes": 43368287,
+      "sha256": "21a2b534fef9287063c4e3f84e1a07f2dd6b7bd78ee4c83ab35892c0ef624193",
+      "role": "unsigned Android production AAB ARM64/x86_64"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-ios-simulator.zip",
+      "bytes": 15138217,
+      "sha256": "8c37ea6af425cdfed4c6a2bf733cd712d0ac831d6249b74da46679cebe591a00",
+      "role": "Xcode signed iOS Simulator ZIP Apple Silicon"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-device-unsigned.zip",
+      "bytes": 26504996,
+      "sha256": "158bdd89544d4011869ea6943b054053304e01aac75fe20e9781122fb4dc49aa",
+      "role": "unsigned iPhoneOS Xcode archive ZIP"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-public-screenshots.zip",
+      "bytes": 19528201,
+      "sha256": "a5ca748c40fa5912a7c105ebff14fc0af0c4436c0997efec394709151bbf2353",
+      "role": "QA screenshots and overlays"
+    },
+    {
+      "name": "dushanbe-fresh-0.4.0-5-806abe3-store-screenshots-draft.zip",
+      "bytes": 5473693,
+      "sha256": "67ce05f0bb075d402e4243bc9097158cc862c3ee037c7a15803781e0b05f1f11",
+      "role": "store screenshots draft"
+    }
+  ],
+  "localOnly": true,
+  "productionCheckout": false,
+  "easBuilds": 0,
+  "storeUploads": 0,
+  "physicalDeviceTests": false
+}

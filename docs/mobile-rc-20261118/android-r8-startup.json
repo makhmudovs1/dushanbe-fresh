@@ -1,0 +1,59 @@
+{
+  "apk": "dushanbe-fresh-0.4.0-5-806abe3-arm64-preview.apk",
+  "sha256": "3dd3c8f28c9ef0c414315b6ba1977f7628b932d0cc46cfcdc4e4d78fcd488a5c",
+  "versions": {
+    "META-INF/com/android/build/gradle/app-metadata.properties": "appMetadataVersion=1.1\nandroidGradlePluginVersion=9.2.1",
+    "META-INF/androidx.room_room-ktx.version": "2.5.0",
+    "META-INF/androidx.room_room-runtime.version": "2.5.0",
+    "META-INF/androidx.work_work-runtime.version": "2.9.1"
+  },
+  "r8": [
+    {
+      "backend": "dex",
+      "compilation-mode": "release",
+      "has-checksums": false,
+      "min-api": 24,
+      "pg-map-id": "620beae45dc6fa56aeb5044bbf39f44db1e767bed6d5ebc8c217a5ca9ebd8c8b",
+      "r8-mode": "full",
+      "version": "9.2.14"
+    }
+  ],
+  "r8FullRelease": true,
+  "classes": {
+    "Landroidx/work/ArrayCreatingInputMerger;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    },
+    "Landroidx/work/OverwritingInputMerger;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    },
+    "Landroidx/work/impl/WorkDatabase_Impl;": {
+      "dex": "classes.dex",
+      "constructors": [
+        {
+          "arguments": 0,
+          "public": true,
+          "hasCode": true
+        }
+      ],
+      "publicNoArgConstructor": true
+    }
+  },
+  "ok": true,
+  "deviceLaunchTested": false
+}

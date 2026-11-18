@@ -1,0 +1,242 @@
+{
+  "sourceCommit": "806abe322e5684bcd7d56a5894f6c36691f13644",
+  "sameLogicalWidth": 390,
+  "nativeResolution": [
+    1170,
+    2532
+  ],
+  "comparedRegion": [
+    0,
+    0,
+    390,
+    700
+  ],
+  "comparisonsPerPlatform": 11,
+  "limitations": "Exploratory screen matching. Different catalog items, loading/focus and map provider states can contribute to pixel differences. Disclosed system insets only. No alignment shifts, stretching or masks.",
+  "metrics": {
+    "ios": {
+      "home": {
+        "changedRatio": 0.09934065934065935,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "categories": {
+        "changedRatio": 0.26788278388278386,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "catalog": {
+        "changedRatio": 0.3345311355311355,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "search": {
+        "changedRatio": 0.21577289377289377,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "product-sheet": {
+        "changedRatio": 0.5444725274725275,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "favorites": {
+        "changedRatio": 0.15746520146520146,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "cart-filled": {
+        "changedRatio": 0.18227472527472527,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "account": {
+        "changedRatio": 0.22863736263736265,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "address": {
+        "changedRatio": 0.6975677655677656,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "login": {
+        "changedRatio": 0.22467765567765569,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      },
+      "checkout-login-gate": {
+        "changedRatio": 0.8445641025641025,
+        "strictPass": false,
+        "insets": [
+          141,
+          0,
+          102,
+          0
+        ]
+      }
+    },
+    "android": {
+      "home": {
+        "changedRatio": 0.10000366300366301,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "categories": {
+        "changedRatio": 0.2734029304029304,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "catalog": {
+        "changedRatio": 0.31552380952380954,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "search": {
+        "changedRatio": 0.2113150183150183,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "product-sheet": {
+        "changedRatio": 0.45844322344322347,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "favorites": {
+        "changedRatio": 0.13962271062271062,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "cart-filled": {
+        "changedRatio": 0.19023076923076923,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "account": {
+        "changedRatio": 0.22991941391941392,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "address": {
+        "changedRatio": 0.2265054945054945,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "login": {
+        "changedRatio": 0.2450989010989011,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      },
+      "checkout-login-gate": {
+        "changedRatio": 0.8571684981684982,
+        "strictPass": false,
+        "insets": [
+          143,
+          0,
+          72,
+          0
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "sourceCommit": "806abe322e5684bcd7d56a5894f6c36691f13644",
+  "automated": {
+    "lint": true,
+    "typecheck": true,
+    "build": true,
+    "passed": 1282,
+    "skipped": 0
+  },
+  "android": {
+    "api": 36,
+    "runtime": "Google APIs ARM64, 390×844 dp",
+    "coldStart": "passed, process alive",
+    "publicMaestroFlowsPassed": 3,
+    "checkoutGateFlowPassed": true,
+    "mapTilesTested": false,
+    "mapFallbackSeen": true,
+    "previewSdkKeyCertificateSHA1": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625",
+    "publication": "NO-GO"
+  },
+  "ios": {
+    "runtime": "iPhone14 Simulator iOS27.0, 390×844 pt",
+    "publicMaestroFlowsPassed": 3,
+    "checkoutGateFlowPassed": true,
+    "deviceArchiveBuilt": true,
+    "localCodeSigningIdentities": 0,
+    "publication": "NO-GO"
+  },
+  "isolatedNativeLifecycle": {
+    "sourceCommit": "c0fe2e60f39de0df0a3830d9975d9288203d04ad",
+    "platform": "iOS Simulator",
+    "sms": "loopback test OTP",
+    "keychainRestoreAndLogout": true,
+    "sharedBrowserMobileCart": true,
+    "nativeAddressAndDeliveryZone": true,
+    "simulatedGpsOutsideZoneRejected": true,
+    "ordersCreated": 1,
+    "adminBrowserOrderVisible": true,
+    "assignedPickerProcessedActualWeight": true,
+    "courierCompletedOrder": true,
+    "nativeTrackingConfirmedDelivered": true
+  },
+  "visual": {
+    "screensComparedPerPlatform": 11,
+    "strict1to1Accepted": false,
+    "publicScreenshotFrames": 33,
+    "storeDraftFrames": 8,
+    "catalogReachableDuringFunctionalQA": true,
+    "laterStoreCaptureBlockedByConnectionTimeout": true
+  },
+  "productionSMS": 0,
+  "productionOrders": 0,
+  "deployed": false,
+  "pushed": false
+}

@@ -1,0 +1,31 @@
+# Run after public-smoke.yaml has added a product to the guest cart.
+# This checks the guest login requirement without sending a code.
+
+appId: tj.dushanbefresh.app.preview
+---
+- stopApp
+- launchApp
+- tapOn: "Корзина"
+- extendedWaitUntil:
+    visible: "К оплате"
+    timeout: 30000
+- assertVisible: "Вернуться в каталог"
+- tapOn: "Вернуться в каталог"
+- assertVisible: "Поиск товаров"
+- tapOn: "Корзина"
+- extendedWaitUntil:
+    visible: "Оформить заказ"
+    timeout: 30000
+- tapOn: "Оформить заказ"
+- extendedWaitUntil:
+    visible: "Войдите, чтобы оформить заказ"
+    timeout: 30000
+- runFlow:
+    when:
+      visible: "Отмена"
+    commands:
+      - tapOn: "Отмена"
+- assertVisible: "Войти по номеру телефона"
+- takeScreenshot: checkout-login-gate
+- tapOn: "Вернуться в корзину"
+- assertVisible: "Вернуться в каталог"

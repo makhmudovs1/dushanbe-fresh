@@ -1,0 +1,91 @@
+{
+  "version": "0.4.0 (5)",
+  "commit": "806abe322e5684bcd7d56a5894f6c36691f13644",
+  "scope": "Draft. Original native previews, RGB re-encoding and Android system-bar crop only; no overlays/resizing. Await final signed binaries, live maps and policy review.",
+  "files": [
+    {
+      "platform": "android",
+      "file": "android/01-home.png",
+      "pixels": [
+        1080,
+        1920
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "01-home"
+    },
+    {
+      "platform": "android",
+      "file": "android/02-categories.png",
+      "pixels": [
+        1080,
+        1920
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "02-categories"
+    },
+    {
+      "platform": "android",
+      "file": "android/03-product.png",
+      "pixels": [
+        1170,
+        2317
+      ],
+      "systemBarsCropped": true,
+      "sourceState": "03-product"
+    },
+    {
+      "platform": "android",
+      "file": "android/04-cart.png",
+      "pixels": [
+        1170,
+        2317
+      ],
+      "systemBarsCropped": true,
+      "sourceState": "04-cart"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/01-home.png",
+      "pixels": [
+        1170,
+        2532
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "01-home"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/02-categories.png",
+      "pixels": [
+        1170,
+        2532
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "02-categories"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/03-product.png",
+      "pixels": [
+        1170,
+        2532
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "03-product"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/04-cart.png",
+      "pixels": [
+        1170,
+        2532
+      ],
+      "systemBarsCropped": false,
+      "sourceState": "04-cart"
+    }
+  ],
+  "pending": [
+    "Full Android 1080x1920 4-shot recommended format",
+    "App Store large Dynamic Island iPhone and 13-inch iPad sets. Public catalog stopped responding during capture."
+  ]
+}
